@@ -1,0 +1,7 @@
+{
+  "name": "Taxmap-admin",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react-vite"
+}
