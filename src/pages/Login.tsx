@@ -12,11 +12,12 @@ import {
   IonToast,
   IonCard,
   IonCardContent,
+  IonAvatar,
 } from '@ionic/react';
-import { useState} from 'react';
+import { useState } from 'react';
 import { supabase } from '../utils/supaBaseClient';
-import Logo from '../Images/Flag_of_Manolo_Fortich,_Bukidnon.png'
-import backgroundImg from '../Images/Background.jpg'
+import Logo from '../Images/Flag_of_Manolo_Fortich,_Bukidnon.png';
+import backgroundImg from '../Images/Background.jpg';
 
 const AlertBox: React.FC<{ message: string; isOpen: boolean; onClose: () => void }> = ({ message, isOpen, onClose }) => {
   return (
@@ -54,7 +55,6 @@ const Login: React.FC = () => {
       return;
     }
 
-
     setShowToast(true);
     setTimeout(() => {
       navigation.push('/it35-lab/app', 'forward', 'replace');
@@ -63,76 +63,54 @@ const Login: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle style={h1Style}>Login</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-      <IonContent className='ion-padding'>
-        <img
-          src={backgroundImg}
-          alt="background"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
+      <IonContent className='ion-padding' fullscreen>
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundImage: `url(${backgroundImg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          filter: 'blur(2px) brightness(0.7)',
+          zIndex: -1,
+        }} />
+        
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100%',
+          padding: '1rem',
+        }}>
+          <IonCard style={{
             width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            zIndex: -1,
-          }}
-        />
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            marginLeft: '8%',
-            height: '70%',
-            width: '100%',
-          }}
-        >
-          <IonCard
-            style={{
-              background: 'transparent',
-              marginTop: '13%',
-              width: '90vw',           
-              maxWidth: '500px',    
-              height: 'auto',          
-              padding: '1rem',
-              backdropFilter: 'blur(2px)',
-              border: '2px solid #2B99E2',
-              boxShadow: '0 0 15px #2B99E2, 0 0 15px #2B99E2, 0 0 15px #2B99E2',
-              borderRadius: '10px',
-              animation: 'borderBlink 2s infinite, fadeIn 1.5s ease-in forwards',
-            }}
-          >
-
+            maxWidth: '500px',
+            backdropFilter: 'blur(8px)',
+            background: 'rgba(255, 255, 255, 0.1)',
+            borderRadius: '10px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+          }}>
             <IonCardContent>
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '1rem', // adds spacing between inputs
-                  marginTop: '2rem',
-                }}
-              >
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '1rem',
+                padding: '1rem',
+              }}>
+                <IonAvatar style={{
+                  width: '100px',
+                  height: '100px',
+                  marginBottom: '1rem',
+                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                }}>
+                  <img src={Logo} alt="Logo" />
+                </IonAvatar>
 
-                <img
-                  src={Logo}
-                  alt="Logo"
-                  style={{
-                    width: '100px',
-                    height: '100px',
-                    objectFit: 'contain',
-                    margin: '0 auto',
-                    display: 'block',
-                    marginBottom: '1rem',
-                  }}
-                />
-
-                <h1 style={h1Style}>USER LOGIN</h1>
+                <h1 style={h1Style}>TaxMap Admin</h1>
+                
                 <IonInput
                   label="Email"
                   labelPlacement="floating"
@@ -142,50 +120,65 @@ const Login: React.FC = () => {
                   value={email}
                   onIonChange={e => setEmail(e.detail.value!)}
                   style={{
-                    boxShadow: '0 0 8px rgba(43, 174, 226, 0.8)',
-                    border: '1px solid rgba(43, 174, 226, 0.8)',
-                    color: 'white',
-                    backdropFilter: 'blur(6px)',
+                    width: '100%',
+                    '--background': 'rgba(255, 255, 255, 0.1)',
+                    '--color': 'white',
+                    '--border-color': 'rgba(255, 255, 255, 0.3)',
                   }}
                 />
+                
                 <IonInput
+                  label="Password"
+                  labelPlacement="floating"
                   fill="outline"
                   type="password"
                   placeholder="Password"
                   value={password}
                   onIonChange={e => setPassword(e.detail.value!)}
                   style={{
-                    marginTop: '10px',
-                    boxShadow: '0 0 8px rgba(43, 174, 226, 0.8)',
-                    border: '1px solid rgba(43, 174, 226, 0.8)',
-                    color: 'white',
-                    backdropFilter: 'blur(3px)',
+                    width: '100%',
+                    '--background': 'rgba(255, 255, 255, 0.1)',
+                    '--color': 'white',
+                    '--border-color': 'rgba(255, 255, 255, 0.3)',
                   }}
                 >
-                  <IonInputPasswordToggle slot="end" color="secondary" />
+                  <IonInputPasswordToggle slot="end" color="light" />
                 </IonInput>
+
+                <IonButton 
+                  onClick={doLogin} 
+                  expand="block" 
+                  shape="round" 
+                  color="warning"
+                  style={{ marginTop: '1rem' }}
+                >
+                  Login
+                </IonButton>
+
+                <IonButton 
+                  routerLink="" 
+                  expand="block" 
+                  fill="clear" 
+                  shape="round" 
+                  color="light"
+                >
+                  Add A Taxmap Admin or User
+                </IonButton>
               </div>
-              <IonButton onClick={doLogin} expand="full" shape="round" color="secondary">
-                Login
-              </IonButton>
-
-              <IonButton routerLink="" expand="full" fill="clear" shape="round" color="secondary">
-                Don't have an account? Register here
-              </IonButton>
-
-              <AlertBox message={alertMessage} isOpen={showAlert} onClose={() => setShowAlert(false)} />
-
-              <IonToast
-                isOpen={showToast}
-                onDidDismiss={() => setShowToast(false)}
-                message="Login successful! Redirecting..."
-                duration={1500}
-                position="top"
-                color="primary"
-              />
             </IonCardContent>
           </IonCard>
         </div>
+
+        <AlertBox message={alertMessage} isOpen={showAlert} onClose={() => setShowAlert(false)} />
+
+        <IonToast
+          isOpen={showToast}
+          onDidDismiss={() => setShowToast(false)}
+          message="Login successful! Redirecting..."
+          duration={1500}
+          position="top"
+          color="primary"
+        />
       </IonContent>
     </IonPage>
   );
