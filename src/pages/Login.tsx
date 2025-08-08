@@ -18,6 +18,7 @@ import { useState } from 'react';
 import { supabase } from '../utils/supaBaseClient';
 import Logo from '../Images/Flag_of_Manolo_Fortich,_Bukidnon.png';
 import backgroundImg from '../Images/Background.jpg';
+import '../CSS/Login.css';
 
 const AlertBox: React.FC<{ message: string; isOpen: boolean; onClose: () => void }> = ({ message, isOpen, onClose }) => {
   return (
@@ -39,13 +40,6 @@ const Login: React.FC = () => {
   const [showAlert, setShowAlert] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
-  const h1Style = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: 'yellow',
-  };
-
   const doLogin = async () => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
@@ -57,59 +51,32 @@ const Login: React.FC = () => {
 
     setShowToast(true);
     setTimeout(() => {
-      navigation.push('/it35-lab/app', 'forward', 'replace');
+      navigation.push('', 'forward', 'replace');
     }, 300);
   };
 
   return (
     <IonPage>
+      <IonHeader>
+        <IonToolbar>
+          <IonTitle className="login-title">Login</IonTitle>
+        </IonToolbar>
+      </IonHeader>
       <IonContent className='ion-padding' fullscreen>
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          backgroundImage: `url(${backgroundImg})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          filter: 'blur(2px) brightness(0.7)',
-          zIndex: -1,
-        }} />
+        <div 
+          className="login-background"
+          style={{ backgroundImage: `url(${backgroundImg})` }}
+        />
         
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100%',
-          padding: '1rem',
-        }}>
-          <IonCard style={{
-            width: '100%',
-            maxWidth: '500px',
-            backdropFilter: 'blur(8px)',
-            background: 'rgba(255, 255, 255, 0.1)',
-            borderRadius: '10px',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
-          }}>
+        <div className="login-container">
+          <IonCard className="login-card">
             <IonCardContent>
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '1rem',
-                padding: '1rem',
-              }}>
-                <IonAvatar style={{
-                  width: '100px',
-                  height: '100px',
-                  marginBottom: '1rem',
-                  border: '2px solid rgba(255, 255, 255, 0.3)',
-                }}>
+              <div className="login-content">
+                <IonAvatar className="login-avatar">
                   <img src={Logo} alt="Logo" />
                 </IonAvatar>
 
-                <h1 style={h1Style}>TaxMap Admin</h1>
+                <h1 className="login-title">TaxMap Admin</h1>
                 
                 <IonInput
                   label="Email"
@@ -119,12 +86,7 @@ const Login: React.FC = () => {
                   placeholder="Enter Email"
                   value={email}
                   onIonChange={e => setEmail(e.detail.value!)}
-                  style={{
-                    width: '100%',
-                    '--background': 'rgba(255, 255, 255, 0.1)',
-                    '--color': 'white',
-                    '--border-color': 'rgba(255, 255, 255, 0.3)',
-                  }}
+                  className="login-input"
                 />
                 
                 <IonInput
@@ -135,12 +97,7 @@ const Login: React.FC = () => {
                   placeholder="Password"
                   value={password}
                   onIonChange={e => setPassword(e.detail.value!)}
-                  style={{
-                    width: '100%',
-                    '--background': 'rgba(255, 255, 255, 0.1)',
-                    '--color': 'white',
-                    '--border-color': 'rgba(255, 255, 255, 0.3)',
-                  }}
+                  className="login-input"
                 >
                   <IonInputPasswordToggle slot="end" color="light" />
                 </IonInput>
@@ -150,7 +107,7 @@ const Login: React.FC = () => {
                   expand="block" 
                   shape="round" 
                   color="warning"
-                  style={{ marginTop: '1rem' }}
+                  className="login-button"
                 >
                   Login
                 </IonButton>
@@ -161,6 +118,7 @@ const Login: React.FC = () => {
                   fill="clear" 
                   shape="round" 
                   color="light"
+                  className="login-secondary-button"
                 >
                   Add A Taxmap Admin or User
                 </IonButton>
