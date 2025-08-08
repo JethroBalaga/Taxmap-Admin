@@ -16,6 +16,7 @@ import {
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supaBaseClient';
 import Logo from '../Images/Flag_of_Manolo_Fortich,_Bukidnon.png'
+import backgroundImg from '../Images/Background.jpg'
 
 const AlertBox: React.FC<{ message: string; isOpen: boolean; onClose: () => void }> = ({ message, isOpen, onClose }) => {
   return (
@@ -41,36 +42,8 @@ const Login: React.FC = () => {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: 'skyblue',
+    color: 'yellow',
   };
-
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.innerHTML = `
-      @keyframes borderBlink {
-        0%, 100% {
-          border-color: #2B99E2;
-          box-shadow: 0 0 15px #2B99E2, 0 0 15px #2BAEE2, 0 0 15px#2B99E2;
-        }
-        50% {
-          border-color: #2B99E2;
-          box-shadow: 0 0 5px #2B99E2, 0 0 5px #2B99E2, 0 0 5px #2B99E2;
-        }
-      }
-
-      @keyframes fadeIn {
-      0% {
-        opacity: 0; /* Start with the card being invisible */
-      }
-      100% {
-          opacity: 1; /* Fade in to fully visible */
-       }
-      }
-    `;
-    document.head.appendChild(style);
-  }, []);
-
-
 
   const doLogin = async () => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
