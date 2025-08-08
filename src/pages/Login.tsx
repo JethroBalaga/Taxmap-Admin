@@ -13,7 +13,7 @@ import {
   IonCard,
   IonCardContent,
 } from '@ionic/react';
-import { useState, useEffect } from 'react';
+import { useState} from 'react';
 import { supabase } from '../utils/supaBaseClient';
 import Logo from '../Images/Flag_of_Manolo_Fortich,_Bukidnon.png'
 import backgroundImg from '../Images/Background.jpg'
@@ -169,7 +169,7 @@ const Login: React.FC = () => {
                 Login
               </IonButton>
 
-              <IonButton routerLink="/it35-lab/Registration" expand="full" fill="clear" shape="round" color="secondary">
+              <IonButton routerLink="" expand="full" fill="clear" shape="round" color="secondary">
                 Don't have an account? Register here
               </IonButton>
 
