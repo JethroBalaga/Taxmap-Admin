@@ -63,11 +63,11 @@ const Login: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent className='ion-padding' fullscreen>
-        <div 
+        <div
           className="login-background"
           style={{ backgroundImage: `url(${backgroundImg})` }}
         />
-        
+
         <div className="login-container">
           <IonCard className="login-card">
             <IonCardContent>
@@ -77,7 +77,7 @@ const Login: React.FC = () => {
                 </IonAvatar>
 
                 <h1 className="login-title">TaxMap Admin</h1>
-                
+
                 <IonInput
                   label="Email or Username"
                   labelPlacement="floating"
@@ -88,7 +88,7 @@ const Login: React.FC = () => {
                   onIonChange={e => setEmail(e.detail.value!)}
                   className="login-input"
                 />
-                
+
                 <IonInput
                   label="Password"
                   labelPlacement="floating"
@@ -99,25 +99,29 @@ const Login: React.FC = () => {
                   onIonChange={e => setPassword(e.detail.value!)}
                   className="login-input"
                 >
-                  <IonInputPasswordToggle slot="end" color="light" />
+                  <IonInputPasswordToggle slot="end" color="dark" />
                 </IonInput>
 
-                <IonButton 
-                  onClick={doLogin} 
-                  expand="block" 
-                  shape="round" 
+                <IonButton
+                  onClick={doLogin}
+                  expand="block"
+                  shape="round"
                   color="warning"
                   className="login-button"
                 >
                   Login
                 </IonButton>
 
-                <IonButton 
-                  routerLink="/Registration" 
-                  expand="block" 
-                  fill="clear" 
-                  shape="round" 
-                  color="light"
+                <IonButton
+                  routerLink="/Registration"
+                  expand="block"
+                  fill="clear"
+                  shape="round"
+                  style={{
+                    '--color': 'white',
+                    '--background': 'transparent',
+                    '--border-color': 'transparent'
+                  }}
                   className="login-secondary-button"
                 >
                   Add A Taxmap Admin or User

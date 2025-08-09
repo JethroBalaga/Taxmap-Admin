@@ -119,115 +119,115 @@ const Register: React.FC = () => {
     }
   };
 
-return (
-  <IonPage>
-    <IonContent className="registration-container">
-      <div className="registration-background"></div>
-      
-      <div className="registration-card-container">
-        <IonCard className="registration-card">
-          <IonCardContent className="registration-content">
-            <h1 className="registration-title">Create your account</h1>
+  return (
+    <IonPage>
+      <IonContent className="registration-container">
+        <div className="registration-background"></div>
+        
+        <div className="registration-center-wrapper">
+          <IonCard className="registration-card">
+            <IonCardContent className="registration-content">
+              <h1 className="registration-title">Create account</h1>
 
-            <RegisterInput
-              label="Username"
-              type="text"
-              placeholder="Enter a unique username"
-              value={formData.username}
-              onChange={(value) => handleInputChange('username', value)}
-              className="registration-input"
-            />
+              <RegisterInput
+                label="Username"
+                type="text"
+                placeholder="Enter a unique username"
+                value={formData.username}
+                onChange={(value) => handleInputChange('username', value)}
+                className="registration-input"
+              />
 
-            <RegisterInput
-              label="First Name"
-              type="text"
-              placeholder="Enter your first name"
-              value={formData.firstName}
-              onChange={(value) => handleInputChange('firstName', value)}
-              className="registration-input"
-            />
+              <RegisterInput
+                label="First Name"
+                type="text"
+                placeholder="Enter first name"
+                value={formData.firstName}
+                onChange={(value) => handleInputChange('firstName', value)}
+                className="registration-input"
+              />
 
-            <RegisterInput
-              label="Last Name"
-              type="text"
-              placeholder="Enter your last name"
-              value={formData.lastName}
-              onChange={(value) => handleInputChange('lastName', value)}
-              className="registration-input"
-            />
+              <RegisterInput
+                label="Last Name"
+                type="text"
+                placeholder="Enter last name"
+                value={formData.lastName}
+                onChange={(value) => handleInputChange('lastName', value)}
+                className="registration-input"
+              />
 
-            <RegisterInput
-              label="Email"
-              type="email"
-              placeholder="youremail@nbsc.edu.ph"
-              value={formData.email}
-              onChange={(value) => handleInputChange('email', value)}
-              className="registration-input"
-            />
+              <RegisterInput
+                label="Email"
+                type="email"
+                placeholder="youremail@gmail.com"
+                value={formData.email}
+                onChange={(value) => handleInputChange('email', value)}
+                className="registration-input"
+              />
 
-            <RegisterInput
-              label="Password"
-              type="password"
-              placeholder="Enter password"
-              value={formData.password}
-              onChange={(value) => handleInputChange('password', value)}
-              className="registration-input"
-              showToggle={true}
-            />
+              <RegisterInput
+                label="Password"
+                type="password"
+                placeholder="Enter password"
+                value={formData.password}
+                onChange={(value) => handleInputChange('password', value)}
+                className="registration-input"
+                showToggle={true}
+              />
 
-            <StrengthMeter 
-              password={formData.password} 
-              strength={passwordStrength} 
-            />
+              <StrengthMeter
+                password={formData.password} 
+                strength={passwordStrength} 
+              />
 
-            <RegisterInput
-              label="Confirm Password"
-              type="password"
-              placeholder="Confirm password"
-              value={formData.confirmPassword}
-              onChange={(value) => handleInputChange('confirmPassword', value)}
-              className="registration-input"
-              showToggle={true}
-            />
+              <RegisterInput
+                label="Confirm Password"
+                type="password"
+                placeholder="Confirm password"
+                value={formData.confirmPassword}
+                onChange={(value) => handleInputChange('confirmPassword', value)}
+                className="registration-input"
+                showToggle={true}
+              />
 
-            <RegisterButton
-              onClick={handleOpenVerificationModal}
-              className="registration-button"
-            >
-              Register
-            </RegisterButton>
+              <RegisterButton
+                onClick={handleOpenVerificationModal}
+                className="registration-button"
+              >
+                Register
+              </RegisterButton>
 
-            <RegisterButton
-              routerLink="/"
-              className="registration-secondary-button"
-              fill="clear"
-            >
-              Already have an account? Sign in
-            </RegisterButton>
+              <RegisterButton
+                routerLink="/"
+                className="registration-secondary-button"
+                fill="clear"
+              >
+                Already have an account? Sign in
+              </RegisterButton>
 
-            <VerificationModal
-              isOpen={showVerificationModal}
-              onClose={() => setShowVerificationModal(false)}
-              onConfirm={doRegister}
-              formData={formData}
-            />
+              <VerificationModal
+                isOpen={showVerificationModal}
+                onClose={() => setShowVerificationModal(false)}
+                onConfirm={doRegister}
+                formData={formData}
+              />
 
-            <SuccessModal
-              isOpen={showSuccessModal}
-              onClose={() => setShowSuccessModal(false)}
-            />
+              <SuccessModal
+                isOpen={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+              />
 
-            <AlertBox 
-              message={alertMessage} 
-              isOpen={showAlert} 
-              onClose={() => setShowAlert(false)} 
-            />
-          </IonCardContent>
-        </IonCard>
-      </div>
-    </IonContent>
-  </IonPage>
-);
+              <AlertBox
+                message={alertMessage} 
+                isOpen={showAlert} 
+                onClose={() => setShowAlert(false)} 
+              />
+            </IonCardContent>
+          </IonCard>
+        </div>
+      </IonContent>
+    </IonPage>
+  );
 };
 
 export default Register;

@@ -21,6 +21,7 @@ const RegisterInput: React.FC<RegisterInputProps> = ({
   className = ''
 }) => {
   return (
+    // In RegisterInput.tsx
     <IonInput
       className={className}
       label={label}
@@ -30,8 +31,9 @@ const RegisterInput: React.FC<RegisterInputProps> = ({
       placeholder={placeholder}
       value={value}
       onIonChange={(e) => onChange(e.detail.value!)}
+      style={showToggle ? { '--ionicon-stroke-width': '16px', '--color': 'white' } : {}}
     >
-      {showToggle && <IonInputPasswordToggle slot="end" />}
+      {showToggle && <IonInputPasswordToggle slot="end" color="dark" />}
     </IonInput>
   );
 };
