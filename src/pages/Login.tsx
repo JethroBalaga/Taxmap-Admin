@@ -75,7 +75,7 @@ const Login: React.FC = () => {
     // 3. Login successful
     setShowToast(true);
     setTimeout(() => {
-      navigation.push('', 'forward', 'replace');
+      navigation.push('/menu', 'forward', 'replace');
     }, 300);
 
   } catch (error) {
@@ -143,7 +143,7 @@ const Login: React.FC = () => {
                 </IonButton>
 
                 <IonButton
-                  routerLink="/Registration"
+                  routerLink="/registration"
                   expand="block"
                   fill="clear"
                   shape="round"
