@@ -8,6 +8,7 @@ interface RegisterInputProps {
   value: string;
   onChange: (value: string) => void;
   showToggle?: boolean;
+  className?: string;
 }
 
 const RegisterInput: React.FC<RegisterInputProps> = ({
@@ -17,6 +18,7 @@ const RegisterInput: React.FC<RegisterInputProps> = ({
   value,
   onChange,
   showToggle = false
+  
 }) => {
   const inputStyle = {
     marginTop: '15px',

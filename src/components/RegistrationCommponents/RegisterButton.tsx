@@ -7,7 +7,8 @@ interface RegisterButtonProps {
   expand?: 'full' | 'block';
   fill?: 'clear' | 'outline' | 'solid';
   shape?: 'round';
-  color?: 'primary' | 'secondary' | 'danger' | 'warning' | 'success';
+  color?: string;
+  className?: string;
   style?: React.CSSProperties;
   children: React.ReactNode;
 }
@@ -18,12 +19,14 @@ const RegisterButton: React.FC<RegisterButtonProps> = ({
   expand = 'block',
   fill,
   shape,
-  color = 'primary',
+  color,
+  className = '',
   style,
   children
 }) => {
   return (
     <IonButton
+      className={className}
       onClick={onClick}
       routerLink={routerLink}
       expand={expand}
