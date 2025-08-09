@@ -10,12 +10,13 @@ import { IonReactRouter } from '@ionic/react-router';
 import { albumsOutline, bookOutline,trailSignOutline} from 'ionicons/icons';
 import { Route, Redirect } from 'react-router';
 import Classification from './Home.tabs/Classification';
+import District from './Home.tabs/District';
   
   const Home: React.FC = () => {
 
     const tabs = [
       {name:'Classification', tab:'classification',url: '/menu/home/classification', icon: bookOutline},
-      {name:'District', tab:'district', url: '/district/home/district', icon: trailSignOutline},
+      {name:'District', tab:'district', url: '/menu/home/district', icon: trailSignOutline},
       {name:'Kind',tab:'kind', url: '/menu/home/kind', icon: albumsOutline},
     ]
     
@@ -34,6 +35,7 @@ import Classification from './Home.tabs/Classification';
           </IonTabBar>
         <IonRouterOutlet>
            <Route exact path="/menu/home/classification" component={Classification} />
+            <Route exact path="/menu/home/district" component={District} />
 
           <Route exact path="/menu/home">
            <Redirect to="/menu/home/classification" />

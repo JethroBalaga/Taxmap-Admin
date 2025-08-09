@@ -1,17 +1,19 @@
 import { 
+    IonButtons,
       IonContent, 
       IonHeader, 
+      IonMenuButton, 
       IonPage, 
       IonTitle, 
       IonToolbar 
   } from '@ionic/react';
   
-  const Classification: React.FC = () => {
+  const District: React.FC = () => {
     return (
       <IonPage>
         <IonHeader>
           <IonToolbar>
-            <IonTitle>Classification Setup</IonTitle>
+            <IonTitle>District Setup</IonTitle>
           </IonToolbar>
         </IonHeader>
         <IonContent fullscreen>
@@ -20,4 +22,4 @@ import {
     );
   };
   
-  export default Classification;
+  export default District;
