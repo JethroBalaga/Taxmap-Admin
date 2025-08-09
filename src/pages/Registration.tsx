@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { IonContent, IonPage } from '@ionic/react';
+import { IonContent, IonPage, IonCard, IonCardContent } from '@ionic/react';
 import { supabase } from '../utils/supaBaseClient';
 import bcrypt from 'bcryptjs';
-import './Registration.css';
+import '../CSS/Registration.css';
+import RegisterInput from '../components/RegistrationCommponents/RegisterInput';
+import StrengthMeter from '../components/RegistrationCommponents/StrengthMeter';
+import RegisterButton from '../components/RegistrationCommponents/RegisterButton';
+import VerificationModal from '../components/RegistrationCommponents/VerificationModal';
+import SuccessModal from '../components/RegistrationCommponents/SuccessModal';
+import AlertBox from '../components/AlertBox';
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -20,7 +26,7 @@ const Register: React.FC = () => {
   const [passwordStrength, setPasswordStrength] = useState({
     value: 0,
     label: '',
-    color: 'yellow'
+    color: 'primary'
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -35,7 +41,7 @@ const Register: React.FC = () => {
       setPasswordStrength({
         value: 0,
         label: '',
-        color: 'yellow'
+        color: 'primary'
       });
     }
   }, [formData.password]);
@@ -113,13 +119,14 @@ const Register: React.FC = () => {
     }
   };
 
-  return (
-    <IonPage>
-      <IonContent className="registration-container">
-        <div className="registration-background"></div>
-        
-        <div className="registration-card">
-          <div className="registration-content">
+return (
+  <IonPage>
+    <IonContent className="registration-container">
+      <div className="registration-background"></div>
+      
+      <div className="registration-card-container">
+        <IonCard className="registration-card">
+          <IonCardContent className="registration-content">
             <h1 className="registration-title">Create your account</h1>
 
             <RegisterInput
@@ -168,7 +175,7 @@ const Register: React.FC = () => {
               showToggle={true}
             />
 
-            <PasswordStrengthMeter 
+            <StrengthMeter 
               password={formData.password} 
               strength={passwordStrength} 
             />
@@ -215,11 +222,12 @@ const Register: React.FC = () => {
               isOpen={showAlert} 
               onClose={() => setShowAlert(false)} 
             />
-          </div>
-        </div>
-      </IonContent>
-    </IonPage>
-  );
+          </IonCardContent>
+        </IonCard>
+      </div>
+    </IonContent>
+  </IonPage>
+);
 };
 
 export default Register;

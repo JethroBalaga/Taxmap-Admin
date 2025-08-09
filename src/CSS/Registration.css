@@ -1,0 +1,104 @@
+/* Registration.css */
+.registration-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  padding: 1rem;
+  position: relative;
+}
+
+.registration-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  filter: blur(2px) brightness(0.7);
+  z-index: -1;
+}
+
+.registration-card-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.registration-card {
+  width: 100%;
+  max-width: 500px;
+  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  margin: 0 auto;
+}
+
+.registration-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.registration-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: yellow;
+  margin-bottom: 1rem;
+}
+
+.registration-input {
+  width: 100%;
+  --background: rgba(255, 255, 255, 0.1);
+  --color: white;
+  --border-color: rgba(255, 255, 255, 0.3);
+  --placeholder-color: rgba(255, 255, 255, 0.5);
+  --highlight-color-focused: yellow;
+}
+
+.registration-button {
+  margin-top: 1rem;
+  --background: yellow;
+  --color: black;
+  --border-radius: 8px;
+}
+
+.registration-secondary-button {
+  --background: transparent;
+  --color: white;
+}
+
+.password-strength-container {
+  width: 100%;
+  margin: 0.5rem 0;
+}
+
+.password-strength-bar {
+  height: 4px;
+}
+
+.password-strength-label {
+  font-size: 0.75rem;
+  color: yellow;
+}
+
+.password-requirements {
+  width: 100%;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.75rem;
+  margin: 0.5rem 0;
+}
+
+.password-requirements ul {
+  padding-left: 1.25rem;
+  margin: 0.5rem 0 0 0;
+}
+
+.password-requirement-valid {
+  color: yellow;
+}

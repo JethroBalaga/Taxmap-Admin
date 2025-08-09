@@ -1,23 +1,9 @@
 import React from 'react';
 import { IonInput, IonInputPasswordToggle } from '@ionic/react';
 
-type InputType = 
-  | 'text'
-  | 'password'
-  | 'email'
-  | 'number'
-  | 'search'
-  | 'tel'
-  | 'url'
-  | 'date'
-  | 'datetime-local'
-  | 'month'
-  | 'time'
-  | 'week';
-
 interface RegisterInputProps {
   label: string;
-  type: InputType;
+  type: 'text' | 'password' | 'email' | 'number' | 'search' | 'tel' | 'url';
   placeholder: string;
   value: string;
   onChange: (value: string) => void;
