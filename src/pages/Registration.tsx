@@ -1,13 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { IonContent, IonPage, IonCard, IonCardContent } from '@ionic/react';
+import { IonContent, IonPage } from '@ionic/react';
 import { supabase } from '../utils/supaBaseClient';
 import bcrypt from 'bcryptjs';
-import RegisterInput from '../components/RegistrationCommponents/RegisterInput';
-import StrengthMeter from '../components/RegistrationCommponents/StrengthMeter';
-import RegisterButton from '../components/RegistrationCommponents/RegisterButton';
-import VerificationModal from '../components/RegistrationCommponents/VerificationModal';
-import SuccessModal from '../components/RegistrationCommponents/SuccessModal';
-import AlertBox from '../components/AlertBox';
+import './Registration.css';
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -25,7 +20,7 @@ const Register: React.FC = () => {
   const [passwordStrength, setPasswordStrength] = useState({
     value: 0,
     label: '',
-    color: ''
+    color: 'yellow'
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -40,7 +35,7 @@ const Register: React.FC = () => {
       setPasswordStrength({
         value: 0,
         label: '',
-        color: ''
+        color: 'yellow'
       });
     }
   }, [formData.password]);
@@ -120,30 +115,12 @@ const Register: React.FC = () => {
 
   return (
     <IonPage>
-      <IonContent
-        fullscreen
-        className="ion-padding"
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: '#121212',
-          height: '100vh',
-        }}
-      >
-        <IonCard
-          style={{
-            background: '#1e1e1e',
-            width: '100%',
-            maxWidth: '500px',
-            padding: '20px',
-            borderRadius: '12px',
-            boxShadow: '0 4px 10px rgba(0,0,0,0.6)',
-            margin: 'auto',
-          }}
-        >
-          <IonCardContent>
-            <h1 style={{ color: 'white', marginBottom: '20px', textAlign: 'center' }}>Register Employee</h1>
+      <IonContent className="registration-container">
+        <div className="registration-background"></div>
+        
+        <div className="registration-card">
+          <div className="registration-content">
+            <h1 className="registration-title">Create your account</h1>
 
             <RegisterInput
               label="Username"
@@ -151,6 +128,7 @@ const Register: React.FC = () => {
               placeholder="Enter a unique username"
               value={formData.username}
               onChange={(value) => handleInputChange('username', value)}
+              className="registration-input"
             />
 
             <RegisterInput
@@ -159,6 +137,7 @@ const Register: React.FC = () => {
               placeholder="Enter your first name"
               value={formData.firstName}
               onChange={(value) => handleInputChange('firstName', value)}
+              className="registration-input"
             />
 
             <RegisterInput
@@ -167,14 +146,16 @@ const Register: React.FC = () => {
               placeholder="Enter your last name"
               value={formData.lastName}
               onChange={(value) => handleInputChange('lastName', value)}
+              className="registration-input"
             />
 
             <RegisterInput
               label="Email"
               type="email"
-              placeholder="youremail@gmail.com"
+              placeholder="youremail@nbsc.edu.ph"
               value={formData.email}
               onChange={(value) => handleInputChange('email', value)}
+              className="registration-input"
             />
 
             <RegisterInput
@@ -183,10 +164,11 @@ const Register: React.FC = () => {
               placeholder="Enter password"
               value={formData.password}
               onChange={(value) => handleInputChange('password', value)}
+              className="registration-input"
               showToggle={true}
             />
 
-            <StrengthMeter
+            <PasswordStrengthMeter 
               password={formData.password} 
               strength={passwordStrength} 
             />
@@ -197,25 +179,21 @@ const Register: React.FC = () => {
               placeholder="Confirm password"
               value={formData.confirmPassword}
               onChange={(value) => handleInputChange('confirmPassword', value)}
+              className="registration-input"
               showToggle={true}
             />
 
             <RegisterButton
               onClick={handleOpenVerificationModal}
-              expand="block"
-              shape="round"
-              color="primary"
-              style={{ marginTop: '20px' }}
+              className="registration-button"
             >
               Register
             </RegisterButton>
 
             <RegisterButton
               routerLink="/"
-              expand="block"
+              className="registration-secondary-button"
               fill="clear"
-              shape="round"
-              color="primary"
             >
               Already have an account? Sign in
             </RegisterButton>
@@ -232,13 +210,13 @@ const Register: React.FC = () => {
               onClose={() => setShowSuccessModal(false)}
             />
 
-            <AlertBox
+            <AlertBox 
               message={alertMessage} 
               isOpen={showAlert} 
               onClose={() => setShowAlert(false)} 
             />
-          </IonCardContent>
-        </IonCard>
+          </div>
+        </div>
       </IonContent>
     </IonPage>
   );
