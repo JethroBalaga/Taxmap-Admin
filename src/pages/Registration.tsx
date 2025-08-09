@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { IonContent, IonPage, IonCard, IonCardContent } from '@ionic/react';
+import { 
+  IonContent, 
+  IonPage, 
+  IonCard, 
+  IonCardContent,
+  IonSelect,
+  IonSelectOption,
+  IonLabel
+} from '@ionic/react';
 import { supabase } from '../utils/supaBaseClient';
 import bcrypt from 'bcryptjs';
 import '../CSS/Registration.css';
@@ -18,8 +26,10 @@ const Register: React.FC = () => {
     lastName: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    role: 'user' // Default to user
   });
+
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
@@ -49,14 +59,14 @@ const Register: React.FC = () => {
 
   const calculatePasswordStrength = (password: string) => {
     let strength = 0;
-
+    
     if (password.length >= 8) strength += 1;
     if (password.length >= 12) strength += 1;
     if (/[A-Z]/.test(password)) strength += 1;
     if (/[a-z]/.test(password)) strength += 1;
     if (/[0-9]/.test(password)) strength += 1;
     if (/[^A-Za-z0-9]/.test(password)) strength += 1;
-
+    
     if (strength <= 2) return { value: 0.25, label: 'Very Weak', color: 'danger' };
     if (strength <= 4) return { value: 0.5, label: 'Weak', color: 'warning' };
     if (strength <= 6) return { value: 0.75, label: 'Strong', color: 'success' };
@@ -83,30 +93,36 @@ const Register: React.FC = () => {
     setShowVerificationModal(false);
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password
+      // 1. Create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({ 
+        email: formData.email, 
+        password: formData.password 
       });
 
-      if (error) {
-        throw new Error('Account creation failed: ' + error.message);
-      }
+      if (authError) throw new Error('Account creation failed: ' + authError.message);
 
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(formData.password, salt);
-
-      const { error: insertError } = await supabase.from('users').insert([
-        {
+      // 2. Add to users table (your structure)
+      const { error: userError } = await supabase
+        .from('users')
+        .insert({
           username: formData.username,
           user_email: formData.email,
           user_firstname: formData.firstName,
           user_lastname: formData.lastName,
-          user_password: hashedPassword,
-        },
-      ]);
+          user_password: await bcrypt.hash(formData.password, 10)
+        });
 
-      if (insertError) {
-        throw new Error('Failed to save user data: ' + insertError.message);
+      if (userError) throw new Error('Failed to save user data: ' + userError.message);
+
+      // 3. If admin, add to admins table
+      if (formData.role === 'admin') {
+        const { error: adminError } = await supabase
+          .from('admins')
+          .insert({
+            user_email: formData.email
+          });
+
+        if (adminError) console.error('Admin creation failed:', adminError);
       }
 
       setShowSuccessModal(true);
@@ -125,9 +141,9 @@ const Register: React.FC = () => {
       <IonContent className="registration-container">
         <div
           className="registration-background"
-           style={{ backgroundImage: `url(${backgroundImg})` }}
+          style={{ backgroundImage: `url(${backgroundImg})` }}
         />
-
+        
         <div className="registration-center-wrapper">
           <IonCard className="registration-card">
             <IonCardContent className="registration-content">
@@ -180,8 +196,8 @@ const Register: React.FC = () => {
               />
 
               <StrengthMeter
-                password={formData.password}
-                strength={passwordStrength}
+                password={formData.password} 
+                strength={passwordStrength} 
               />
 
               <RegisterInput
@@ -193,6 +209,18 @@ const Register: React.FC = () => {
                 className="registration-input"
                 showToggle={true}
               />
+
+              <div className="registration-input">
+                <IonLabel>Account Type</IonLabel>
+                <IonSelect 
+                  value={formData.role}
+                  onIonChange={e => handleInputChange('role', e.detail.value)}
+                  interface="popover"
+                >
+                  <IonSelectOption value="user">User</IonSelectOption>
+                  <IonSelectOption value="admin">Admin</IonSelectOption>
+                </IonSelect>
+              </div>
 
               <RegisterButton
                 onClick={handleOpenVerificationModal}
@@ -222,9 +250,9 @@ const Register: React.FC = () => {
               />
 
               <AlertBox
-                message={alertMessage}
-                isOpen={showAlert}
-                onClose={() => setShowAlert(false)}
+                message={alertMessage} 
+                isOpen={showAlert} 
+                onClose={() => setShowAlert(false)} 
               />
             </IonCardContent>
           </IonCard>
