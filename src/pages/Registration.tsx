@@ -172,7 +172,7 @@ const Register: React.FC = () => {
             <RegisterInput
               label="Email"
               type="email"
-              placeholder="youremail@nbsc.edu.ph"
+              placeholder="youremail@gmail.com"
               value={formData.email}
               onChange={(value) => handleInputChange('email', value)}
             />
