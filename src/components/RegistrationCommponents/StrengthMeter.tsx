@@ -13,35 +13,34 @@ interface PasswordStrengthMeterProps {
 const StrengthMeter: React.FC<PasswordStrengthMeterProps> = ({ password, strength }) => {
   if (!password) return null;
 
+  const getRequirementColor = (condition: boolean) => {
+    return condition ? 'password-requirement-valid' : '';
+  };
+
   return (
-    <div style={{ width: '100%', marginTop: '8px' }}>
+    <div className="password-strength-container">
       <IonProgressBar 
         value={strength.value} 
         color={strength.color}
-        style={{ height: '4px' }}
+        className="password-strength-bar"
       />
-      <IonText color={strength.color} style={{ fontSize: '12px' }}>
+      <IonText color={strength.color} className="password-strength-label">
         {strength.label}
       </IonText>
       
-      <div style={{ 
-        width: '100%', 
-        color: '#a1a1aa',
-        fontSize: '12px',
-        margin: '8px 0'
-      }}>
+      <div className="password-requirements">
         <p>Password should contain:</p>
-        <ul style={{ paddingLeft: '20px', margin: '8px 0 0 0' }}>
-          <li style={{ color: password.length >= 8 ? '#3880ff' : '#a1a1aa' }}>
+        <ul>
+          <li className={getRequirementColor(password.length >= 8)}>
             At least 8 characters
           </li>
-          <li style={{ color: /[A-Z]/.test(password) ? '#3880ff' : '#a1a1aa' }}>
+          <li className={getRequirementColor(/[A-Z]/.test(password))}>
             One uppercase letter
           </li>
-          <li style={{ color: /[0-9]/.test(password) ? '#3880ff' : '#a1a1aa' }}>
+          <li className={getRequirementColor(/[0-9]/.test(password))}>
             One number
           </li>
-          <li style={{ color: /[^A-Za-z0-9]/.test(password) ? '#3880ff' : '#a1a1aa' }}>
+          <li className={getRequirementColor(/[^A-Za-z0-9]/.test(password))}>
             One special character
           </li>
         </ul>
