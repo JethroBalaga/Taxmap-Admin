@@ -9,6 +9,7 @@ import RegisterButton from '../components/RegistrationCommponents/RegisterButton
 import VerificationModal from '../components/RegistrationCommponents/VerificationModal';
 import SuccessModal from '../components/RegistrationCommponents/SuccessModal';
 import AlertBox from '../components/AlertBox';
+import backgroundImg from '../Images/Manolo 2.jpg';
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -48,14 +49,14 @@ const Register: React.FC = () => {
 
   const calculatePasswordStrength = (password: string) => {
     let strength = 0;
-    
+
     if (password.length >= 8) strength += 1;
     if (password.length >= 12) strength += 1;
     if (/[A-Z]/.test(password)) strength += 1;
     if (/[a-z]/.test(password)) strength += 1;
     if (/[0-9]/.test(password)) strength += 1;
     if (/[^A-Za-z0-9]/.test(password)) strength += 1;
-    
+
     if (strength <= 2) return { value: 0.25, label: 'Very Weak', color: 'danger' };
     if (strength <= 4) return { value: 0.5, label: 'Weak', color: 'warning' };
     if (strength <= 6) return { value: 0.75, label: 'Strong', color: 'success' };
@@ -82,9 +83,9 @@ const Register: React.FC = () => {
     setShowVerificationModal(false);
 
     try {
-      const { data, error } = await supabase.auth.signUp({ 
-        email: formData.email, 
-        password: formData.password 
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password
       });
 
       if (error) {
@@ -122,8 +123,11 @@ const Register: React.FC = () => {
   return (
     <IonPage>
       <IonContent className="registration-container">
-        <div className="registration-background"></div>
-        
+        <div
+          className="registration-background"
+           style={{ backgroundImage: `url(${backgroundImg})` }}
+        />
+
         <div className="registration-center-wrapper">
           <IonCard className="registration-card">
             <IonCardContent className="registration-content">
@@ -176,8 +180,8 @@ const Register: React.FC = () => {
               />
 
               <StrengthMeter
-                password={formData.password} 
-                strength={passwordStrength} 
+                password={formData.password}
+                strength={passwordStrength}
               />
 
               <RegisterInput
@@ -218,9 +222,9 @@ const Register: React.FC = () => {
               />
 
               <AlertBox
-                message={alertMessage} 
-                isOpen={showAlert} 
-                onClose={() => setShowAlert(false)} 
+                message={alertMessage}
+                isOpen={showAlert}
+                onClose={() => setShowAlert(false)}
               />
             </IonCardContent>
           </IonCard>

@@ -7,15 +7,17 @@
 }
 
 .registration-background {
-  position: fixed;
+  position: fixed; /* Changed from absolute to fixed */
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   background-size: cover;
   background-position: center;
-  filter: blur(2px) brightness(0.7);
+  background-repeat: no-repeat;
+  filter: blur(4px) brightness(0.7);
   z-index: -1;
+  transform: scale(1.02); /* Prevents blurred edges */
 }
 
 .registration-center-wrapper {
@@ -82,7 +84,7 @@
 
 .registration-button {
   margin-top: 1rem;
-  --background: yellow;
+  --background: rgb(243, 194, 58);
   --color: black;
   --border-radius: 8px;
   font-weight: bold;
