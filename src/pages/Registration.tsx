@@ -143,7 +143,7 @@ const Register: React.FC = () => {
           }}
         >
           <IonCardContent>
-            <h1 style={{ color: 'white', marginBottom: '20px', textAlign: 'center' }}>Create your account</h1>
+            <h1 style={{ color: 'white', marginBottom: '20px', textAlign: 'center' }}>Register Employee</h1>
 
             <RegisterInput
               label="Username"

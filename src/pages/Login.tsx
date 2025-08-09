@@ -79,11 +79,11 @@ const Login: React.FC = () => {
                 <h1 className="login-title">TaxMap Admin</h1>
                 
                 <IonInput
-                  label="Email"
+                  label="Email or Username"
                   labelPlacement="floating"
                   fill="outline"
                   type="email"
-                  placeholder="Enter Email"
+                  placeholder="Enter Email or Username"
                   value={email}
                   onIonChange={e => setEmail(e.detail.value!)}
                   className="login-input"
@@ -113,7 +113,7 @@ const Login: React.FC = () => {
                 </IonButton>
 
                 <IonButton 
-                  routerLink="" 
+                  routerLink="/Registration" 
                   expand="block" 
                   fill="clear" 
                   shape="round" 
