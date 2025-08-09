@@ -1,6 +1,6 @@
 import { supabase } from './supaBaseClient';
 
-export const isAdmin = async (userEmail: string) => {
+export const isAdmin = async (userEmail: string): Promise<boolean> => {
   const { data, error } = await supabase
     .from('admins')
     .select('admin_id')
