@@ -41,19 +41,49 @@ const Login: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
 
   const doLogin = async () => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+  try {
+    // 1. First check if email exists in admin table
+    const { data: adminData, error: adminError } = await supabase
+      .from('admins')
+      .select('user_email')
+      .eq('user_email', email)
+      .single();
 
-    if (error) {
-      setAlertMessage(error.message);
+    if (adminError || !adminData) {
+      setAlertMessage('Access restricted to admin users only.');
       setShowAlert(true);
       return;
     }
 
+    // 2. Verify credentials through Supabase Auth
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (authError) {
+      // Handle specific password errors
+      if (authError.message.includes('Invalid login credentials')) {
+        setAlertMessage('Incorrect password. Please try again.');
+      } else {
+        setAlertMessage(authError.message);
+      }
+      setShowAlert(true);
+      return;
+    }
+
+    // 3. Login successful
     setShowToast(true);
     setTimeout(() => {
       navigation.push('', 'forward', 'replace');
     }, 300);
-  };
+
+  } catch (error) {
+    setAlertMessage('An unexpected error occurred. Please try again.');
+    setShowAlert(true);
+    console.error('Login error:', error);
+  }
+};
 
   return (
     <IonPage>
