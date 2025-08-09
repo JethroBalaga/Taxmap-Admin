@@ -1,22 +1,15 @@
 import { 
-  IonButton,
-    IonButtons,
-      IonContent, 
-      IonHeader, 
       IonIcon, 
       IonLabel, 
-      IonMenuButton, 
-      IonPage, 
       IonRouterOutlet, 
       IonTabBar, 
       IonTabButton, 
       IonTabs, 
-      IonTitle, 
-      IonToolbar 
   } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import { albumsOutline, bookOutline,trailSignOutline} from 'ionicons/icons';
 import { Route, Redirect } from 'react-router';
+import Classification from './Home.tabs/Classification';
   
   const Home: React.FC = () => {
 
@@ -40,8 +33,10 @@ import { Route, Redirect } from 'react-router';
             
           </IonTabBar>
         <IonRouterOutlet>
+           <Route exact path="/menu/home/classification" component={Classification} />
 
           <Route exact path="/menu/home">
+           <Redirect to="/menu/home/classification" />
           </Route>
 
         </IonRouterOutlet>
