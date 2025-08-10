@@ -6,9 +6,12 @@ import {
   IonToolbar,
   IonGrid,
   IonRow,
-  IonCol
+  IonCol,
+  IonIcon
 } from '@ionic/react';
+import { add } from 'ionicons/icons';
 import Search from '../../components/Globalcomponents/Search';
+import './../../CSS/Classification.css';
 
 interface ClassificationItem {
   id: string;
@@ -17,14 +20,6 @@ interface ClassificationItem {
 }
 
 const Classification: React.FC = () => {
-  const handleSearch = (filtered: ClassificationItem[]) => {
-    console.log('Filtered results:', filtered);
-  };
-
-  const handleItemClick = (item: ClassificationItem) => {
-    console.log('Selected classification:', item);
-  };
-
   return (
     <IonPage>
       <IonHeader>
@@ -35,14 +30,18 @@ const Classification: React.FC = () => {
       <IonContent fullscreen>
         <IonGrid>
           <IonRow>
-            {/* Just moved the column to the left - nothing else changed */}
-            <IonCol size="12" sizeMd="8" sizeLg="6" className="ion-float-left">
+            <IonCol size="12" className="search-container">
               <Search<ClassificationItem>
                 data={[]}
                 searchKeys={['code', 'name']}
                 placeholder="Search classifications..."
-                onSearch={handleSearch}
-                onItemClick={handleItemClick}
+                onSearch={() => {}}
+                onItemClick={() => {}}
+              />
+              <IonIcon 
+                icon={add} 
+                className="create-icon"
+                onClick={() => console.log('Create clicked')} 
               />
             </IonCol>
           </IonRow>

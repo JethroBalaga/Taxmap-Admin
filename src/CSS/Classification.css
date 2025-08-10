@@ -1,33 +1,20 @@
 /* Classification.css */
-.classification-container {
+.search-container {
   display: flex;
-  flex-direction: column;
-  height: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
 }
 
-.search-column {
-  width: 300px; /* Fixed width for search column */
-  padding: 16px;
-  background: #f8f9fa;
-  border-right: 1px solid #e0e0e0;
-  height: 100%;
+/* Search bar width control */
+.search-container ion-searchbar {
+  width: 600px; /* Adjust this value as needed */
+  flex-shrink: 0; /* Prevents shrinking */
 }
 
-.content-area {
-  flex: 1;
-  padding: 16px;
-}
-
-/* For Ionic components */
-ion-grid {
-  --ion-grid-padding: 0;
-  height: 100%;
-}
-
-ion-row {
-  height: 100%;
-}
-
-ion-col {
-  padding: 0;
+.create-icon {
+  font-size: 24px;
+  color: #ffd700;
+  cursor: pointer;
+  flex-shrink: 0; /* Keeps icon from shrinking */
 }
