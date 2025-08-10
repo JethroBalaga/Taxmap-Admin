@@ -104,7 +104,7 @@ const ClassificationCreateModal: React.FC<ClassificationCreateModalProps> = ({
                     label="Code"
                     value={code}
                     onChange={handleCodeChange}
-                    placeholder="Enter classification code (e.g., HR, IT)"
+                    placeholder="Enter classification code (e.g., R, I)"
                     className="modal-input"
                   />
                 </div>

@@ -17,6 +17,7 @@ import {
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Classification.css';
 import ClassificationCreateModal from '../../components/ClassificationModals/ClassificationCreateModal';
+import ClassificationUpdateModal from '../../components/ClassificationModals/ClassificationUpdateModal';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 
@@ -28,10 +29,12 @@ interface ClassificationItem {
 
 const Classification: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [classifications, setClassifications] = useState<ClassificationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRow, setSelectedRow] = useState<ClassificationItem | null>(null);
+  const [selectedClassification, setSelectedClassification] = useState<ClassificationItem | null>(null);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showCannotDeleteAlert, setShowCannotDeleteAlert] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -73,13 +76,12 @@ const Classification: React.FC = () => {
   // Check if classification is used in other tables
   const checkIfClassificationIsUsed = async (classId: string) => {
     try {
-      // Check in the first related table (replace 'related_table1' with your actual table name)
+      // Check in related tables (replace with your actual table names)
       const { count: count1 } = await supabase
         .from('related_table1')
         .select('*', { count: 'exact', head: true })
         .eq('class_id', classId);
 
-      // Check in the second related table (replace 'related_table2' with your actual table name)
       const { count: count2 } = await supabase
         .from('related_table2')
         .select('*', { count: 'exact', head: true })
@@ -88,7 +90,7 @@ const Classification: React.FC = () => {
       return (count1 || 0) + (count2 || 0) > 0;
     } catch (error) {
       console.error('Error checking classification usage:', error);
-      return true; // Assume it's in use if there's an error
+      return true;
     }
   };
 
@@ -108,10 +110,10 @@ const Classification: React.FC = () => {
     setSelectedRow(rowData);
   };
 
-  const handleExport = () => {
+  const handleUpdateClick = () => {
     if (selectedRow) {
-      console.log('Exporting:', selectedRow);
-      // Add your export logic here
+      setSelectedClassification(selectedRow);
+      setShowUpdateModal(true);
     }
   };
 
@@ -148,7 +150,6 @@ const Classification: React.FC = () => {
       
       if (error) throw error;
       
-      // Refresh the list after deletion
       await fetchClassifications();
       setSelectedRow(null);
       setToastMessage('Classification deleted successfully');
@@ -191,7 +192,7 @@ const Classification: React.FC = () => {
                 <IonIcon 
                   icon={arrowUpCircle} 
                   className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
-                  onClick={handleExport}
+                  onClick={handleUpdateClick}
                 />
                 <IonIcon 
                   icon={trash} 
@@ -222,7 +223,13 @@ const Classification: React.FC = () => {
           onClassificationCreated={fetchClassifications}
         />
 
-        {/* Delete confirmation dialog */}
+        <ClassificationUpdateModal
+          isOpen={showUpdateModal}
+          onClose={() => setShowUpdateModal(false)}
+          classificationData={selectedClassification}
+          onClassificationUpdated={fetchClassifications}
+        />
+
         <IonAlert
           isOpen={showDeleteAlert}
           onDidDismiss={() => setShowDeleteAlert(false)}
@@ -241,7 +248,6 @@ const Classification: React.FC = () => {
           ]}
         />
 
-        {/* Cannot delete dialog */}
         <IonAlert
           isOpen={showCannotDeleteAlert}
           onDidDismiss={() => setShowCannotDeleteAlert(false)}
