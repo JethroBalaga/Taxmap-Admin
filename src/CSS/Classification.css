@@ -7,7 +7,7 @@
 }
 
 .search-container ion-searchbar {
-  width: 700px; /* Adjust this value as needed */
+  width: 700px;
   flex-shrink: 0;
 }
 
@@ -16,13 +16,16 @@
   gap: 8px;
 }
 
-.yellow-icon {
+/* Yellow icons with !important to override Ionic defaults */
+.icon-yellow {
+  color: #ffd700 !important;
+  --ion-color-base: #ffd700 !important;
+  --ion-color-contrast: #000000 !important;
   font-size: 24px;
-  color: #ffd700; /* Yellow color */
   cursor: pointer;
   transition: opacity 0.2s;
 }
 
-.yellow-icon:hover {
+.icon-yellow:hover {
   opacity: 0.8;
 }

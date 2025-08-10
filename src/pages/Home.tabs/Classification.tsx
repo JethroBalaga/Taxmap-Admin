@@ -1,15 +1,15 @@
-import {
-  IonContent,
-  IonHeader,
-  IonPage,
-  IonTitle,
+import { 
+  IonContent, 
+  IonHeader, 
+  IonPage, 
+  IonTitle, 
   IonToolbar,
   IonGrid,
   IonRow,
   IonCol,
   IonIcon
 } from '@ionic/react';
-import { add, arrowUpCircle } from 'ionicons/icons'; // Added arrowUpCircle import
+import { add, arrowUpCircle, trash } from 'ionicons/icons'; // Added trash icon
 import Search from '../../components/Globalcomponents/Search';
 import './../../CSS/Classification.css';
 
@@ -35,21 +35,24 @@ const Classification: React.FC = () => {
                 data={[]}
                 searchKeys={['code', 'name']}
                 placeholder="Search classifications..."
-                onSearch={() => { }}
-                onItemClick={() => { }}
+                onSearch={() => {}}
+                onItemClick={() => {}}
               />
               <div className="icon-group">
-                <IonIcon
-                  icon={add}
+                <IonIcon 
+                  icon={add} 
                   className="icon-yellow"
-                  color="warning" // Ionic's built-in yellow
-                  onClick={() => console.log('Create clicked')}
+                  onClick={() => console.log('Create clicked')} 
                 />
-                <IonIcon
-                  icon={arrowUpCircle}
+                <IonIcon 
+                  icon={arrowUpCircle} 
                   className="icon-yellow"
-                  color="warning" // Ionic's built-in yellow 
                   onClick={() => console.log('Arrow up clicked')}
+                />
+                <IonIcon 
+                  icon={trash} 
+                  className="icon-yellow"
+                  onClick={() => console.log('Trash clicked')}
                 />
               </div>
             </IonCol>
