@@ -9,8 +9,10 @@ import {
   IonRow,
   IonCol,
   IonLoading,
-  IonToast
+  IonToast,
+  IonIcon
 } from '@ionic/react';
+import { warning } from 'ionicons/icons';
 import Input from '../Globalcomponents/Input';
 import './../../CSS/ClassificationModal.css';
 import Button from '../Globalcomponents/Button';
@@ -38,21 +40,32 @@ const ClassificationUpdateModal: React.FC<ClassificationUpdateModalProps> = ({
 
   useEffect(() => {
     if (classificationData) {
-      setCode(classificationData.class_id || '');
-      setClassification(classificationData.classification || '');
+      setCode(classificationData.class_id);
+      setClassification(classificationData.classification);
     }
   }, [classificationData]);
 
   const handleUpdate = async () => {
-    if (!code || !classification) return;
+    if (!code || !classification || !classificationData) return;
 
     setIsLoading(true);
 
     try {
+      if (code !== classificationData.class_id) {
+        const { count } = await supabase
+          .from('classtbl')
+          .select('*', { count: 'exact', head: true })
+          .eq('class_id', code);
+
+        if (count && count > 0) {
+          throw new Error('This ID already exists!');
+        }
+      }
+
       const { error } = await supabase
         .from('classtbl')
-        .update({ classification })
-        .eq('class_id', code);
+        .update({ class_id: code, classification })
+        .eq('class_id', classificationData.class_id);
 
       if (error) throw error;
 
@@ -60,10 +73,8 @@ const ClassificationUpdateModal: React.FC<ClassificationUpdateModalProps> = ({
       onClassificationUpdated();
       setTimeout(onClose, 1000);
     } catch (error: any) {
-      const errorMessage = error.message || 'Failed to update classification';
-      setToastMessage(errorMessage);
+      setToastMessage(error.message || 'Failed to update classification');
       setIsError(true);
-      console.error('Error updating classification:', error);
     } finally {
       setIsLoading(false);
       setShowToast(true);
@@ -73,6 +84,8 @@ const ClassificationUpdateModal: React.FC<ClassificationUpdateModalProps> = ({
   const handleCodeChange = (value: string) => {
     setCode(value.toUpperCase());
   };
+
+  const isChangingId = code !== (classificationData?.class_id || '');
 
   return (
     <>
@@ -91,6 +104,13 @@ const ClassificationUpdateModal: React.FC<ClassificationUpdateModalProps> = ({
           <IonGrid className="form-grid">
             <IonRow>
               <IonCol className="form-column">
+                {isChangingId && (
+                  <div className="id-change-notice">
+                    <IonIcon icon={warning} className="warning-icon" />
+                    <span>Changing ID will update all related records</span>
+                  </div>
+                )}
+
                 <div className="input-wrapper">
                   <Input
                     label="Code"
@@ -98,8 +118,6 @@ const ClassificationUpdateModal: React.FC<ClassificationUpdateModalProps> = ({
                     onChange={handleCodeChange}
                     placeholder="Enter classification code"
                     className="modal-input"
-                    // Optionally disable if you don't want code to be changed
-                    disabled
                   />
                 </div>
 
