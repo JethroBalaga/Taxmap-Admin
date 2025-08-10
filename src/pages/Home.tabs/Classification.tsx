@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'; // Added useMemo import
 import { 
   IonContent, 
   IonHeader, 
@@ -9,10 +9,10 @@ import {
   IonRow,
   IonCol,
   IonIcon,
-  IonLoading
+  IonLoading,
+  IonSearchbar // Added IonSearchbar
 } from '@ionic/react';
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
-import Search from '../../components/Globalcomponents/Search';
 import './../../CSS/Classification.css';
 import ClassificationCreateModal from '../../components/ClassificationModals/ClassificationCreateModal';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
@@ -28,10 +28,19 @@ const Classification: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [classifications, setClassifications] = useState<ClassificationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filteredData, setFilteredData] = useState<ClassificationItem[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const searchRef = useRef<HTMLIonSearchbarElement>(null);
 
-  // Fetch classifications from Supabase
-  const fetchClassifications = async () => {
+  // Focus search input on mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      searchRef.current?.setFocus();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Fetch data
+  const fetchClassifications = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -41,37 +50,28 @@ const Classification: React.FC = () => {
 
       if (error) throw error;
       setClassifications(data || []);
-      setFilteredData(data || []); // Initialize filtered data
     } catch (error) {
       console.error('Error fetching classifications:', error);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Initial data fetch
-  useEffect(() => {
-    fetchClassifications();
   }, []);
 
-  // Handle creation of new classification
-  const handleCreateClassification = async (code: string, name: string) => {
-    try {
-      const { error } = await supabase
-        .from('classtbl')
-        .insert([{ 
-          class_id: code, 
-          classification: name 
-        }]);
+  useEffect(() => {
+    fetchClassifications();
+  }, [fetchClassifications]);
 
-      if (error) throw error;
-      await fetchClassifications(); // Refresh the list
-    } catch (error) {
-      console.error('Error creating classification:', error);
-    } finally {
-      setShowCreateModal(false);
+  // Filter data based on search term
+  const filteredData = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return classifications;
     }
-  };
+    
+    return classifications.filter(item =>
+      item.class_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.classification.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [classifications, searchTerm]);
 
   return (
     <IonPage>
@@ -80,17 +80,19 @@ const Classification: React.FC = () => {
           <IonTitle>Classification Setup</IonTitle>
         </IonToolbar>
       </IonHeader>
+      
       <IonContent fullscreen>
         <IonGrid>
           <IonRow>
             <IonCol size="12" className="search-container">
-              <Search<ClassificationItem>
-                data={classifications}
-                searchKeys={['class_id', 'classification']}
+              {/* Replaced Search component with direct IonSearchbar */}
+              <IonSearchbar
+                ref={searchRef}
                 placeholder="Search classifications..."
-                onSearch={(filteredResults) => setFilteredData(filteredResults)}
-                onItemClick={(item) => console.log('Item clicked:', item)}
+                onIonInput={(e) => setSearchTerm(e.detail.value || '')}
+                debounce={0} // Instant filtering
               />
+              
               <div className="icon-group">
                 <IonIcon 
                   icon={add} 
@@ -100,18 +102,17 @@ const Classification: React.FC = () => {
                 <IonIcon 
                   icon={arrowUpCircle} 
                   className="icon-yellow"
-                  onClick={() => console.log('Arrow up clicked')}
+                  onClick={() => console.log('Export clicked')}
                 />
                 <IonIcon 
                   icon={trash} 
                   className="icon-yellow"
-                  onClick={() => console.log('Trash clicked')}
+                  onClick={() => console.log('Delete clicked')}
                 />
               </div>
             </IonCol>
           </IonRow>
 
-          {/* Data Table */}
           <IonRow>
             <IonCol size="12">
               <DynamicTable 
@@ -123,14 +124,11 @@ const Classification: React.FC = () => {
           </IonRow>
         </IonGrid>
 
-        {/* Loading Indicator */}
         <IonLoading isOpen={isLoading} message="Loading classifications..." />
 
-        {/* Create Modal */}
         <ClassificationCreateModal
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
-          onClassificationCreated={fetchClassifications}
         />
       </IonContent>
     </IonPage>
