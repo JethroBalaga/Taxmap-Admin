@@ -10,7 +10,8 @@ import {
   IonCol,
   IonIcon,
   IonLoading,
-  IonSearchbar
+  IonSearchbar,
+  IonAlert
 } from '@ionic/react';
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Classification.css';
@@ -30,6 +31,7 @@ const Classification: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRow, setSelectedRow] = useState<ClassificationItem | null>(null);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
 
   // Focus search input on mount
@@ -85,10 +87,32 @@ const Classification: React.FC = () => {
     }
   };
 
-  const handleDelete = () => {
+  const handleDeleteClick = () => {
     if (selectedRow) {
-      console.log('Deleting:', selectedRow);
-      // Add your delete logic here
+      setShowDeleteAlert(true);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedRow) return;
+    
+    try {
+      setIsLoading(true);
+      const { error } = await supabase
+        .from('classtbl')
+        .delete()
+        .eq('class_id', selectedRow.class_id);
+      
+      if (error) throw error;
+      
+      // Refresh the list after deletion
+      await fetchClassifications();
+      setSelectedRow(null);
+    } catch (error) {
+      console.error('Error deleting classification:', error);
+    } finally {
+      setIsLoading(false);
+      setShowDeleteAlert(false);
     }
   };
 
@@ -125,7 +149,7 @@ const Classification: React.FC = () => {
                 <IonIcon 
                   icon={trash} 
                   className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
-                  onClick={handleDelete}
+                  onClick={handleDeleteClick}
                 />
               </div>
             </IonCol>
@@ -148,6 +172,24 @@ const Classification: React.FC = () => {
         <ClassificationCreateModal
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
+        />
+
+        <IonAlert
+          isOpen={showDeleteAlert}
+          onDidDismiss={() => setShowDeleteAlert(false)}
+          header={'Confirm Delete'}
+          message={`Are you sure you want to delete the classification ${selectedRow?.classification}?`}
+          buttons={[
+            {
+              text: 'Cancel',
+              role: 'cancel',
+              cssClass: 'secondary',
+            },
+            {
+              text: 'Delete',
+              handler: handleDeleteConfirm
+            }
+          ]}
         />
       </IonContent>
     </IonPage>
