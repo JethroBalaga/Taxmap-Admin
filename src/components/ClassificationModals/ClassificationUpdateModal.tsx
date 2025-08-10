@@ -37,16 +37,23 @@ const ClassificationUpdateModal: React.FC<ClassificationUpdateModalProps> = ({
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [isError, setIsError] = useState(false);
+  const [isFormValid, setIsFormValid] = useState(false);
+
+  // Check form validity whenever inputs change
+  useEffect(() => {
+    setIsFormValid(code.trim() !== '' && classification.trim() !== '');
+  }, [code, classification]);
 
   useEffect(() => {
     if (classificationData) {
       setCode(classificationData.class_id);
       setClassification(classificationData.classification);
+      setIsFormValid(true); // Set to true initially since we're populating with valid data
     }
   }, [classificationData]);
 
   const handleUpdate = async () => {
-    if (!code || !classification || !classificationData) return;
+    if (!isFormValid || !classificationData) return;
 
     setIsLoading(true);
 
@@ -83,6 +90,10 @@ const ClassificationUpdateModal: React.FC<ClassificationUpdateModalProps> = ({
 
   const handleCodeChange = (value: string) => {
     setCode(value.toUpperCase());
+  };
+
+  const handleClassificationChange = (value: string) => {
+    setClassification(value);
   };
 
   const isChangingId = code !== (classificationData?.class_id || '');
@@ -125,7 +136,7 @@ const ClassificationUpdateModal: React.FC<ClassificationUpdateModalProps> = ({
                   <Input
                     label="Classification"
                     value={classification}
-                    onChange={setClassification}
+                    onChange={handleClassificationChange}
                     placeholder="Enter classification name"
                     className="modal-input"
                   />
@@ -144,7 +155,7 @@ const ClassificationUpdateModal: React.FC<ClassificationUpdateModalProps> = ({
                   <Button
                     variant="primary"
                     onClick={handleUpdate}
-                    disabled={!code || !classification || isLoading}
+                    disabled={!isFormValid || isLoading}
                     className="create-btn"
                   >
                     {isLoading ? 'Updating...' : 'Update'}
