@@ -29,3 +29,8 @@
 .icon-yellow:hover {
   opacity: 0.8;
 }
+.icon-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
+}

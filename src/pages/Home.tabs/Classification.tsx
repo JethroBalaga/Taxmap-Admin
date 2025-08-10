@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'; // Added useMemo import
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { 
   IonContent, 
   IonHeader, 
@@ -10,7 +10,7 @@ import {
   IonCol,
   IonIcon,
   IonLoading,
-  IonSearchbar // Added IonSearchbar
+  IonSearchbar
 } from '@ionic/react';
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Classification.css';
@@ -29,6 +29,7 @@ const Classification: React.FC = () => {
   const [classifications, setClassifications] = useState<ClassificationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedRow, setSelectedRow] = useState<ClassificationItem | null>(null);
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
 
   // Focus search input on mount
@@ -73,6 +74,24 @@ const Classification: React.FC = () => {
     );
   }, [classifications, searchTerm]);
 
+  const handleRowClick = (rowData: ClassificationItem) => {
+    setSelectedRow(rowData);
+  };
+
+  const handleExport = () => {
+    if (selectedRow) {
+      console.log('Exporting:', selectedRow);
+      // Add your export logic here
+    }
+  };
+
+  const handleDelete = () => {
+    if (selectedRow) {
+      console.log('Deleting:', selectedRow);
+      // Add your delete logic here
+    }
+  };
+
   return (
     <IonPage>
       <IonHeader>
@@ -85,12 +104,11 @@ const Classification: React.FC = () => {
         <IonGrid>
           <IonRow>
             <IonCol size="12" className="search-container">
-              {/* Replaced Search component with direct IonSearchbar */}
               <IonSearchbar
                 ref={searchRef}
                 placeholder="Search classifications..."
                 onIonInput={(e) => setSearchTerm(e.detail.value || '')}
-                debounce={0} // Instant filtering
+                debounce={0}
               />
               
               <div className="icon-group">
@@ -101,13 +119,13 @@ const Classification: React.FC = () => {
                 />
                 <IonIcon 
                   icon={arrowUpCircle} 
-                  className="icon-yellow"
-                  onClick={() => console.log('Export clicked')}
+                  className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
+                  onClick={handleExport}
                 />
                 <IonIcon 
                   icon={trash} 
-                  className="icon-yellow"
-                  onClick={() => console.log('Delete clicked')}
+                  className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
+                  onClick={handleDelete}
                 />
               </div>
             </IonCol>
@@ -119,6 +137,7 @@ const Classification: React.FC = () => {
                 data={filteredData}
                 title="Classifications"
                 keyField="class_id"
+                onRowClick={handleRowClick}
               />
             </IonCol>
           </IonRow>
