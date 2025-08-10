@@ -16,7 +16,7 @@ import StrengthMeter from '../components/RegistrationCommponents/StrengthMeter';
 import RegisterButton from '../components/RegistrationCommponents/RegisterButton';
 import VerificationModal from '../components/RegistrationCommponents/VerificationModal';
 import SuccessModal from '../components/RegistrationCommponents/SuccessModal';
-import AlertBox from '../components/AlertBox';
+import AlertBox from '../components/RegistrationCommponents/AlertBox';
 import backgroundImg from '../Images/Manolo 2.jpg';
 
 const Register: React.FC = () => {
