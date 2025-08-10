@@ -11,7 +11,8 @@ import {
   IonIcon,
   IonLoading,
   IonSearchbar,
-  IonAlert
+  IonAlert,
+  IonToast
 } from '@ionic/react';
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Classification.css';
@@ -32,6 +33,9 @@ const Classification: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRow, setSelectedRow] = useState<ClassificationItem | null>(null);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [showCannotDeleteAlert, setShowCannotDeleteAlert] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
 
   // Focus search input on mount
@@ -55,6 +59,8 @@ const Classification: React.FC = () => {
       setClassifications(data || []);
     } catch (error) {
       console.error('Error fetching classifications:', error);
+      setToastMessage('Failed to load classifications');
+      setShowToast(true);
     } finally {
       setIsLoading(false);
     }
@@ -63,6 +69,28 @@ const Classification: React.FC = () => {
   useEffect(() => {
     fetchClassifications();
   }, [fetchClassifications]);
+
+  // Check if classification is used in other tables
+  const checkIfClassificationIsUsed = async (classId: string) => {
+    try {
+      // Check in the first related table (replace 'related_table1' with your actual table name)
+      const { count: count1 } = await supabase
+        .from('related_table1')
+        .select('*', { count: 'exact', head: true })
+        .eq('class_id', classId);
+
+      // Check in the second related table (replace 'related_table2' with your actual table name)
+      const { count: count2 } = await supabase
+        .from('related_table2')
+        .select('*', { count: 'exact', head: true })
+        .eq('class_id', classId);
+
+      return (count1 || 0) + (count2 || 0) > 0;
+    } catch (error) {
+      console.error('Error checking classification usage:', error);
+      return true; // Assume it's in use if there's an error
+    }
+  };
 
   // Filter data based on search term
   const filteredData = useMemo(() => {
@@ -87,9 +115,24 @@ const Classification: React.FC = () => {
     }
   };
 
-  const handleDeleteClick = () => {
-    if (selectedRow) {
-      setShowDeleteAlert(true);
+  const handleDeleteClick = async () => {
+    if (!selectedRow) return;
+
+    setIsLoading(true);
+    try {
+      const isUsed = await checkIfClassificationIsUsed(selectedRow.class_id);
+      
+      if (isUsed) {
+        setShowCannotDeleteAlert(true);
+      } else {
+        setShowDeleteAlert(true);
+      }
+    } catch (error) {
+      console.error('Error checking classification usage:', error);
+      setToastMessage('Error checking if classification can be deleted');
+      setShowToast(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -108,8 +151,12 @@ const Classification: React.FC = () => {
       // Refresh the list after deletion
       await fetchClassifications();
       setSelectedRow(null);
+      setToastMessage('Classification deleted successfully');
+      setShowToast(true);
     } catch (error) {
       console.error('Error deleting classification:', error);
+      setToastMessage('Failed to delete classification');
+      setShowToast(true);
     } finally {
       setIsLoading(false);
       setShowDeleteAlert(false);
@@ -167,18 +214,20 @@ const Classification: React.FC = () => {
           </IonRow>
         </IonGrid>
 
-        <IonLoading isOpen={isLoading} message="Loading classifications..." />
+        <IonLoading isOpen={isLoading} message="Loading..." />
 
         <ClassificationCreateModal
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
+          onClassificationCreated={fetchClassifications}
         />
 
+        {/* Delete confirmation dialog */}
         <IonAlert
           isOpen={showDeleteAlert}
           onDidDismiss={() => setShowDeleteAlert(false)}
           header={'Confirm Delete'}
-          message={`Are you sure you want to delete the classification ${selectedRow?.classification}?`}
+          message={`Are you sure you want to delete the classification <strong>${selectedRow?.classification}</strong>?`}
           buttons={[
             {
               text: 'Cancel',
@@ -190,6 +239,22 @@ const Classification: React.FC = () => {
               handler: handleDeleteConfirm
             }
           ]}
+        />
+
+        {/* Cannot delete dialog */}
+        <IonAlert
+          isOpen={showCannotDeleteAlert}
+          onDidDismiss={() => setShowCannotDeleteAlert(false)}
+          header={'Cannot Delete'}
+          message={`The classification <strong>${selectedRow?.classification}</strong> cannot be deleted because it is being used in other records.`}
+          buttons={['OK']}
+        />
+
+        <IonToast
+          isOpen={showToast}
+          onDidDismiss={() => setShowToast(false)}
+          message={toastMessage}
+          duration={3000}
         />
       </IonContent>
     </IonPage>
