@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   IonModal,
   IonHeader,
@@ -16,16 +16,18 @@ import './../../CSS/ClassificationModal.css';
 import Button from '../Globalcomponents/Button';
 import { supabase } from './../../utils/supaBaseClient';
 
-interface ClassificationCreateModalProps {
+interface ClassificationUpdateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onClassificationCreated?: () => void; // Made optional
+  classificationData: { class_id: string; classification: string } | null;
+  onClassificationUpdated?: () => void;
 }
 
-const ClassificationCreateModal: React.FC<ClassificationCreateModalProps> = ({
+const ClassificationUpdateModal: React.FC<ClassificationUpdateModalProps> = ({
   isOpen,
   onClose,
-  onClassificationCreated = () => {}, // Default empty function
+  classificationData,
+  onClassificationUpdated = () => {}
 }) => {
   const [code, setCode] = useState('');
   const [classification, setClassification] = useState('');
@@ -34,44 +36,34 @@ const ClassificationCreateModal: React.FC<ClassificationCreateModalProps> = ({
   const [toastMessage, setToastMessage] = useState('');
   const [isError, setIsError] = useState(false);
 
-  const handleCreate = async () => {
+  useEffect(() => {
+    if (classificationData) {
+      setCode(classificationData.class_id || '');
+      setClassification(classificationData.classification || '');
+    }
+  }, [classificationData]);
+
+  const handleUpdate = async () => {
     if (!code || !classification) return;
 
     setIsLoading(true);
-    
+
     try {
-      // Check if classification code already exists
-      const { data: existingData, error: existingError } = await supabase
+      const { error } = await supabase
         .from('classtbl')
-        .select('class_id')
-        .eq('class_id', code)
-        .maybeSingle();
-
-      if (existingData) {
-        throw new Error('Classification code already exists');
-      }
-
-      // Insert new classification
-      const { data, error } = await supabase
-        .from('classtbl')
-        .insert([{ 
-          class_id: code, 
-          classification: classification 
-        }])
-        .select();
+        .update({ classification })
+        .eq('class_id', code);
 
       if (error) throw error;
 
-      setToastMessage('Classification created successfully!');
-      setCode('');
-      setClassification('');
-      onClassificationCreated(); // Safe to call now
+      setToastMessage('Classification updated successfully!');
+      onClassificationUpdated();
       setTimeout(onClose, 1000);
     } catch (error: any) {
-      const errorMessage = error.message || 'Failed to create classification';
+      const errorMessage = error.message || 'Failed to update classification';
       setToastMessage(errorMessage);
       setIsError(true);
-      console.error('Error creating classification:', error);
+      console.error('Error updating classification:', error);
     } finally {
       setIsLoading(false);
       setShowToast(true);
@@ -91,7 +83,7 @@ const ClassificationCreateModal: React.FC<ClassificationCreateModalProps> = ({
       >
         <IonHeader>
           <IonToolbar className="modal-header">
-            <IonTitle className="modal-title">Create New Classification</IonTitle>
+            <IonTitle className="modal-title">Update Classification</IonTitle>
           </IonToolbar>
         </IonHeader>
 
@@ -104,11 +96,13 @@ const ClassificationCreateModal: React.FC<ClassificationCreateModalProps> = ({
                     label="Code"
                     value={code}
                     onChange={handleCodeChange}
-                    placeholder="Enter classification code (e.g., HR, IT)"
+                    placeholder="Enter classification code"
                     className="modal-input"
+                    // Optionally disable if you don't want code to be changed
+                    disabled
                   />
                 </div>
-                
+
                 <div className="input-wrapper">
                   <Input
                     label="Classification"
@@ -128,14 +122,14 @@ const ClassificationCreateModal: React.FC<ClassificationCreateModalProps> = ({
                   >
                     Cancel
                   </Button>
-                  
-                  <Button 
+
+                  <Button
                     variant="primary"
-                    onClick={handleCreate}
+                    onClick={handleUpdate}
                     disabled={!code || !classification || isLoading}
                     className="create-btn"
                   >
-                    {isLoading ? 'Creating...' : 'Create'}
+                    {isLoading ? 'Updating...' : 'Update'}
                   </Button>
                 </div>
               </IonCol>
@@ -144,17 +138,17 @@ const ClassificationCreateModal: React.FC<ClassificationCreateModalProps> = ({
         </IonContent>
       </IonModal>
 
-      <IonLoading isOpen={isLoading} message="Creating classification..." />
-      
+      <IonLoading isOpen={isLoading} message="Updating classification..." />
+
       <IonToast
         isOpen={showToast}
         onDidDismiss={() => setShowToast(false)}
         message={toastMessage}
         duration={3000}
-        color={isError ? 'green' : 'success'}
+        color={isError ? 'danger' : 'success'}
       />
     </>
   );
 };
 
-export default ClassificationCreateModal;
+export default ClassificationUpdateModal;
