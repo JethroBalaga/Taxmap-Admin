@@ -1,6 +1,16 @@
 import React, { useState } from 'react';
-import { IonModal, IonHeader, IonToolbar, IonTitle, IonContent, IonGrid, IonRow, IonCol } from '@ionic/react';
+import {
+  IonModal,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+  IonGrid,
+  IonRow,
+  IonCol
+} from '@ionic/react';
 import Input from '../Globalcomponents/Input';
+import './../../CSS/ClassificationCreateModal.css';
 import Button from '../Globalcomponents/Button';
 
 interface ClassificationCreateModalProps {
@@ -19,41 +29,53 @@ const ClassificationCreateModal: React.FC<ClassificationCreateModalProps> = ({
 
   const handleCreate = () => {
     onCreate(code, classification);
-    // Reset form after creation
     setCode('');
     setClassification('');
   };
 
   return (
-    <IonModal isOpen={isOpen} onDidDismiss={onClose}>
+    <IonModal
+      isOpen={isOpen}
+      onDidDismiss={onClose}
+      className="classification-modal"
+    >
       <IonHeader>
-        <IonToolbar>
-          <IonTitle>Create New Classification</IonTitle>
+        <IonToolbar className="modal-header">
+          <IonTitle className="modal-title">Create New Classification</IonTitle>
         </IonToolbar>
       </IonHeader>
-      <IonContent className="ion-padding">
-        <IonGrid>
-          <IonRow className="ion-justify-content-center">
-            <IonCol size="12" sizeMd="8" sizeLg="6">
-              <Input
-                label="Code"
-                value={code}
-                onChange={setCode}
-                placeholder="Enter classification code"
-              />
-              
-              <Input
-                label="Classification"
-                value={classification}
-                onChange={setClassification}
-                placeholder="Enter classification name"
-              />
 
-              <div className="ion-margin-top ion-text-end">
+      <IonContent className="modal-content">
+        {/* Remove ion-justify-content-center from here */}
+        <IonGrid className="form-grid">
+          <IonRow>
+            {/* Remove size constraints that might cause centering */}
+            <IonCol className="form-column">
+              <div className="input-wrapper">
+                <Input
+                  label="Code"
+                  value={code}
+                  onChange={setCode}
+                  placeholder="Enter classification code"
+                  className="modal-input"
+                />
+              </div>
+              
+              <div className="input-wrapper">
+                <Input
+                  label="Classification"
+                  value={classification}
+                  onChange={setClassification}
+                  placeholder="Enter classification name"
+                  className="modal-input"
+                />
+              </div>
+
+              <div className="button-group">
                 <Button
-                  variant="secondary" 
+                  variant="secondary"
                   onClick={onClose}
-                  className="ion-margin-end"
+                  className="cancel-btn"
                 >
                   Cancel
                 </Button>
@@ -62,6 +84,7 @@ const ClassificationCreateModal: React.FC<ClassificationCreateModalProps> = ({
                   variant="primary"
                   onClick={handleCreate}
                   disabled={!code || !classification}
+                  className="create-btn"
                 >
                   Create
                 </Button>
