@@ -8,13 +8,24 @@ import {
   IonRow,
   IonCol
 } from '@ionic/react';
-import { useState } from 'react';
-import Input from '../../components/Globalcomponents/Input';
-import Button from '../../components/Globalcomponents/Button';
+import Search from '../../components/Globalcomponents/Search';
+
+interface ClassificationItem {
+  id: string;
+  code: string;
+  name: string;
+}
 
 const Classification: React.FC = () => {
-  const [code, setCode] = useState('');
-  const [classification, setClassification] = useState('');
+  const handleSearch = (filtered: ClassificationItem[]) => {
+    console.log('Filtered results:', filtered);
+    // Handle filtered results (e.g., update state)
+  };
+
+  const handleItemClick = (item: ClassificationItem) => {
+    console.log('Selected classification:', item);
+    // Handle item selection
+  };
 
   return (
     <IonPage>
@@ -27,29 +38,13 @@ const Classification: React.FC = () => {
         <IonGrid className="ion-padding">
           <IonRow className="ion-justify-content-center">
             <IonCol size="12" sizeMd="8" sizeLg="6">
-              <Input
-                label="Code"
-                value={code}
-                onChange={setCode}
-                placeholder="Enter code"
+              <Search<ClassificationItem>
+                data={[]} // Empty array - parent should provide actual data
+                searchKeys={['code', 'name']}
+                placeholder="Search classifications..."
+                onSearch={handleSearch}
+                onItemClick={handleItemClick}
               />
-              
-              <Input
-                label="Classification"
-                value={classification}
-                onChange={setClassification}
-                placeholder="Enter classification"
-              />
-              
-              <div className="ion-margin-top">
-                <Button
-                  variant="primary" 
-                  fullWidth
-                  onClick={() => console.log('Create clicked')}
-                >
-                  Create
-                </Button>
-              </div>
             </IonCol>
           </IonRow>
         </IonGrid>
