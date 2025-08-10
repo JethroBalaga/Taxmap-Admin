@@ -19,12 +19,10 @@ interface ClassificationItem {
 const Classification: React.FC = () => {
   const handleSearch = (filtered: ClassificationItem[]) => {
     console.log('Filtered results:', filtered);
-    // Handle filtered results (e.g., update state)
   };
 
   const handleItemClick = (item: ClassificationItem) => {
     console.log('Selected classification:', item);
-    // Handle item selection
   };
 
   return (
@@ -35,11 +33,12 @@ const Classification: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
-        <IonGrid className="ion-padding">
-          <IonRow className="ion-justify-content-center">
-            <IonCol size="12" sizeMd="8" sizeLg="6">
+        <IonGrid>
+          <IonRow>
+            {/* Just moved the column to the left - nothing else changed */}
+            <IonCol size="12" sizeMd="8" sizeLg="6" className="ion-float-left">
               <Search<ClassificationItem>
-                data={[]} // Empty array - parent should provide actual data
+                data={[]}
                 searchKeys={['code', 'name']}
                 placeholder="Search classifications..."
                 onSearch={handleSearch}
