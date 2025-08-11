@@ -10,10 +10,11 @@ import {
   IonCol,
   IonLoading,
   IonToast,
-  IonDatetime,
-  IonLabel,
   IonDatetimeButton,
-  IonPopover
+  IonPopover,
+  IonLabel,
+  IonDatetime,
+  IonInput
 } from '@ionic/react';
 import Input from '../Globalcomponents/Input';
 import './../../CSS/Modal.css';
@@ -31,7 +32,7 @@ const DistrictCreateModal: React.FC<DistrictCreateModalProps> = ({
   onClose,
   onDistrictCreated = () => {},
 }) => {
-  const [districtId, setDistrictId] = useState('');
+  const [districtId, setDistrictId] = useState<number | null>(null);
   const [districtName, setDistrictName] = useState('');
   const [foundedDate, setFoundedDate] = useState<string>(new Date().toISOString());
   const [isLoading, setIsLoading] = useState(false);
@@ -40,7 +41,7 @@ const DistrictCreateModal: React.FC<DistrictCreateModalProps> = ({
   const [isError, setIsError] = useState(false);
 
   const handleCreate = async () => {
-    if (!districtId || !districtName || !foundedDate) return;
+    if (districtId === null || !districtName || !foundedDate) return;
 
     setIsLoading(true);
     
@@ -72,9 +73,8 @@ const DistrictCreateModal: React.FC<DistrictCreateModalProps> = ({
       if (error) throw error;
 
       setToastMessage('District created successfully!');
-      setDistrictId('');
+      setDistrictId(null);
       setDistrictName('');
-      setFoundedDate(new Date().toISOString());
       onDistrictCreated();
       setTimeout(onClose, 1000);
     } catch (error: any) {
@@ -89,16 +89,13 @@ const DistrictCreateModal: React.FC<DistrictCreateModalProps> = ({
   };
 
   const handleDistrictIdChange = (value: string) => {
-    setDistrictId(value.toUpperCase());
+    const num = parseInt(value, 10);
+    setDistrictId(isNaN(num) ? null : num);
   };
 
   return (
     <>
-      <IonModal
-        isOpen={isOpen}
-        onDidDismiss={onClose}
-        className="classification-modal"
-      >
+      <IonModal isOpen={isOpen} onDidDismiss={onClose} className="classification-modal">
         <IonHeader>
           <IonToolbar className="modal-header">
             <IonTitle className="modal-title">Create New District</IonTitle>
@@ -110,11 +107,12 @@ const DistrictCreateModal: React.FC<DistrictCreateModalProps> = ({
             <IonRow>
               <IonCol className="form-column">
                 <div className="input-wrapper">
-                  <Input
-                    label="District#"
+                  <IonLabel className="input-label">District ID (Number)</IonLabel>
+                  <IonInput
+                    type="number"
                     value={districtId}
-                    onChange={handleDistrictIdChange}
-                    placeholder="Enter district code (e.g., D001)"
+                    onIonChange={(e) => handleDistrictIdChange(e.detail.value!)}
+                    placeholder="Enter district number"
                     className="modal-input"
                   />
                 </div>
@@ -158,7 +156,7 @@ const DistrictCreateModal: React.FC<DistrictCreateModalProps> = ({
                   <Button 
                     variant="primary"
                     onClick={handleCreate}
-                    disabled={!districtId || !districtName || !foundedDate || isLoading}
+                    disabled={districtId === null || !districtName || !foundedDate || isLoading}
                     className="create-btn"
                   >
                     {isLoading ? 'Creating...' : 'Create'}

@@ -22,7 +22,7 @@ import DistrictCreateModal from '../../components/DistrictModal/DistrictCreateMo
 import DistrictUpdateModal from '../../components/DistrictModal/DistrictUpdateModal';
 
 interface DistrictItem {
-  district_id: string;
+  district_id: number;  // Changed to number
   district_name: string;
   founded: string;
   created_at?: string;
@@ -61,7 +61,7 @@ const District: React.FC = () => {
 
       if (error) throw error;
       
-      // Format the date for display
+      // Format the date for display while keeping original data
       const formattedData = data?.map(item => ({
         ...item,
         founded: new Date(item.founded).toLocaleDateString()
@@ -82,9 +82,8 @@ const District: React.FC = () => {
   }, [fetchDistricts]);
 
   // Check if district is used in other tables
-  const checkIfDistrictIsUsed = async (districtId: string) => {
+  const checkIfDistrictIsUsed = async (districtId: number) => {  // Changed to number
     try {
-      // Check in related tables (replace with your actual table names)
       const { count: count1 } = await supabase
         .from('related_table1')
         .select('*', { count: 'exact', head: true })
@@ -108,10 +107,11 @@ const District: React.FC = () => {
       return districts;
     }
     
+    const term = searchTerm.toLowerCase();
     return districts.filter(item =>
-      item.district_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.district_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.founded.toLowerCase().includes(searchTerm.toLowerCase())
+      item.district_id.toString().includes(term) ||  // Convert number to string for search
+      item.district_name.toLowerCase().includes(term) ||
+      item.founded.toLowerCase().includes(term)
     );
   }, [districts, searchTerm]);
 
@@ -121,7 +121,6 @@ const District: React.FC = () => {
 
   const handleUpdateClick = () => {
     if (selectedRow) {
-      // Convert the display date back to ISO format for the update modal
       setSelectedDistrict({
         ...selectedRow,
         founded: new Date(selectedRow.founded).toISOString()
@@ -247,7 +246,7 @@ const District: React.FC = () => {
           isOpen={showDeleteAlert}
           onDidDismiss={() => setShowDeleteAlert(false)}
           header={'Confirm Delete'}
-          message={`Are you sure you want to delete the district <strong>${selectedRow?.district_name}</strong>?`}
+          message={`Are you sure you want to delete district #${selectedRow?.district_id} (${selectedRow?.district_name})?`}
           buttons={[
             {
               text: 'Cancel',
@@ -265,7 +264,7 @@ const District: React.FC = () => {
           isOpen={showCannotDeleteAlert}
           onDidDismiss={() => setShowCannotDeleteAlert(false)}
           header={'Cannot Delete'}
-          message={`The district <strong>${selectedRow?.district_name}</strong> cannot be deleted because it is being used in other records.`}
+          message={`District #${selectedRow?.district_id} cannot be deleted because it is being used in other records.`}
           buttons={['OK']}
         />
 
