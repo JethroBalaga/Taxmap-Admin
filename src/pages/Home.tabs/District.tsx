@@ -15,7 +15,7 @@ import {
   IonToast
 } from '@ionic/react';
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
-import './../../CSS/District.css';
+import './../../CSS/Setup2.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 import DistrictCreateModal from '../../components/DistrictModal/DistrictCreateModal';

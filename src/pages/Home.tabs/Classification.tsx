@@ -15,7 +15,7 @@ import {
   IonToast
 } from '@ionic/react';
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
-import './../../CSS/Classification.css';
+import './../../CSS/Setup.css';
 import ClassificationCreateModal from '../../components/ClassificationModals/ClassificationCreateModal';
 import ClassificationUpdateModal from '../../components/ClassificationModals/ClassificationUpdateModal';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';

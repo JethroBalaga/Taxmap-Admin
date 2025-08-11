@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { 
-  IonContent, 
-  IonHeader, 
-  IonPage, 
-  IonTitle, 
+import {
+  IonContent,
+  IonHeader,
+  IonPage,
+  IonTitle,
   IonToolbar,
   IonGrid,
   IonRow,
@@ -15,7 +15,7 @@ import {
   IonToast
 } from '@ionic/react';
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
-import './../../CSS/Kind.css';
+import './../../CSS/Setup2.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 import KindCreateModal from '../../components/KindModals/KindCreateModal';
@@ -34,6 +34,7 @@ const Kind: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRow, setSelectedRow] = useState<KindItem | null>(null);
+  const [selectedKind, setSelectedKind] = useState<KindItem | null>(null);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showCannotDeleteAlert, setShowCannotDeleteAlert] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -76,7 +77,6 @@ const Kind: React.FC = () => {
   // Check if kind is used in other tables
   const checkIfKindIsUsed = async (kindId: number) => {
     try {
-      // Check in related tables (replace with your actual table names)
       const { count: count1 } = await supabase
         .from('related_table1')
         .select('*', { count: 'exact', head: true })
@@ -94,17 +94,20 @@ const Kind: React.FC = () => {
     }
   };
 
-  // Filter data based on search term
+  // Filter data based on search term with null checks
   const filteredData = useMemo(() => {
     if (!searchTerm.trim()) {
       return kinds;
     }
     
     const term = searchTerm.toLowerCase();
-    return kinds.filter(item =>
-      item.id.toString().includes(term) ||
-      item.description.toLowerCase().includes(term)
-    );
+    return kinds.filter(item => {
+      if (!item) return false;
+      return (
+        (item.id?.toString() || '').includes(term) ||
+        (item.description?.toLowerCase() || '').includes(term)
+      );
+    });
   }, [kinds, searchTerm]);
 
   const handleRowClick = (rowData: KindItem) => {
@@ -113,6 +116,7 @@ const Kind: React.FC = () => {
 
   const handleUpdateClick = () => {
     if (selectedRow) {
+      setSelectedKind(selectedRow);
       setShowUpdateModal(true);
     }
   };
@@ -226,7 +230,7 @@ const Kind: React.FC = () => {
         <KindUpdateModal
           isOpen={showUpdateModal}
           onClose={() => setShowUpdateModal(false)}
-          kindData={selectedRow}
+          kindData={selectedKind}
           onKindUpdated={fetchKinds}
         />
 
