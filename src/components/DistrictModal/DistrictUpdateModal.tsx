@@ -14,10 +14,10 @@ import {
   IonDatetimeButton,
   IonPopover,
   IonLabel,
-  IonDatetime 
+  IonDatetime,
+  IonInput
 } from '@ionic/react';
 import { warning } from 'ionicons/icons';
-import Input from '../Globalcomponents/Input';
 import './../../CSS/Modal.css';
 import Button from '../Globalcomponents/Button';
 import { supabase } from './../../utils/supaBaseClient';
@@ -25,7 +25,7 @@ import { supabase } from './../../utils/supaBaseClient';
 interface DistrictUpdateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  districtData: { district_id: string; district_name: string; founded: string } | null;
+  districtData: { district_id: number; district_name: string; founded: string } | null;
   onDistrictUpdated?: () => void;
 }
 
@@ -35,7 +35,7 @@ const DistrictUpdateModal: React.FC<DistrictUpdateModalProps> = ({
   districtData,
   onDistrictUpdated = () => {}
 }) => {
-  const [districtId, setDistrictId] = useState('');
+  const [districtId, setDistrictId] = useState<number | null>(null);
   const [districtName, setDistrictName] = useState('');
   const [foundedDate, setFoundedDate] = useState<string>(new Date().toISOString());
   const [isLoading, setIsLoading] = useState(false);
@@ -47,7 +47,7 @@ const DistrictUpdateModal: React.FC<DistrictUpdateModalProps> = ({
   // Check form validity whenever inputs change
   useEffect(() => {
     setIsFormValid(
-      districtId.trim() !== '' && 
+      districtId !== null && 
       districtName.trim() !== '' && 
       foundedDate.trim() !== ''
     );
@@ -57,14 +57,18 @@ const DistrictUpdateModal: React.FC<DistrictUpdateModalProps> = ({
     if (districtData) {
       setDistrictId(districtData.district_id);
       setDistrictName(districtData.district_name);
-      // Convert the date string to ISO format for the datetime component
-      setFoundedDate(new Date(districtData.founded).toISOString());
+      try {
+        const date = districtData.founded ? new Date(districtData.founded) : new Date();
+        setFoundedDate(date.toISOString());
+      } catch {
+        setFoundedDate(new Date().toISOString());
+      }
       setIsFormValid(true);
     }
   }, [districtData]);
 
   const handleUpdate = async () => {
-    if (!isFormValid || !districtData) return;
+    if (!isFormValid || !districtData || districtId === null) return;
 
     setIsLoading(true);
 
@@ -107,14 +111,15 @@ const DistrictUpdateModal: React.FC<DistrictUpdateModalProps> = ({
   };
 
   const handleDistrictIdChange = (value: string) => {
-    setDistrictId(value.toUpperCase());
+    const num = parseInt(value, 10);
+    setDistrictId(isNaN(num) ? null : num);
   };
 
   const handleDistrictNameChange = (value: string) => {
     setDistrictName(value);
   };
 
-  const isChangingId = districtId !== (districtData?.district_id || '');
+  const isChangingId = districtId !== (districtData?.district_id || null);
 
   return (
     <>
@@ -141,20 +146,21 @@ const DistrictUpdateModal: React.FC<DistrictUpdateModalProps> = ({
                 )}
 
                 <div className="input-wrapper">
-                  <Input
-                    label="District#"
-                    value={districtId}
-                    onChange={handleDistrictIdChange}
-                    placeholder="Enter district code"
+                  <IonLabel className="input-label">District ID</IonLabel>
+                  <IonInput
+                    type="number"
+                    value={districtId?.toString()}
+                    onIonChange={(e) => handleDistrictIdChange(e.detail.value!)}
+                    placeholder="Enter district ID"
                     className="modal-input"
                   />
                 </div>
 
                 <div className="input-wrapper">
-                  <Input
-                    label="District Name"
+                  <IonLabel className="input-label">District Name</IonLabel>
+                  <IonInput
                     value={districtName}
-                    onChange={handleDistrictNameChange}
+                    onIonChange={(e) => handleDistrictNameChange(e.detail.value!)}
                     placeholder="Enter district name"
                     className="modal-input"
                   />
