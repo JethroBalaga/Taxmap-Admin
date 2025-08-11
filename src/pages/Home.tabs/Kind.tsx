@@ -59,7 +59,7 @@ const Kind: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
+
       setKinds(data || []);
     } catch (error) {
       console.error('Error fetching kinds:', error);
@@ -95,20 +95,29 @@ const Kind: React.FC = () => {
   };
 
   // Filter data based on search term with null checks
+  // In your Kind component, modify the filteredData memo to include string IDs
   const filteredData = useMemo(() => {
-    if (!searchTerm.trim()) {
-      return kinds;
+    // First filter the data
+    let result = kinds;
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      result = kinds.filter(item => {
+        if (!item) return false;
+        return (
+          (item.id?.toString() || '').includes(term) ||
+          (item.description?.toLowerCase() || '').includes(term)
+        );
+      });
     }
-    
-    const term = searchTerm.toLowerCase();
-    return kinds.filter(item => {
-      if (!item) return false;
-      return (
-        (item.id?.toString() || '').includes(term) ||
-        (item.description?.toLowerCase() || '').includes(term)
-      );
-    });
+
+    // Then ensure each item has a valid unique key
+    return result.map((item, index) => ({
+      ...item,
+      // Use existing ID if available, otherwise fallback to index
+      tableKey: item.id !== undefined ? String(item.id) : `no-id-${index}`
+    }));
   }, [kinds, searchTerm]);
+
 
   const handleRowClick = (rowData: KindItem) => {
     setSelectedRow(rowData);
@@ -127,7 +136,7 @@ const Kind: React.FC = () => {
     setIsLoading(true);
     try {
       const isUsed = await checkIfKindIsUsed(selectedRow.id);
-      
+
       if (isUsed) {
         setShowCannotDeleteAlert(true);
       } else {
@@ -144,16 +153,16 @@ const Kind: React.FC = () => {
 
   const handleDeleteConfirm = async () => {
     if (!selectedRow) return;
-    
+
     try {
       setIsLoading(true);
       const { error } = await supabase
         .from('kindtbl')
         .delete()
         .eq('id', selectedRow.id);
-      
+
       if (error) throw error;
-      
+
       await fetchKinds();
       setSelectedRow(null);
       setToastMessage('Kind deleted successfully');
@@ -175,7 +184,7 @@ const Kind: React.FC = () => {
           <IonTitle>Kind Setup</IonTitle>
         </IonToolbar>
       </IonHeader>
-      
+
       <IonContent fullscreen>
         <IonGrid>
           <IonRow>
@@ -186,20 +195,20 @@ const Kind: React.FC = () => {
                 onIonInput={(e) => setSearchTerm(e.detail.value || '')}
                 debounce={0}
               />
-              
+
               <div className="icon-group">
-                <IonIcon 
-                  icon={add} 
+                <IonIcon
+                  icon={add}
                   className="icon-yellow"
-                  onClick={() => setShowCreateModal(true)} 
+                  onClick={() => setShowCreateModal(true)}
                 />
-                <IonIcon 
-                  icon={arrowUpCircle} 
+                <IonIcon
+                  icon={arrowUpCircle}
                   className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
                   onClick={handleUpdateClick}
                 />
-                <IonIcon 
-                  icon={trash} 
+                <IonIcon
+                  icon={trash}
                   className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
                   onClick={handleDeleteClick}
                 />
@@ -209,10 +218,10 @@ const Kind: React.FC = () => {
 
           <IonRow>
             <IonCol size="12">
-              <DynamicTable 
+              <DynamicTable
                 data={filteredData}
                 title="Kinds"
-                keyField="id"
+                keyField="tableKey"  // Use our guaranteed unique key
                 onRowClick={handleRowClick}
               />
             </IonCol>
