@@ -18,6 +18,7 @@ import {
   IonInput
 } from '@ionic/react';
 import { warning } from 'ionicons/icons';
+import Input from '../Globalcomponents/Input';
 import './../../CSS/Modal.css';
 import Button from '../Globalcomponents/Button';
 import { supabase } from './../../utils/supaBaseClient';
@@ -44,12 +45,11 @@ const DistrictUpdateModal: React.FC<DistrictUpdateModalProps> = ({
   const [isError, setIsError] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
 
-  // Check form validity whenever inputs change
   useEffect(() => {
     setIsFormValid(
       districtId !== null && 
-      districtName.trim() !== '' && 
-      foundedDate.trim() !== ''
+      !!districtName && 
+      !!foundedDate
     );
   }, [districtId, districtName, foundedDate]);
 
@@ -84,7 +84,6 @@ const DistrictUpdateModal: React.FC<DistrictUpdateModalProps> = ({
         }
       }
 
-      // Format the date for Supabase (YYYY-MM-DD)
       const formattedDate = new Date(foundedDate).toISOString().split('T')[0];
 
       const { error } = await supabase
@@ -123,11 +122,7 @@ const DistrictUpdateModal: React.FC<DistrictUpdateModalProps> = ({
 
   return (
     <>
-      <IonModal
-        isOpen={isOpen}
-        onDidDismiss={onClose}
-        className="classification-modal"
-      >
+      <IonModal isOpen={isOpen} onDidDismiss={onClose} className="classification-modal">
         <IonHeader>
           <IonToolbar className="modal-header">
             <IonTitle className="modal-title">Update District</IonTitle>
@@ -146,21 +141,21 @@ const DistrictUpdateModal: React.FC<DistrictUpdateModalProps> = ({
                 )}
 
                 <div className="input-wrapper">
-                  <IonLabel className="input-label">District ID</IonLabel>
+                  <IonLabel className="input-label">District ID (Number)</IonLabel>
                   <IonInput
                     type="number"
-                    value={districtId?.toString()}
+                    value={districtId}
                     onIonChange={(e) => handleDistrictIdChange(e.detail.value!)}
-                    placeholder="Enter district ID"
+                    placeholder="Enter district number"
                     className="modal-input"
                   />
                 </div>
 
                 <div className="input-wrapper">
-                  <IonLabel className="input-label">District Name</IonLabel>
-                  <IonInput
+                  <Input
+                    label="District Name"
                     value={districtName}
-                    onIonChange={(e) => handleDistrictNameChange(e.detail.value!)}
+                    onChange={handleDistrictNameChange}
                     placeholder="Enter district name"
                     className="modal-input"
                   />

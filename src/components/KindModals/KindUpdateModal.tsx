@@ -21,7 +21,7 @@ import { supabase } from './../../utils/supaBaseClient';
 interface KindUpdateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  kindData: { id: number; description: string } | null;
+  kindData: { kind_id: number; description: string } | null;
   onKindUpdated?: () => void;
 }
 
@@ -58,7 +58,7 @@ const KindUpdateModal: React.FC<KindUpdateModalProps> = ({
       const { error } = await supabase
         .from('kindtbl')
         .update({ description })
-        .eq('id', kindData.id);
+        .eq('kind_id', kindData.kind_id);
 
       if (error) throw error;
 

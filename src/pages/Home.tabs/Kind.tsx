@@ -22,7 +22,7 @@ import KindCreateModal from '../../components/KindModals/KindCreateModal';
 import KindUpdateModal from '../../components/KindModals/KindUpdateModal';
 
 interface KindItem {
-  id: number;
+  kind_id: number;
   description: string;
   created_at?: string;
 }
@@ -95,28 +95,18 @@ const Kind: React.FC = () => {
   };
 
   // Filter data based on search term with null checks
-  // In your Kind component, modify the filteredData memo to include string IDs
   const filteredData = useMemo(() => {
-    // First filter the data
-    let result = kinds;
-    if (searchTerm.trim()) {
+      if (!searchTerm.trim()) {
+        return kinds;
+      }
+      
       const term = searchTerm.toLowerCase();
-      result = kinds.filter(item => {
-        if (!item) return false;
-        return (
-          (item.id?.toString() || '').includes(term) ||
-          (item.description?.toLowerCase() || '').includes(term)
-        );
-      });
-    }
+      return kinds.filter(item =>
+        item.kind_id.toString().includes(term) ||  // Convert number to string for search
+        item.description.toLowerCase().includes(term)
+      );
+    }, [kinds, searchTerm]);
 
-    // Then ensure each item has a valid unique key
-    return result.map((item, index) => ({
-      ...item,
-      // Use existing ID if available, otherwise fallback to index
-      tableKey: item.id !== undefined ? String(item.id) : `no-id-${index}`
-    }));
-  }, [kinds, searchTerm]);
 
 
   const handleRowClick = (rowData: KindItem) => {
@@ -135,7 +125,7 @@ const Kind: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const isUsed = await checkIfKindIsUsed(selectedRow.id);
+      const isUsed = await checkIfKindIsUsed(selectedRow.kind_id);
 
       if (isUsed) {
         setShowCannotDeleteAlert(true);
@@ -159,7 +149,7 @@ const Kind: React.FC = () => {
       const { error } = await supabase
         .from('kindtbl')
         .delete()
-        .eq('id', selectedRow.id);
+        .eq('id', selectedRow.kind_id);
 
       if (error) throw error;
 
@@ -221,7 +211,7 @@ const Kind: React.FC = () => {
               <DynamicTable
                 data={filteredData}
                 title="Kinds"
-                keyField="tableKey"  // Use our guaranteed unique key
+                keyField="kind_id"
                 onRowClick={handleRowClick}
               />
             </IonCol>
@@ -247,7 +237,7 @@ const Kind: React.FC = () => {
           isOpen={showDeleteAlert}
           onDidDismiss={() => setShowDeleteAlert(false)}
           header={'Confirm Delete'}
-          message={`Are you sure you want to delete kind #${selectedRow?.id} (${selectedRow?.description})?`}
+          message={`Are you sure you want to delete kind #${selectedRow?.kind_id} (${selectedRow?.description})?`}
           buttons={[
             {
               text: 'Cancel',
@@ -265,7 +255,7 @@ const Kind: React.FC = () => {
           isOpen={showCannotDeleteAlert}
           onDidDismiss={() => setShowCannotDeleteAlert(false)}
           header={'Cannot Delete'}
-          message={`Kind #${selectedRow?.id} cannot be deleted because it is being used in other records.`}
+          message={`Kind #${selectedRow?.kind_id} cannot be deleted because it is being used in other records.`}
           buttons={['OK']}
         />
 
