@@ -12,7 +12,7 @@ import {
   IonToast
 } from '@ionic/react';
 import Input from '../Globalcomponents/Input';
-import './../../CSS/ClassificationModal.css';
+import './../../CSS/Modal.css';
 import Button from '../Globalcomponents/Button';
 import { supabase } from './../../utils/supaBaseClient';
 

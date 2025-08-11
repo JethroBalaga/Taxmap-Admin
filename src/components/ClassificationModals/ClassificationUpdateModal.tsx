@@ -14,7 +14,7 @@ import {
 } from '@ionic/react';
 import { warning } from 'ionicons/icons';
 import Input from '../Globalcomponents/Input';
-import './../../CSS/ClassificationModal.css';
+import './../../CSS/Modal.css';
 import Button from '../Globalcomponents/Button';
 import { supabase } from './../../utils/supaBaseClient';
 
