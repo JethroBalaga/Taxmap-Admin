@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { 
-  IonContent, 
-  IonHeader, 
-  IonPage, 
-  IonTitle, 
+import {
+  IonContent,
+  IonHeader,
+  IonPage,
+  IonTitle,
   IonToolbar,
   IonGrid,
   IonRow,
@@ -12,7 +12,8 @@ import {
   IonLoading,
   IonSearchbar,
   IonAlert,
-  IonToast
+  IonToast,
+  IonRouterOutlet,
 } from '@ionic/react';
 import { add, arrowUpCircle, trash, cashOutline } from 'ionicons/icons';
 import './../../CSS/Setup2.css';
@@ -21,6 +22,8 @@ import { supabase } from '../../utils/supaBaseClient';
 import DistrictCreateModal from '../../components/DistrictModal/DistrictCreateModal';
 import DistrictUpdateModal from '../../components/DistrictModal/DistrictUpdateModal';
 import { useHistory } from 'react-router-dom';
+import { Route } from 'react-router';
+import Taxrate from './Taxrate';
 
 interface DistrictItem {
   district_id: number;
@@ -52,6 +55,7 @@ const District: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
+
   // Fetch data
   const fetchDistricts = useCallback(async () => {
     setIsLoading(true);
@@ -62,12 +66,12 @@ const District: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
+
       const formattedData = data?.map(item => ({
         ...item,
         founded: new Date(item.founded).toLocaleDateString()
       })) || [];
-      
+
       setDistricts(formattedData);
     } catch (error) {
       console.error('Error fetching districts:', error);
@@ -107,7 +111,7 @@ const District: React.FC = () => {
     if (!searchTerm.trim()) {
       return districts;
     }
-    
+
     const term = searchTerm.toLowerCase();
     return districts.filter(item =>
       item.district_id.toString().includes(term) ||
@@ -136,7 +140,7 @@ const District: React.FC = () => {
     setIsLoading(true);
     try {
       const isUsed = await checkIfDistrictIsUsed(selectedRow.district_id);
-      
+
       if (isUsed) {
         setShowCannotDeleteAlert(true);
       } else {
@@ -153,22 +157,21 @@ const District: React.FC = () => {
 
   const handleCashClick = () => {
     if (!selectedRow) return;
-    // Placeholder for cash icon functionality
-    console.log('Cash icon clicked for district:', selectedRow.district_name);
+    history.push(`/menu/home/taxrate?district_id=${selectedRow.district_id}`);
   };
 
   const handleDeleteConfirm = async () => {
     if (!selectedRow) return;
-    
+
     try {
       setIsLoading(true);
       const { error } = await supabase
         .from('districttbl')
         .delete()
         .eq('district_id', selectedRow.district_id);
-      
+
       if (error) throw error;
-      
+
       await fetchDistricts();
       setSelectedRow(null);
       setToastMessage('District deleted successfully');
@@ -190,7 +193,7 @@ const District: React.FC = () => {
           <IonTitle>District Setup</IonTitle>
         </IonToolbar>
       </IonHeader>
-      
+
       <IonContent fullscreen>
         <IonGrid>
           <IonRow>
@@ -201,25 +204,25 @@ const District: React.FC = () => {
                 onIonInput={(e) => setSearchTerm(e.detail.value || '')}
                 debounce={0}
               />
-              
+
               <div className="icon-group">
-                <IonIcon 
-                  icon={add} 
+                <IonIcon
+                  icon={add}
                   className="icon-yellow"
-                  onClick={() => setShowCreateModal(true)} 
+                  onClick={() => setShowCreateModal(true)}
                 />
-                <IonIcon 
-                  icon={arrowUpCircle} 
+                <IonIcon
+                  icon={arrowUpCircle}
                   className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
                   onClick={handleUpdateClick}
                 />
-                <IonIcon 
-                  icon={trash} 
+                <IonIcon
+                  icon={trash}
                   className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
                   onClick={handleDeleteClick}
                 />
-                <IonIcon 
-                  icon={cashOutline} 
+                <IonIcon
+                  icon={cashOutline}
                   className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
                   onClick={handleCashClick}
                 />
@@ -229,7 +232,7 @@ const District: React.FC = () => {
 
           <IonRow>
             <IonCol size="12">
-              <DynamicTable 
+              <DynamicTable
                 data={filteredData}
                 title="Districts"
                 keyField="district_id"

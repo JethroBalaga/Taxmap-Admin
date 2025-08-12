@@ -13,6 +13,7 @@ import Classification from './Home.tabs/Classification';
 import District from './Home.tabs/District';
 import Kind from './Home.tabs/Kind';
 import Subclass from './Home.tabs/Subclass';
+import Taxrate from './Home.tabs/Taxrate';
 
 const Home: React.FC = () => {
 
@@ -41,6 +42,7 @@ const Home: React.FC = () => {
           <Route exact path="/menu/home/district" component={District} />
           <Route exact path="/menu/home/kind" component={Kind} />
           <Route exact path="/menu/home/subclass" component={Subclass} />
+          <Route exact path="/menu/home/taxrate" component={Taxrate} />
 
           <Route exact path="/menu/home">
             <Redirect to="/menu/home/classification" />

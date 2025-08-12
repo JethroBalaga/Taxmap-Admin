@@ -16,6 +16,7 @@ import {
   import {homeOutline, informationOutline, logOutOutline, rocketOutline} from 'ionicons/icons';
 import { Redirect, Route } from 'react-router';
 import Home from './Home';
+import Taxrate from './Home.tabs/Taxrate';
   const Menu: React.FC = () => {
     const path = [
         {name:'Home', url: '/menu/home', icon: homeOutline},
@@ -56,6 +57,7 @@ import Home from './Home';
         <IonContent className="ion-padding">
         <IonRouterOutlet id="main">
         <Route exact path="/menu/home" component={Home} />
+        <Route exact path="/menu/home/taxrate" component={Taxrate} />
                     <Route exact path="/menu">
                         <Redirect to="/menu/home"/>
                     </Route>
