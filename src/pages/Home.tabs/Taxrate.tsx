@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react'; // Added useMemo
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   IonContent, 
   IonHeader, 
@@ -24,8 +24,8 @@ import { supabase } from '../../utils/supaBaseClient';
 interface TaxrateItem {
   tax_rate_id: string;
   district_id: string;
-  eff_year: string;
-  rate: string;
+  effective_year: string;  // Changed from eff_year to effective_year
+  rate_percent: string;   // Changed from rate to rate_percent
   created_at?: string;
 }
 
@@ -61,6 +61,7 @@ const Taxrate: React.FC = () => {
     } catch (error) {
       console.error('Error fetching tax rates:', error);
       setToastMessage('Failed to load tax rates');
+      setIsError(true);
       setShowToast(true);
     } finally {
       setIsLoading(false);
@@ -77,12 +78,20 @@ const Taxrate: React.FC = () => {
   const filteredData = useMemo(() => {
     if (!searchTerm.trim()) return taxrates;
     const term = searchTerm.toLowerCase();
-    const term2= searchTerm;
-    return taxrates.filter(item =>
-      item.tax_rate_id.toString().includes(term) ||
-      item.eff_year.includes(term2) ||
-      item.rate.toLowerCase().includes(term)
-    );
+
+    return taxrates.filter(item => {
+      // Convert all values to strings for consistent searching
+      const taxRateId = item.tax_rate_id?.toString().toLowerCase() || '';
+      const effectiveYear = item.effective_year?.toString().toLowerCase() || '';
+      const ratePercent = item.rate_percent?.toString().toLowerCase() || '';
+
+      // Check if any field contains the search term
+      return (
+        taxRateId.includes(term) ||
+        effectiveYear.includes(term) ||
+        ratePercent.includes(term)
+      );
+    });
   }, [taxrates, searchTerm]);
 
   const handleRowClick = (rowData: TaxrateItem) => {
@@ -109,10 +118,12 @@ const Taxrate: React.FC = () => {
       await fetchTaxrates();
       setSelectedRow(null);
       setToastMessage('Tax rate deleted successfully');
+      setIsError(false);
       setShowToast(true);
     } catch (error) {
       console.error('Error deleting tax rate:', error);
       setToastMessage('Failed to delete tax rate');
+      setIsError(true);
       setShowToast(true);
     } finally {
       setIsLoading(false);
@@ -134,9 +145,9 @@ const Taxrate: React.FC = () => {
             <IonCol size="12" className="search-container">
               <IonSearchbar
                 ref={searchRef}
-                placeholder="Search tax rates..."
+                placeholder="Search by year, ID, or rate..."
                 onIonInput={(e) => setSearchTerm(e.detail.value || '')}
-                debounce={0}
+                debounce={200}  // Added small debounce for better performance
               />
               
               <div className="icon-group">
@@ -187,7 +198,7 @@ const Taxrate: React.FC = () => {
           isOpen={showDeleteAlert}
           onDidDismiss={() => setShowDeleteAlert(false)}
           header={'Confirm Delete'}
-          message={`Are you sure you want to delete the tax rate for ${selectedRow?.eff_year}?`}
+          message={`Are you sure you want to delete the tax rate for year ${selectedRow?.effective_year}?`}
           buttons={[
             {
               text: 'Cancel',
@@ -206,7 +217,7 @@ const Taxrate: React.FC = () => {
           onDidDismiss={() => setShowToast(false)}
           message={toastMessage}
           duration={3000}
-          color={isError ? 'green' : 'success'}
+          color={isError ? 'danger' : 'success'}
         />
       </IonContent>
     </IonPage>
