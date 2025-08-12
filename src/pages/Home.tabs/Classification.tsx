@@ -165,7 +165,7 @@ const Classification: React.FC = () => {
     }
   };
 
-  const addsubclass = () => {
+  const addSubclass = () => {
 
   };
 
@@ -173,7 +173,7 @@ const Classification: React.FC = () => {
     { icon: add, onClick: () => setShowCreateModal(true), disabled: false, title: "Add Classification" },
     { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Classification" },
     { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Classification" },
-    { icon: layersOutline, onClick: addsubclass, disabled: !selectedRow, title: "Add Subclass" }
+    { icon: layersOutline, onClick: addSubclass, disabled: !selectedRow, title: "Add Subclass" }
   ];
 
 

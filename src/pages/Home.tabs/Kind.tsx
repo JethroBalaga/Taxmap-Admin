@@ -14,7 +14,7 @@ import {
   IonAlert,
   IonToast
 } from '@ionic/react';
-import { add, arrowUpCircle, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, readerOutline, trash } from 'ionicons/icons';
 import './../../CSS/Setup2.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
@@ -168,10 +168,15 @@ const Kind: React.FC = () => {
     }
   };
 
+    const addAssesment = () => {
+
+  };
+
   const iconButtons = [
     { icon: add, onClick: () => setShowCreateModal(true), disabled: false, title: "Add Kind" },
     { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Kind" },
-    { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Kind" }
+    { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Kind" },
+    { icon: readerOutline, onClick: addAssesment, disabled: !selectedRow, title: "Add Assesment" }
   ];
 
   return (
