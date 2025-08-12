@@ -40,6 +40,7 @@ const Kind: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
+  const [isError, setIsError] = useState(false);
 
   // Focus search input on mount
   useEffect(() => {
@@ -96,16 +97,16 @@ const Kind: React.FC = () => {
 
   // Filter data based on search term with null checks
   const filteredData = useMemo(() => {
-      if (!searchTerm.trim()) {
-        return kinds;
-      }
-      
-      const term = searchTerm.toLowerCase();
-      return kinds.filter(item =>
-        item.kind_id.toString().includes(term) ||  // Convert number to string for search
-        item.description.toLowerCase().includes(term)
-      );
-    }, [kinds, searchTerm]);
+    if (!searchTerm.trim()) {
+      return kinds;
+    }
+
+    const term = searchTerm.toLowerCase();
+    return kinds.filter(item =>
+      item.kind_id.toString().includes(term) ||  // Convert number to string for search
+      item.description.toLowerCase().includes(term)
+    );
+  }, [kinds, searchTerm]);
 
 
 
@@ -264,6 +265,7 @@ const Kind: React.FC = () => {
           onDidDismiss={() => setShowToast(false)}
           message={toastMessage}
           duration={3000}
+          color={isError ? 'green' : 'success'}
         />
       </IonContent>
     </IonPage>

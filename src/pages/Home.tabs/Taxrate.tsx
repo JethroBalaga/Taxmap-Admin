@@ -22,7 +22,7 @@ import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 
 interface TaxrateItem {
-  id: number;
+  tax_rate_id: string;
   district_id: string;
   eff_year: string;
   rate: string;
@@ -40,6 +40,7 @@ const Taxrate: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const location = useLocation();
+  const [isError, setIsError] = useState(false);
 
   // Get district_id from URL
   const queryParams = new URLSearchParams(location.search);
@@ -76,8 +77,10 @@ const Taxrate: React.FC = () => {
   const filteredData = useMemo(() => {
     if (!searchTerm.trim()) return taxrates;
     const term = searchTerm.toLowerCase();
+    const term2= searchTerm;
     return taxrates.filter(item =>
-      item.eff_year.toLowerCase().includes(term) ||
+      item.tax_rate_id.toString().includes(term) ||
+      item.eff_year.includes(term2) ||
       item.rate.toLowerCase().includes(term)
     );
   }, [taxrates, searchTerm]);
@@ -99,7 +102,7 @@ const Taxrate: React.FC = () => {
       const { error } = await supabase
         .from('taxratetbl')
         .delete()
-        .eq('id', selectedRow.id);
+        .eq('tax_rate_id', selectedRow.tax_rate_id);
       
       if (error) throw error;
       
@@ -161,7 +164,7 @@ const Taxrate: React.FC = () => {
               <DynamicTable 
                 data={filteredData}
                 title="Tax Rates"
-                keyField="id"
+                keyField="tax_rate_id"
                 onRowClick={handleRowClick}
               />
             </IonCol>
@@ -203,6 +206,7 @@ const Taxrate: React.FC = () => {
           onDidDismiss={() => setShowToast(false)}
           message={toastMessage}
           duration={3000}
+          color={isError ? 'green' : 'success'}
         />
       </IonContent>
     </IonPage>
