@@ -146,3 +146,15 @@
     width: 48%;
   }
 }
+.year-picker {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+  margin-top: 5px;
+  width: 100%;
+}
+
+.year-picker::part(text) {
+  font-size: 16px;
+  color: #333;
+}

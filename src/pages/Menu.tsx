@@ -57,7 +57,6 @@ import Taxrate from './Home.tabs/Taxrate';
         <IonContent className="ion-padding">
         <IonRouterOutlet id="main">
         <Route exact path="/menu/home" component={Home} />
-        <Route exact path="/menu/home/taxrate" component={Taxrate} />
                     <Route exact path="/menu">
                         <Redirect to="/menu/home"/>
                     </Route>
