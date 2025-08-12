@@ -14,7 +14,7 @@ import {
   IonAlert,
   IonToast
 } from '@ionic/react';
-import { add, arrowUpCircle, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, layersOutline, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import ClassificationCreateModal from '../../components/ClassificationModals/ClassificationCreateModal';
 import ClassificationUpdateModal from '../../components/ClassificationModals/ClassificationUpdateModal';
@@ -165,10 +165,15 @@ const Classification: React.FC = () => {
     }
   };
 
+  const addsubclass = () => {
+
+  };
+
   const iconButtons = [
     { icon: add, onClick: () => setShowCreateModal(true), disabled: false, title: "Add Classification" },
     { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Classification" },
-    { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Classification" }
+    { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Classification" },
+    { icon: layersOutline, onClick: addsubclass, disabled: !selectedRow, title: "Add Subclass" }
   ];
 
 

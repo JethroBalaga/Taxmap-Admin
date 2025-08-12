@@ -20,7 +20,6 @@ const Home: React.FC = () => {
   const tabs = [
     { name: 'Classification', tab: 'classification', url: '/menu/home/classification', icon: bookOutline },
     { name: 'District', tab: 'district', url: '/menu/home/district', icon: trailSignOutline },
-     { name:'Subclass', tab: 'subclass', url: '/menu/home/subclass', icon: layersOutline },
     { name: 'Kind', tab: 'kind', url: '/menu/home/kind', icon: albumsOutline },
   ]
 
