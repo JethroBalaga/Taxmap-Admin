@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { 
-  IonContent, 
-  IonHeader, 
-  IonPage, 
-  IonTitle, 
+import {
+  IonContent,
+  IonHeader,
+  IonPage,
+  IonTitle,
   IonToolbar,
   IonSearchbar,
   IonIcon,
@@ -109,16 +109,16 @@ const Taxrate: React.FC = () => {
 
   const handleDeleteConfirm = async () => {
     if (!selectedRow) return;
-    
+
     try {
       setIsLoading(true);
       const { error } = await supabase
         .from('taxratetbl')
         .delete()
         .eq('tax_rate_id', selectedRow.tax_rate_id);
-      
+
       if (error) throw error;
-      
+
       await fetchTaxrates();
       setSelectedRow(null);
       setToastMessage('Tax rate deleted successfully');
@@ -142,7 +142,7 @@ const Taxrate: React.FC = () => {
           <IonTitle>Tax Rates - District {districtId}</IonTitle>
         </IonToolbar>
       </IonHeader>
-      
+
       <IonContent fullscreen>
         <IonGrid>
           <IonRow>
@@ -153,20 +153,20 @@ const Taxrate: React.FC = () => {
                 onIonInput={(e) => setSearchTerm(e.detail.value || '')}
                 debounce={200}
               />
-              
+
               <div className="icon-group">
-                <IonIcon 
-                  icon={add} 
+                <IonIcon
+                  icon={add}
                   className="icon-yellow"
-                  onClick={() => setShowCreateModal(true)} 
+                  onClick={() => setShowCreateModal(true)}
                 />
-                <IonIcon 
-                  icon={arrowUpCircle} 
+                <IonIcon
+                  icon={arrowUpCircle}
                   className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
                   onClick={handleUpdateClick}
                 />
-                <IonIcon 
-                  icon={trash} 
+                <IonIcon
+                  icon={trash}
                   className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
                   onClick={handleDeleteClick}
                 />
@@ -176,7 +176,7 @@ const Taxrate: React.FC = () => {
 
           <IonRow>
             <IonCol size="12">
-              <DynamicTable 
+              <DynamicTable
                 data={filteredData}
                 title="Tax Rates"
                 keyField="tax_rate_id"
@@ -202,7 +202,7 @@ const Taxrate: React.FC = () => {
             isOpen={showUpdateModal}
             onClose={() => setShowUpdateModal(false)}
             taxrateData={{
-              id: selectedRow.tax_rate_id,
+              tax_rate_id: selectedRow.tax_rate_id,  // Changed from id to tax_rate_id
               district_id: districtId,
               effective_year: selectedRow.effective_year,
               rate_percent: selectedRow.rate_percent
@@ -212,7 +212,7 @@ const Taxrate: React.FC = () => {
         )}
 
         <IonLoading isOpen={isLoading} message="Loading..." />
-        
+
         <IonAlert
           isOpen={showDeleteAlert}
           onDidDismiss={() => setShowDeleteAlert(false)}

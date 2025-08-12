@@ -1,3 +1,4 @@
+// TaxrateUpdateModal.tsx
 import React, { useState, useEffect } from 'react';
 import {
     IonModal,
@@ -24,7 +25,7 @@ interface TaxrateUpdateModalProps {
     onClose: () => void;
     onTaxrateUpdated?: () => void;
     taxrateData: {
-        id: string;
+        tax_rate_id: string;  // Changed from id to tax_rate_id
         district_id: string;
         effective_year: string;
         rate_percent: string;
@@ -47,7 +48,6 @@ const TaxrateUpdateModal: React.FC<TaxrateUpdateModalProps> = ({
     useEffect(() => {
         if (taxrateData) {
             setSelectedDate(taxrateData.effective_year);
-            // Remove the % sign if present
             setRate(taxrateData.rate_percent.replace('%', ''));
         }
     }, [taxrateData]);
@@ -60,11 +60,10 @@ const TaxrateUpdateModal: React.FC<TaxrateUpdateModalProps> = ({
             const { error } = await supabase
                 .from('taxratetbl')
                 .update({
-                    effective_year: selectedDate.split('T')[0], // Extract YYYY-MM-DD
+                    effective_year: selectedDate.split('T')[0],
                     rate_percent: `${rate}%`,
-                    updated_at: new Date().toISOString()
                 })
-                .eq('id', taxrateData.id);
+                .eq('tax_rate_id', taxrateData.tax_rate_id);  // Using tax_rate_id in WHERE clause
 
             if (error) throw error;
 
@@ -101,6 +100,11 @@ const TaxrateUpdateModal: React.FC<TaxrateUpdateModalProps> = ({
                                 {/* District ID Label */}
                                 <IonItem lines="none" className="district-label-item">
                                     <IonLabel className="district-label">District: {taxrateData?.district_id}</IonLabel>
+                                </IonItem>
+
+                                {/* Tax Rate ID Label */}
+                                <IonItem lines="none" className="district-label-item">
+                                    <IonLabel className="district-label">Tax Rate ID: {taxrateData?.tax_rate_id}</IonLabel>
                                 </IonItem>
 
                                 {/* Year Picker */}
