@@ -176,7 +176,7 @@ const Kind: React.FC = () => {
     { icon: add, onClick: () => setShowCreateModal(true), disabled: false, title: "Add Kind" },
     { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Kind" },
     { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Kind" },
-    { icon: readerOutline, onClick: addAssesment, disabled: !selectedRow, title: "Add Assesment" }
+    { icon: readerOutline, onClick: addAssesment, disabled: !selectedRow, title: "Manage Assesment Level" }
   ];
 
   return (

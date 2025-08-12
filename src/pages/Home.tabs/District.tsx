@@ -191,7 +191,7 @@ const District: React.FC = () => {
     { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit District" },
     { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete District" },
     { icon: cashOutline, onClick: handleCashClick, disabled: !selectedRow, title: "Manage Tax Rates" },
-    { icon: podiumOutline, onClick: undefined, disabled: !selectedRow, title: "View Location (Coming Soon)" },
+    { icon: podiumOutline, onClick: undefined, disabled: !selectedRow, title: "Manage Barangay" },
   ];
 
   return (
