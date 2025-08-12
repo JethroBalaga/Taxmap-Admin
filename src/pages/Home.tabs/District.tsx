@@ -14,15 +14,16 @@ import {
   IonAlert,
   IonToast
 } from '@ionic/react';
-import { add, arrowUpCircle, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, trash, cashOutline } from 'ionicons/icons';
 import './../../CSS/Setup2.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 import DistrictCreateModal from '../../components/DistrictModal/DistrictCreateModal';
 import DistrictUpdateModal from '../../components/DistrictModal/DistrictUpdateModal';
+import { useHistory } from 'react-router-dom';
 
 interface DistrictItem {
-  district_id: number;  // Changed to number
+  district_id: number;
   district_name: string;
   founded: string;
   created_at?: string;
@@ -41,6 +42,7 @@ const District: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
+  const history = useHistory();
 
   // Focus search input on mount
   useEffect(() => {
@@ -61,7 +63,6 @@ const District: React.FC = () => {
 
       if (error) throw error;
       
-      // Format the date for display while keeping original data
       const formattedData = data?.map(item => ({
         ...item,
         founded: new Date(item.founded).toLocaleDateString()
@@ -82,7 +83,7 @@ const District: React.FC = () => {
   }, [fetchDistricts]);
 
   // Check if district is used in other tables
-  const checkIfDistrictIsUsed = async (districtId: number) => {  // Changed to number
+  const checkIfDistrictIsUsed = async (districtId: number) => {
     try {
       const { count: count1 } = await supabase
         .from('related_table1')
@@ -109,7 +110,7 @@ const District: React.FC = () => {
     
     const term = searchTerm.toLowerCase();
     return districts.filter(item =>
-      item.district_id.toString().includes(term) ||  // Convert number to string for search
+      item.district_id.toString().includes(term) ||
       item.district_name.toLowerCase().includes(term) ||
       item.founded.toLowerCase().includes(term)
     );
@@ -148,6 +149,12 @@ const District: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleCashClick = () => {
+    if (!selectedRow) return;
+    // Placeholder for cash icon functionality
+    console.log('Cash icon clicked for district:', selectedRow.district_name);
   };
 
   const handleDeleteConfirm = async () => {
@@ -210,6 +217,11 @@ const District: React.FC = () => {
                   icon={trash} 
                   className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
                   onClick={handleDeleteClick}
+                />
+                <IonIcon 
+                  icon={cashOutline} 
+                  className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
+                  onClick={handleCashClick}
                 />
               </div>
             </IonCol>

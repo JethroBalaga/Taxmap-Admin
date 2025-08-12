@@ -42,7 +42,6 @@ const Home: React.FC = () => {
           <Route exact path="/menu/home/kind" component={Kind} />
           <Route exact path="/menu/home/subclass" component={Subclass} />
 
-
           <Route exact path="/menu/home">
             <Redirect to="/menu/home/classification" />
           </Route>
