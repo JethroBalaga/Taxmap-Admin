@@ -23,7 +23,6 @@ import { supabase } from '../../utils/supaBaseClient';
 
 interface TaxrateItem {
   tax_rate_id: string;
-  district_id: string;
   effective_year: string;  // Changed from eff_year to effective_year
   rate_percent: string;   // Changed from rate to rate_percent
   created_at?: string;
@@ -48,25 +47,25 @@ const Taxrate: React.FC = () => {
 
   // Fetch tax rates
   const fetchTaxrates = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('taxratetbl')
-        .select('*')
-        .eq('district_id', districtId)
-        .order('created_at', { ascending: false });
+  setIsLoading(true);
+  try {
+    const { data, error } = await supabase
+      .from('taxratetbl')
+      .select('tax_rate_id, effective_year, rate_percent, created_at')
+      .eq('district_id', districtId)
+      .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setTaxrates(data || []);
-    } catch (error) {
-      console.error('Error fetching tax rates:', error);
-      setToastMessage('Failed to load tax rates');
-      setIsError(true);
-      setShowToast(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    if (error) throw error;
+    setTaxrates(data || []);
+  } catch (error) {
+    console.error('Error fetching tax rates:', error);
+    setToastMessage('Failed to load tax rates');
+    setIsError(true);
+    setShowToast(true);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   useEffect(() => {
     if (districtId) {
