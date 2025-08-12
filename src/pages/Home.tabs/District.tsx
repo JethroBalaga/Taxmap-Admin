@@ -15,7 +15,7 @@ import {
   IonToast,
   IonRouterOutlet,
 } from '@ionic/react';
-import { add, arrowUpCircle, trash, cashOutline } from 'ionicons/icons';
+import { add, arrowUpCircle, trash, cashOutline, podiumOutline } from 'ionicons/icons';
 import './../../CSS/Setup2.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
@@ -225,6 +225,10 @@ const District: React.FC = () => {
                   icon={cashOutline}
                   className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
                   onClick={handleCashClick}
+                />
+                <IonIcon
+                  icon={podiumOutline}
+                  className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
                 />
               </div>
             </IonCol>
