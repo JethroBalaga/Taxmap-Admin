@@ -1,80 +1,76 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef,  useEffect} from 'react';
 import { 
   IonContent, 
   IonHeader, 
   IonPage, 
   IonTitle, 
   IonToolbar,
-  IonLabel,
-  IonItem,
-  IonButton
+  IonSearchbar,
+  IonIcon,
+  IonGrid,
+  IonRow,
+  IonCol
 } from '@ionic/react';
 import { useLocation } from 'react-router-dom';
-import { supabase } from '../../utils/supaBaseClient';
-
-interface BarangayItem {
-  barangay_id: number;
-  barangay_name: string;
-  district_id: number;
-}
+import { add, arrowUpCircle, trash } from 'ionicons/icons';
+import './../../CSS/Setup.css';
 
 const Taxrate: React.FC = () => {
-  const location = useLocation();
-  const [districtId, setDistrictId] = useState<string | null>(null);
-  const [barangays, setBarangays] = useState<BarangayItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedRow, setSelectedRow] = useState<any>(null);
+  const searchRef = useRef<HTMLIonSearchbarElement>(null);
 
+  // Get district_id from URL (display only)
+  const queryParams = new URLSearchParams(location.search);
+  const districtId = queryParams.get('district_id');
+
+  // Focus search input on mount
   useEffect(() => {
-    // Get district_id from URL query params
-    const queryParams = new URLSearchParams(location.search);
-    const id = queryParams.get('district_id');
-    setDistrictId(id);
-
-    if (id) {
-      fetchBarangays(parseInt(id));
-    }
-  }, [location]);
-
-  const fetchBarangays = async (districtId: number) => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('barangaytbl')
-        .select('*')
-        .eq('district_id', districtId);
-
-      if (error) throw error;
-      setBarangays(data || []);
-    } catch (error) {
-      console.error('Error fetching barangays:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const timer = setTimeout(() => {
+      searchRef.current?.setFocus();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Tax Rates</IonTitle>
+          <IonTitle>Tax Rates - District {districtId}</IonTitle>
         </IonToolbar>
       </IonHeader>
       
-      <IonContent>
-        <div style={{ padding: '16px' }}>
-          <h3>District: {districtId} Barangays:</h3>
-          {barangays.length > 0 ? (
-            <ul>
-              {barangays.map(barangay => (
-                <li key={barangay.barangay_id}>
-                  {barangay.barangay_name}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>No barangays found for this district</p>
-          )}
-        </div>
+      <IonContent fullscreen>
+        <IonGrid>
+          <IonRow>
+            <IonCol size="12" className="search-container">
+              <IonSearchbar
+                ref={searchRef}
+                placeholder="Search tax rate"
+                onIonInput={(e) => setSearchTerm(e.detail.value || '')}
+                debounce={0}
+              />
+              
+              <div className="icon-group">
+                <IonIcon 
+                  icon={add} 
+                  className="icon-yellow"
+                  onClick={() => console.log('Add clicked')} 
+                />
+                <IonIcon 
+                  icon={arrowUpCircle} 
+                  className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
+                  onClick={() => console.log('Update clicked')}
+                />
+                <IonIcon 
+                  icon={trash} 
+                  className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
+                  onClick={() => console.log('Delete clicked')}
+                />
+              </div>
+            </IonCol>
+          </IonRow>
+        </IonGrid>
       </IonContent>
     </IonPage>
   );
