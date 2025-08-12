@@ -165,6 +165,13 @@ const Classification: React.FC = () => {
     }
   };
 
+  const iconButtons = [
+    { icon: add, onClick: () => setShowCreateModal(true), disabled: false, title: "Add Classification" },
+    { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Classification" },
+    { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Classification" }
+  ];
+
+
   return (
     <IonPage>
       <IonHeader>
@@ -185,21 +192,16 @@ const Classification: React.FC = () => {
               />
 
               <div className="icon-group">
-                <IonIcon
-                  icon={add}
-                  className="icon-yellow"
-                  onClick={() => setShowCreateModal(true)}
-                />
-                <IonIcon
-                  icon={arrowUpCircle}
-                  className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
-                  onClick={handleUpdateClick}
-                />
-                <IonIcon
-                  icon={trash}
-                  className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
-                  onClick={handleDeleteClick}
-                />
+                {iconButtons.map((btn, index) => (
+                  <IonIcon
+                    key={index}
+                    icon={btn.icon}
+                    className={`icon-yellow ${btn.disabled ? 'icon-disabled' : ''}`}
+                    onClick={btn.disabled ? undefined : btn.onClick}
+                    title={btn.title}
+                  />
+                ))}
+
               </div>
             </IonCol>
           </IonRow>

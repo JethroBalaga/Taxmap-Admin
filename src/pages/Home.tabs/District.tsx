@@ -186,6 +186,14 @@ const District: React.FC = () => {
     }
   };
 
+  const iconButtons = [
+    { icon: add, onClick: () => setShowCreateModal(true), disabled: false, title: "Add District" },
+    { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit District" },
+    { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete District" },
+    { icon: cashOutline, onClick: handleCashClick, disabled: !selectedRow, title: "Manage Tax Rates" },
+    { icon: podiumOutline, onClick: undefined, disabled: !selectedRow, title: "View Location (Coming Soon)" },
+  ];
+
   return (
     <IonPage>
       <IonHeader>
@@ -206,30 +214,15 @@ const District: React.FC = () => {
               />
 
               <div className="icon-group">
-                <IonIcon
-                  icon={add}
-                  className="icon-yellow"
-                  onClick={() => setShowCreateModal(true)}
-                />
-                <IonIcon
-                  icon={arrowUpCircle}
-                  className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
-                  onClick={handleUpdateClick}
-                />
-                <IonIcon
-                  icon={trash}
-                  className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
-                  onClick={handleDeleteClick}
-                />
-                <IonIcon
-                  icon={cashOutline}
-                  className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
-                  onClick={handleCashClick}
-                />
-                <IonIcon
-                  icon={podiumOutline}
-                  className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
-                />
+                {iconButtons.map((btn, index) => (
+                  <IonIcon
+                    key={index}
+                    icon={btn.icon}
+                    className={`icon-yellow ${btn.disabled ? 'icon-disabled' : ''}`}
+                    onClick={btn.disabled ? undefined : btn.onClick}
+                    title={btn.title} // Tooltip on hover
+                  />
+                ))}
               </div>
             </IonCol>
           </IonRow>
