@@ -22,7 +22,6 @@ import { supabase } from '../../utils/supaBaseClient';
 import DistrictCreateModal from '../../components/DistrictModal/DistrictCreateModal';
 import DistrictUpdateModal from '../../components/DistrictModal/DistrictUpdateModal';
 import { useHistory } from 'react-router-dom';
-import { Route } from 'react-router';
 import Taxrate from './Taxrate';
 
 interface DistrictItem {
@@ -46,6 +45,7 @@ const District: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const history = useHistory();
+  const [isError, setIsError] = useState(false);
 
   // Focus search input on mount
   useEffect(() => {
@@ -288,6 +288,7 @@ const District: React.FC = () => {
           onDidDismiss={() => setShowToast(false)}
           message={toastMessage}
           duration={3000}
+          color={isError ? 'green' : 'success'}
         />
       </IonContent>
     </IonPage>

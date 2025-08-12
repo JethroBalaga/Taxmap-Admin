@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { 
-  IonContent, 
-  IonHeader, 
-  IonPage, 
-  IonTitle, 
+import {
+  IonContent,
+  IonHeader,
+  IonPage,
+  IonTitle,
   IonToolbar,
   IonGrid,
   IonRow,
@@ -40,6 +40,7 @@ const Classification: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
+  const [isError, setIsError] = useState(false);
 
   // Focus search input on mount
   useEffect(() => {
@@ -99,7 +100,7 @@ const Classification: React.FC = () => {
     if (!searchTerm.trim()) {
       return classifications;
     }
-    
+
     return classifications.filter(item =>
       item.class_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.classification.toLowerCase().includes(searchTerm.toLowerCase())
@@ -123,7 +124,7 @@ const Classification: React.FC = () => {
     setIsLoading(true);
     try {
       const isUsed = await checkIfClassificationIsUsed(selectedRow.class_id);
-      
+
       if (isUsed) {
         setShowCannotDeleteAlert(true);
       } else {
@@ -140,16 +141,16 @@ const Classification: React.FC = () => {
 
   const handleDeleteConfirm = async () => {
     if (!selectedRow) return;
-    
+
     try {
       setIsLoading(true);
       const { error } = await supabase
         .from('classtbl')
         .delete()
         .eq('class_id', selectedRow.class_id);
-      
+
       if (error) throw error;
-      
+
       await fetchClassifications();
       setSelectedRow(null);
       setToastMessage('Classification deleted successfully');
@@ -171,7 +172,7 @@ const Classification: React.FC = () => {
           <IonTitle>Classification Setup</IonTitle>
         </IonToolbar>
       </IonHeader>
-      
+
       <IonContent fullscreen>
         <IonGrid>
           <IonRow>
@@ -182,20 +183,20 @@ const Classification: React.FC = () => {
                 onIonInput={(e) => setSearchTerm(e.detail.value || '')}
                 debounce={0}
               />
-              
+
               <div className="icon-group">
-                <IonIcon 
-                  icon={add} 
+                <IonIcon
+                  icon={add}
                   className="icon-yellow"
-                  onClick={() => setShowCreateModal(true)} 
+                  onClick={() => setShowCreateModal(true)}
                 />
-                <IonIcon 
-                  icon={arrowUpCircle} 
+                <IonIcon
+                  icon={arrowUpCircle}
                   className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
                   onClick={handleUpdateClick}
                 />
-                <IonIcon 
-                  icon={trash} 
+                <IonIcon
+                  icon={trash}
                   className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
                   onClick={handleDeleteClick}
                 />
@@ -205,7 +206,7 @@ const Classification: React.FC = () => {
 
           <IonRow>
             <IonCol size="12">
-              <DynamicTable 
+              <DynamicTable
                 data={filteredData}
                 title="Classifications"
                 keyField="class_id"
@@ -261,6 +262,7 @@ const Classification: React.FC = () => {
           onDidDismiss={() => setShowToast(false)}
           message={toastMessage}
           duration={3000}
+          color={isError ? 'green' : 'success'}
         />
       </IonContent>
     </IonPage>
