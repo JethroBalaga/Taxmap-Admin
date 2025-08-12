@@ -1,4 +1,4 @@
-import React, { useState, useRef,  useEffect} from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   IonContent, 
   IonHeader, 
@@ -14,15 +14,23 @@ import {
 import { useLocation } from 'react-router-dom';
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
+import TaxrateCreateModal from '../../components/TaxrateModals/TaxrateCreateModal';
 
 const Taxrate: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRow, setSelectedRow] = useState<any>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
+  const location = useLocation();
 
-  // Get district_id from URL (display only)
+  // Get district_id from URL
   const queryParams = new URLSearchParams(location.search);
   const districtId = queryParams.get('district_id');
+
+  // Debug: Verify districtId is captured
+  useEffect(() => {
+    console.log('District ID from URL:', districtId);
+  }, [districtId]);
 
   // Focus search input on mount
   useEffect(() => {
@@ -55,7 +63,7 @@ const Taxrate: React.FC = () => {
                 <IonIcon 
                   icon={add} 
                   className="icon-yellow"
-                  onClick={() => console.log('Add clicked')} 
+                  onClick={() => setShowCreateModal(true)} 
                 />
                 <IonIcon 
                   icon={arrowUpCircle} 
@@ -71,6 +79,19 @@ const Taxrate: React.FC = () => {
             </IonCol>
           </IonRow>
         </IonGrid>
+
+        {/* Taxrate Create Modal */}
+        {districtId && (
+          <TaxrateCreateModal
+            isOpen={showCreateModal}
+            onClose={() => setShowCreateModal(false)}
+            district_id={districtId}
+            onTaxrateCreated={() => {
+              // Will implement refresh later
+              console.log('Should refresh tax rates');
+            }}
+          />
+        )}
       </IonContent>
     </IonPage>
   );
