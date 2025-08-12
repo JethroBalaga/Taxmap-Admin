@@ -18,13 +18,14 @@ import { useLocation } from 'react-router-dom';
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import TaxrateCreateModal from '../../components/TaxrateModals/TaxrateCreateModal';
+import TaxrateUpdateModal from '../../components/TaxrateModals/TaxrateUpdateModal'; // Add this import
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 
 interface TaxrateItem {
   tax_rate_id: string;
-  effective_year: string;  // Changed from eff_year to effective_year
-  rate_percent: string;   // Changed from rate to rate_percent
+  effective_year: string;
+  rate_percent: string;
   created_at?: string;
 }
 
@@ -33,6 +34,7 @@ const Taxrate: React.FC = () => {
   const [taxrates, setTaxrates] = useState<TaxrateItem[]>([]);
   const [selectedRow, setSelectedRow] = useState<TaxrateItem | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false); // Add this state
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -47,25 +49,25 @@ const Taxrate: React.FC = () => {
 
   // Fetch tax rates
   const fetchTaxrates = async () => {
-  setIsLoading(true);
-  try {
-    const { data, error } = await supabase
-      .from('taxratetbl')
-      .select('tax_rate_id, effective_year, rate_percent, created_at')
-      .eq('district_id', districtId)
-      .order('created_at', { ascending: false });
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('taxratetbl')
+        .select('tax_rate_id, effective_year, rate_percent, created_at')
+        .eq('district_id', districtId)
+        .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    setTaxrates(data || []);
-  } catch (error) {
-    console.error('Error fetching tax rates:', error);
-    setToastMessage('Failed to load tax rates');
-    setIsError(true);
-    setShowToast(true);
-  } finally {
-    setIsLoading(false);
-  }
-};
+      if (error) throw error;
+      setTaxrates(data || []);
+    } catch (error) {
+      console.error('Error fetching tax rates:', error);
+      setToastMessage('Failed to load tax rates');
+      setIsError(true);
+      setShowToast(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (districtId) {
@@ -79,12 +81,10 @@ const Taxrate: React.FC = () => {
     const term = searchTerm.toLowerCase();
 
     return taxrates.filter(item => {
-      // Convert all values to strings for consistent searching
       const taxRateId = item.tax_rate_id?.toString().toLowerCase() || '';
       const effectiveYear = item.effective_year?.toString().toLowerCase() || '';
       const ratePercent = item.rate_percent?.toString().toLowerCase() || '';
 
-      // Check if any field contains the search term
       return (
         taxRateId.includes(term) ||
         effectiveYear.includes(term) ||
@@ -100,6 +100,11 @@ const Taxrate: React.FC = () => {
   const handleDeleteClick = () => {
     if (!selectedRow) return;
     setShowDeleteAlert(true);
+  };
+
+  const handleUpdateClick = () => {
+    if (!selectedRow) return;
+    setShowUpdateModal(true);
   };
 
   const handleDeleteConfirm = async () => {
@@ -146,7 +151,7 @@ const Taxrate: React.FC = () => {
                 ref={searchRef}
                 placeholder="Search by year, ID, or rate..."
                 onIonInput={(e) => setSearchTerm(e.detail.value || '')}
-                debounce={200}  // Added small debounce for better performance
+                debounce={200}
               />
               
               <div className="icon-group">
@@ -158,7 +163,7 @@ const Taxrate: React.FC = () => {
                 <IonIcon 
                   icon={arrowUpCircle} 
                   className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
-                  onClick={() => console.log('Update clicked')}
+                  onClick={handleUpdateClick}
                 />
                 <IonIcon 
                   icon={trash} 
@@ -188,6 +193,21 @@ const Taxrate: React.FC = () => {
             onClose={() => setShowCreateModal(false)}
             district_id={districtId}
             onTaxrateCreated={fetchTaxrates}
+          />
+        )}
+
+        {/* Taxrate Update Modal */}
+        {selectedRow && districtId && (
+          <TaxrateUpdateModal
+            isOpen={showUpdateModal}
+            onClose={() => setShowUpdateModal(false)}
+            taxrateData={{
+              id: selectedRow.tax_rate_id,
+              district_id: districtId,
+              effective_year: selectedRow.effective_year,
+              rate_percent: selectedRow.rate_percent
+            }}
+            onTaxrateUpdated={fetchTaxrates}
           />
         )}
 
