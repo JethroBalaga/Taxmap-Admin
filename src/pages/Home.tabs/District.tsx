@@ -186,12 +186,21 @@ const District: React.FC = () => {
     }
   };
 
+  const handleBarangayClick = () => {
+  if (!selectedRow) return;
+  history.push({
+    pathname: '/menu/home/barangay',
+    search: `?district_id=${selectedRow.district_id}`,
+    state: { districtName: selectedRow.district_name } // optional: pass additional data
+  });
+};
+  
   const iconButtons = [
     { icon: add, onClick: () => setShowCreateModal(true), disabled: false, title: "Add District" },
     { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit District" },
     { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete District" },
     { icon: cashOutline, onClick: handleCashClick, disabled: !selectedRow, title: "Manage Tax Rates" },
-    { icon: podiumOutline, onClick: undefined, disabled: !selectedRow, title: "Manage Barangay" },
+    { icon: podiumOutline, onClick:  handleBarangayClick, disabled: !selectedRow, title: "Manage Barangay" },
   ];
 
   return (
