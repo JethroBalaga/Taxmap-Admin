@@ -32,14 +32,14 @@ const BarangayCreateModal: React.FC<BarangayCreateModalProps> = ({
   district_id
 }) => {
   const [barangay_id, setBarangayId] = useState('');
-  const [barangay_name, setBarangayName] = useState('');
+  const [barangay, setBarangay] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [isError, setIsError] = useState(false);
 
   const handleCreate = async () => {
-    if (!barangay_id || !barangay_name) return;
+    if (!barangay_id || !barangay) return;
 
     setIsLoading(true);
     try {
@@ -47,7 +47,7 @@ const BarangayCreateModal: React.FC<BarangayCreateModalProps> = ({
         .from('barangaytbl')
         .insert([{
           barangay_id,
-          barangay_name,
+          barangay,
           district_id
         }]);
 
@@ -55,7 +55,7 @@ const BarangayCreateModal: React.FC<BarangayCreateModalProps> = ({
 
       setToastMessage('Barangay created successfully!');
       setBarangayId('');
-      setBarangayName('');
+      setBarangay('');
       onBarangayCreated();
       setTimeout(onClose, 1000);
     } catch (error: any) {
@@ -68,13 +68,12 @@ const BarangayCreateModal: React.FC<BarangayCreateModalProps> = ({
     }
   };
 
-  // Safe input handlers that work with different Input component implementations
   const handleBarangayIdChange = (value: string) => {
     setBarangayId(value);
   };
 
-  const handleBarangayNameChange = (value: string) => {
-    setBarangayName(value);
+  const handleBarangayChange = (value: string) => {
+    setBarangay(value);
   };
 
   return (
@@ -90,12 +89,10 @@ const BarangayCreateModal: React.FC<BarangayCreateModalProps> = ({
           <IonGrid className="form-grid">
             <IonRow>
               <IonCol className="form-column">
-                {/* District ID Label */}
                 <IonItem lines="none" className="district-label-item">
                   <IonLabel className="district-label">District ID: {district_id}</IonLabel>
                 </IonItem>
 
-                {/* Barangay ID Input */}
                 <div className="input-wrapper">
                   <Input
                     label="Barangay ID"
@@ -106,13 +103,12 @@ const BarangayCreateModal: React.FC<BarangayCreateModalProps> = ({
                   />
                 </div>
 
-                {/* Barangay Name Input */}
                 <div className="input-wrapper">
                   <Input
-                    label="Barangay Name"
-                    value={barangay_name}
-                    onChange={handleBarangayNameChange}
-                    placeholder="Enter barangay name"
+                    label="Barangay"
+                    value={barangay}
+                    onChange={handleBarangayChange}
+                    placeholder="Enter barangay"
                     className="modal-input"
                   />
                 </div>
@@ -130,7 +126,7 @@ const BarangayCreateModal: React.FC<BarangayCreateModalProps> = ({
                   <Button
                     variant="primary"
                     onClick={handleCreate}
-                    disabled={!barangay_id || !barangay_name || isLoading}
+                    disabled={!barangay_id || !barangay || isLoading}
                     className="create-btn"
                   >
                     {isLoading ? 'Creating...' : 'Create'}

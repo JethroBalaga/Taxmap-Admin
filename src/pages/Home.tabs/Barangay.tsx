@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo,useCallback,} from 'react';
 import {
   IonContent,
   IonHeader,
@@ -17,6 +17,7 @@ import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../../utils/supaBaseClient';
+import BarangayCreateModal from '../../components/BarangayModals/BarangayCreateModal';
 
 interface BarangayItem {
   barangay_id: string;
@@ -32,8 +33,8 @@ const Barangay: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRow, setSelectedRow] = useState<BarangayItem | null>(null);
-  const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const searchRef = useRef<HTMLIonSearchbarElement>(null);
 
   // Get district_id from URL params
   useEffect(() => {
@@ -45,43 +46,74 @@ const Barangay: React.FC = () => {
   }, [location]);
 
   // Fetch barangays when districtId changes
-  useEffect(() => {
-    const fetchBarangays = async () => {
-      if (!districtId) return;
-      
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('barangaytbl')
-          .select('*')
-          .eq('district_id', districtId)
-          .order('created_at', { ascending: false });
+  const fetchBarangays = useCallback(async () => {
+    if (!districtId) return;
+    
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('barangaytbl')
+        .select('*')
+        .eq('district_id', districtId)
+        .order('created_at', { ascending: false });
 
-        if (error) throw error;
-        setBarangays(data || []);
-      } catch (error) {
-        console.error('Error fetching barangays:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchBarangays();
+      if (error) throw error;
+      setBarangays(data || []);
+    } catch (error) {
+      console.error('Error fetching barangays:', error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [districtId]);
+
+  useEffect(() => {
+    fetchBarangays();
+  }, [fetchBarangays]);
 
   // Filter data based on search term
   const filteredData = useMemo(() => {
-    return searchTerm.trim() 
-      ? barangays.filter(item =>
-          item.barangay_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.barangay_name.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      : barangays;
+    if (!searchTerm.trim()) return barangays;
+
+    const term = searchTerm.toLowerCase();
+    return barangays.filter(item =>
+      item.barangay_id.toLowerCase().includes(term) ||
+      item.barangay_name.toLowerCase().includes(term)
+    );
   }, [barangays, searchTerm]);
 
   const handleRowClick = (rowData: BarangayItem) => {
     setSelectedRow(rowData);
   };
+
+  const handleCreateClick = () => {
+    setShowCreateModal(true);
+  };
+
+  const handleBarangayCreated = () => {
+    fetchBarangays();
+    setShowCreateModal(false);
+  };
+
+  const iconButtons = [
+    { 
+      icon: add, 
+      onClick: handleCreateClick, 
+      disabled: false, 
+      title: "Add Barangay" 
+    },
+    { 
+      icon: arrowUpCircle, 
+      onClick: () => {}, 
+      disabled: !selectedRow, 
+      title: "Edit Barangay" 
+    },
+    { 
+      icon: trash, 
+      onClick: () => {}, 
+      disabled: !selectedRow, 
+      title: "Delete Barangay" 
+    },
+  ];
 
   return (
     <IonPage>
@@ -105,17 +137,15 @@ const Barangay: React.FC = () => {
               />
 
               <div className="icon-group">
-                <IonIcon icon={add} className="icon-yellow" title="Add Barangay" />
-                <IonIcon 
-                  icon={arrowUpCircle} 
-                  className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`} 
-                  title="Edit Barangay" 
-                />
-                <IonIcon 
-                  icon={trash} 
-                  className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`} 
-                  title="Delete Barangay" 
-                />
+                {iconButtons.map((btn, index) => (
+                  <IonIcon
+                    key={index}
+                    icon={btn.icon}
+                    className={`icon-yellow ${btn.disabled ? 'icon-disabled' : ''}`}
+                    onClick={btn.disabled ? undefined : btn.onClick}
+                    title={btn.title}
+                  />
+                ))}
               </div>
             </IonCol>
           </IonRow>
@@ -131,6 +161,13 @@ const Barangay: React.FC = () => {
             </IonCol>
           </IonRow>
         </IonGrid>
+
+        <BarangayCreateModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onBarangayCreated={handleBarangayCreated}
+          district_id={districtId || 0}
+        />
 
         <IonLoading isOpen={isLoading} message="Loading..." />
       </IonContent>
