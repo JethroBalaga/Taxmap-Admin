@@ -186,13 +186,10 @@ const District: React.FC = () => {
     }
   };
 
-  const handleBarangayClick = () => {
+  // In your District.tsx component, modify the handleBarangayClick function:
+const handleBarangayClick = () => {
   if (!selectedRow) return;
-  history.push({
-    pathname: '/menu/home/barangay',
-    search: `?district_id=${selectedRow.district_id}`,
-    state: { districtName: selectedRow.district_name } // optional: pass additional data
-  });
+  history.push(`/menu/home/barangay?district_id=${selectedRow.district_id}`);
 };
   
   const iconButtons = [
