@@ -33,6 +33,7 @@ const Barangay: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRow, setSelectedRow] = useState<BarangayItem | null>(null);
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Get district_id from URL params
   useEffect(() => {
