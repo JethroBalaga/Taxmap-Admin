@@ -23,7 +23,7 @@ import BarangayUpdateModal from '../../components/BarangayModals/BarangayUpdateM
 
 interface BarangayItem {
   barangay_id: string;
-  barangay_name: string;
+  barangay: string;
   district_id: number;
   created_at?: string;
 }
@@ -52,7 +52,7 @@ const Barangay: React.FC = () => {
   // Fetch barangays when districtId changes
   const fetchBarangays = useCallback(async () => {
     if (!districtId) return;
-    
+
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -81,7 +81,7 @@ const Barangay: React.FC = () => {
     const term = searchTerm.toLowerCase();
     return barangays.filter(item =>
       item.barangay_id.toLowerCase().includes(term) ||
-      item.barangay_name.toLowerCase().includes(term)
+      item.barangay.toLowerCase().includes(term)
     );
   }, [barangays, searchTerm]);
 
@@ -107,7 +107,7 @@ const Barangay: React.FC = () => {
 
   const handleDeleteConfirm = async () => {
     if (!selectedRow) return;
-    
+
     setIsLoading(true);
     try {
       const { error } = await supabase
@@ -139,23 +139,23 @@ const Barangay: React.FC = () => {
   };
 
   const iconButtons = [
-    { 
-      icon: add, 
-      onClick: handleCreateClick, 
-      disabled: false, 
-      title: "Add Barangay" 
+    {
+      icon: add,
+      onClick: handleCreateClick,
+      disabled: false,
+      title: "Add Barangay"
     },
-    { 
-      icon: arrowUpCircle, 
-      onClick: handleEditClick, 
-      disabled: !selectedRow, 
-      title: "Edit Barangay" 
+    {
+      icon: arrowUpCircle,
+      onClick: handleEditClick,
+      disabled: !selectedRow,
+      title: "Edit Barangay"
     },
-    { 
-      icon: trash, 
-      onClick: handleDeleteClick, 
-      disabled: !selectedRow, 
-      title: "Delete Barangay" 
+    {
+      icon: trash,
+      onClick: handleDeleteClick,
+      disabled: !selectedRow,
+      title: "Delete Barangay"
     },
   ];
 
@@ -216,7 +216,11 @@ const Barangay: React.FC = () => {
         <BarangayUpdateModal
           isOpen={showUpdateModal}
           onClose={() => setShowUpdateModal(false)}
-          barangayData={selectedRow}
+          barangayData={selectedRow ? {
+            barangay_id: selectedRow.barangay_id,
+            barangay_name: selectedRow.barangay,  // Map barangay to barangay_name
+            district_id: selectedRow.district_id
+          } : null}
           onBarangayUpdated={handleBarangayUpdated}
         />
 
@@ -224,7 +228,7 @@ const Barangay: React.FC = () => {
           isOpen={showDeleteAlert}
           onDidDismiss={() => setShowDeleteAlert(false)}
           header="Delete Barangay"
-          message={`Are you sure you want to delete ${selectedRow?.barangay_name}?`}
+          message={`Are you sure you want to delete ${selectedRow?.barangay}?`}
           buttons={[
             {
               text: 'Cancel',
