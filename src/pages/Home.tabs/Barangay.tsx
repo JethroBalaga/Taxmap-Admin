@@ -11,7 +11,8 @@ import {
   IonIcon,
   IonLoading,
   IonSearchbar,
-  IonAlert
+  IonAlert,
+  IonToast
 } from '@ionic/react';
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
@@ -52,7 +53,7 @@ const Barangay: React.FC = () => {
   // Fetch barangays when districtId changes
   const fetchBarangays = useCallback(async () => {
     if (!districtId) return;
-
+    
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -107,7 +108,7 @@ const Barangay: React.FC = () => {
 
   const handleDeleteConfirm = async () => {
     if (!selectedRow) return;
-
+    
     setIsLoading(true);
     try {
       const { error } = await supabase
@@ -117,13 +118,17 @@ const Barangay: React.FC = () => {
 
       if (error) throw error;
 
+      setToastMessage(`${selectedRow.barangay} deleted successfully!`);
       setSelectedRow(null);
       fetchBarangays();
     } catch (error) {
+      setToastMessage('Failed to delete barangay');
+      setIsError(true);
       console.error('Error deleting barangay:', error);
     } finally {
       setIsLoading(false);
       setShowDeleteAlert(false);
+      setShowToast(true);
     }
   };
 
@@ -138,24 +143,28 @@ const Barangay: React.FC = () => {
     setShowUpdateModal(false);
   };
 
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [isError, setIsError] = useState(false);
+
   const iconButtons = [
-    {
-      icon: add,
-      onClick: handleCreateClick,
-      disabled: false,
-      title: "Add Barangay"
+    { 
+      icon: add, 
+      onClick: handleCreateClick, 
+      disabled: false, 
+      title: "Add Barangay" 
     },
-    {
-      icon: arrowUpCircle,
-      onClick: handleEditClick,
-      disabled: !selectedRow,
-      title: "Edit Barangay"
+    { 
+      icon: arrowUpCircle, 
+      onClick: handleEditClick, 
+      disabled: !selectedRow, 
+      title: "Edit Barangay" 
     },
-    {
-      icon: trash,
-      onClick: handleDeleteClick,
-      disabled: !selectedRow,
-      title: "Delete Barangay"
+    { 
+      icon: trash, 
+      onClick: handleDeleteClick, 
+      disabled: !selectedRow, 
+      title: "Delete Barangay" 
     },
   ];
 
@@ -206,6 +215,7 @@ const Barangay: React.FC = () => {
           </IonRow>
         </IonGrid>
 
+        {/* Create Modal */}
         <BarangayCreateModal
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
@@ -213,35 +223,46 @@ const Barangay: React.FC = () => {
           district_id={districtId || 0}
         />
 
+        {/* Update Modal */}
         <BarangayUpdateModal
           isOpen={showUpdateModal}
           onClose={() => setShowUpdateModal(false)}
           barangayData={selectedRow ? {
             barangay_id: selectedRow.barangay_id,
-            barangay_name: selectedRow.barangay,  // Map barangay to barangay_name
+            barangay_name: selectedRow.barangay,
             district_id: selectedRow.district_id
           } : null}
           onBarangayUpdated={handleBarangayUpdated}
         />
 
+        {/* Delete Confirmation */}
         <IonAlert
           isOpen={showDeleteAlert}
           onDidDismiss={() => setShowDeleteAlert(false)}
-          header="Delete Barangay"
+          header="Confirm Delete"
           message={`Are you sure you want to delete ${selectedRow?.barangay}?`}
           buttons={[
             {
               text: 'Cancel',
-              role: 'cancel'
+              role: 'cancel',
+              cssClass: 'secondary'
             },
             {
               text: 'Delete',
-              handler: handleDeleteConfirm
+              handler: handleDeleteConfirm,
+              cssClass: 'danger'
             }
           ]}
         />
 
         <IonLoading isOpen={isLoading} message="Loading..." />
+        <IonToast
+          isOpen={showToast}
+          onDidDismiss={() => setShowToast(false)}
+          message={toastMessage}
+          duration={3000}
+          color={isError ? 'danger' : 'success'}
+        />
       </IonContent>
     </IonPage>
   );
