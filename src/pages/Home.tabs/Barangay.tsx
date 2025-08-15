@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo,useCallback,} from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   IonContent,
   IonHeader,
@@ -10,7 +10,8 @@ import {
   IonCol,
   IonIcon,
   IonLoading,
-  IonSearchbar
+  IonSearchbar,
+  IonAlert
 } from '@ionic/react';
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
@@ -18,6 +19,7 @@ import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../../utils/supaBaseClient';
 import BarangayCreateModal from '../../components/BarangayModals/BarangayCreateModal';
+import BarangayUpdateModal from '../../components/BarangayModals/BarangayUpdateModal';
 
 interface BarangayItem {
   barangay_id: string;
@@ -34,6 +36,8 @@ const Barangay: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRow, setSelectedRow] = useState<BarangayItem | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
 
   // Get district_id from URL params
@@ -89,9 +93,49 @@ const Barangay: React.FC = () => {
     setShowCreateModal(true);
   };
 
+  const handleEditClick = () => {
+    if (selectedRow) {
+      setShowUpdateModal(true);
+    }
+  };
+
+  const handleDeleteClick = () => {
+    if (selectedRow) {
+      setShowDeleteAlert(true);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedRow) return;
+    
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('barangaytbl')
+        .delete()
+        .eq('barangay_id', selectedRow.barangay_id);
+
+      if (error) throw error;
+
+      setSelectedRow(null);
+      fetchBarangays();
+    } catch (error) {
+      console.error('Error deleting barangay:', error);
+    } finally {
+      setIsLoading(false);
+      setShowDeleteAlert(false);
+    }
+  };
+
   const handleBarangayCreated = () => {
     fetchBarangays();
     setShowCreateModal(false);
+  };
+
+  const handleBarangayUpdated = () => {
+    fetchBarangays();
+    setSelectedRow(null);
+    setShowUpdateModal(false);
   };
 
   const iconButtons = [
@@ -103,13 +147,13 @@ const Barangay: React.FC = () => {
     },
     { 
       icon: arrowUpCircle, 
-      onClick: () => {}, 
+      onClick: handleEditClick, 
       disabled: !selectedRow, 
       title: "Edit Barangay" 
     },
     { 
       icon: trash, 
-      onClick: () => {}, 
+      onClick: handleDeleteClick, 
       disabled: !selectedRow, 
       title: "Delete Barangay" 
     },
@@ -167,6 +211,30 @@ const Barangay: React.FC = () => {
           onClose={() => setShowCreateModal(false)}
           onBarangayCreated={handleBarangayCreated}
           district_id={districtId || 0}
+        />
+
+        <BarangayUpdateModal
+          isOpen={showUpdateModal}
+          onClose={() => setShowUpdateModal(false)}
+          barangayData={selectedRow}
+          onBarangayUpdated={handleBarangayUpdated}
+        />
+
+        <IonAlert
+          isOpen={showDeleteAlert}
+          onDidDismiss={() => setShowDeleteAlert(false)}
+          header="Delete Barangay"
+          message={`Are you sure you want to delete ${selectedRow?.barangay_name}?`}
+          buttons={[
+            {
+              text: 'Cancel',
+              role: 'cancel'
+            },
+            {
+              text: 'Delete',
+              handler: handleDeleteConfirm
+            }
+          ]}
         />
 
         <IonLoading isOpen={isLoading} message="Loading..." />
