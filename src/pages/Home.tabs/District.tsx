@@ -13,7 +13,6 @@ import {
   IonSearchbar,
   IonAlert,
   IonToast,
-  IonRouterOutlet,
 } from '@ionic/react';
 import { add, arrowUpCircle, trash, cashOutline, podiumOutline } from 'ionicons/icons';
 import './../../CSS/Setup2.css';
@@ -22,7 +21,6 @@ import { supabase } from '../../utils/supaBaseClient';
 import DistrictCreateModal from '../../components/DistrictModal/DistrictCreateModal';
 import DistrictUpdateModal from '../../components/DistrictModal/DistrictUpdateModal';
 import { useHistory } from 'react-router-dom';
-import Taxrate from './Taxrate';
 
 interface DistrictItem {
   district_id: number;
@@ -178,7 +176,7 @@ const District: React.FC = () => {
       setShowToast(true);
     } catch (error) {
       console.error('Error deleting district:', error);
-      setToastMessage('Failed to delete district');
+      setToastMessage('Cannot delete district with taxrate and barangay');
       setShowToast(true);
     } finally {
       setIsLoading(false);
