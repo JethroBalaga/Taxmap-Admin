@@ -1,4 +1,3 @@
-// TaxrateUpdateModal.tsx
 import React, { useState, useEffect } from 'react';
 import {
     IonModal,
@@ -25,7 +24,7 @@ interface TaxrateUpdateModalProps {
     onClose: () => void;
     onTaxrateUpdated?: () => void;
     taxrateData: {
-        tax_rate_id: string;  // Changed from id to tax_rate_id
+        tax_rate_id: string;
         district_id: string;
         effective_year: string;
         rate_percent: string;
@@ -38,7 +37,7 @@ const TaxrateUpdateModal: React.FC<TaxrateUpdateModalProps> = ({
     onTaxrateUpdated = () => { },
     taxrateData
 }) => {
-    const [selectedDate, setSelectedDate] = useState<string>('');
+    const [selectedYear, setSelectedYear] = useState<string>('');
     const [rate, setRate] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showToast, setShowToast] = useState(false);
@@ -47,23 +46,25 @@ const TaxrateUpdateModal: React.FC<TaxrateUpdateModalProps> = ({
 
     useEffect(() => {
         if (taxrateData) {
-            setSelectedDate(taxrateData.effective_year);
+            // Extract just the year if the stored value is a full date
+            const yearOnly = taxrateData.effective_year.split('-')[0];
+            setSelectedYear(yearOnly);
             setRate(taxrateData.rate_percent.replace('%', ''));
         }
     }, [taxrateData]);
 
     const handleUpdate = async () => {
-        if (!selectedDate || !rate || !taxrateData) return;
+        if (!selectedYear || !rate || !taxrateData) return;
 
         setIsLoading(true);
         try {
             const { error } = await supabase
                 .from('taxratetbl')
                 .update({
-                    effective_year: selectedDate.split('T')[0],
+                    effective_year: selectedYear, // Just the year
                     rate_percent: `${rate}%`,
                 })
-                .eq('tax_rate_id', taxrateData.tax_rate_id);  // Using tax_rate_id in WHERE clause
+                .eq('tax_rate_id', taxrateData.tax_rate_id);
 
             if (error) throw error;
 
@@ -82,6 +83,13 @@ const TaxrateUpdateModal: React.FC<TaxrateUpdateModalProps> = ({
 
     const handleRateChange = (value: string) => {
         setRate(value.replace(/[^0-9]/g, ''));
+    };
+
+    const handleYearChange = (e: CustomEvent) => {
+        // Extract just the year from the datetime value
+        const fullDate = e.detail.value?.toString() || '';
+        const yearOnly = fullDate.split('-')[0];
+        setSelectedYear(yearOnly);
     };
 
     return (
@@ -112,8 +120,8 @@ const TaxrateUpdateModal: React.FC<TaxrateUpdateModalProps> = ({
                                     <IonLabel className="input-label">Effective Year</IonLabel>
                                     <IonDatetime
                                         presentation="year"
-                                        value={selectedDate}
-                                        onIonChange={e => setSelectedDate(e.detail.value?.toString() || '')}
+                                        value={selectedYear}
+                                        onIonChange={handleYearChange}
                                         className="year-picker"
                                     />
                                 </div>
@@ -142,7 +150,7 @@ const TaxrateUpdateModal: React.FC<TaxrateUpdateModalProps> = ({
                                     <Button
                                         variant="primary"
                                         onClick={handleUpdate}
-                                        disabled={!selectedDate || !rate || isLoading}
+                                        disabled={!selectedYear || !rate || isLoading}
                                         className="update-btn"
                                     >
                                         {isLoading ? 'Updating...' : 'Update'}
