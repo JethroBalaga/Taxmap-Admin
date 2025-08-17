@@ -32,7 +32,7 @@ const TaxrateCreateModal: React.FC<TaxrateCreateModalProps> = ({
     onTaxrateCreated = () => { },
     district_id
 }) => {
-    const [selectedDate, setSelectedDate] = useState<string>('');
+    const [selectedYear, setSelectedYear] = useState<string>('');
     const [rate, setRate] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showToast, setShowToast] = useState(false);
@@ -40,7 +40,7 @@ const TaxrateCreateModal: React.FC<TaxrateCreateModalProps> = ({
     const [isError, setIsError] = useState(false);
 
     const handleCreate = async () => {
-        if (!selectedDate || !rate) return;
+        if (!selectedYear || !rate) return;
 
         setIsLoading(true);
         try {
@@ -48,19 +48,20 @@ const TaxrateCreateModal: React.FC<TaxrateCreateModalProps> = ({
                 .from('taxratetbl')
                 .insert([{
                     district_id,
-                    effective_year: selectedDate.split('T')[0], // Extract YYYY-MM-DD
+                    effective_year: selectedYear, // Just the year
                     rate_percent: `${rate}%`
                 }]);
 
             if (error) throw error;
 
             setToastMessage('Tax rate created successfully!');
-            setSelectedDate('');
+            setSelectedYear('');
             setRate('');
             onTaxrateCreated();
             setTimeout(onClose, 1000);
         } catch (error: any) {
             setToastMessage(error.message || 'Failed to create tax rate');
+            setIsError(true);
             console.error('Error:', error);
         } finally {
             setIsLoading(false);
@@ -70,6 +71,13 @@ const TaxrateCreateModal: React.FC<TaxrateCreateModalProps> = ({
 
     const handleRateChange = (value: string) => {
         setRate(value.replace(/[^0-9]/g, ''));
+    };
+
+    const handleYearChange = (e: CustomEvent) => {
+        // Extract just the year from the datetime value
+        const fullDate = e.detail.value?.toString() || '';
+        const yearOnly = fullDate.split('-')[0];
+        setSelectedYear(yearOnly);
     };
 
     return (
@@ -95,8 +103,8 @@ const TaxrateCreateModal: React.FC<TaxrateCreateModalProps> = ({
                                     <IonLabel className="input-label">Effective Year</IonLabel>
                                     <IonDatetime
                                         presentation="year"
-                                        value={selectedDate}
-                                        onIonChange={e => setSelectedDate(e.detail.value?.toString() || '')}
+                                        value={selectedYear}
+                                        onIonChange={handleYearChange}
                                         className="year-picker"
                                     />
                                 </div>
@@ -125,7 +133,7 @@ const TaxrateCreateModal: React.FC<TaxrateCreateModalProps> = ({
                                     <Button
                                         variant="primary"
                                         onClick={handleCreate}
-                                        disabled={!selectedDate || !rate || isLoading}
+                                        disabled={!selectedYear || !rate || isLoading}
                                         className="create-btn"
                                     >
                                         {isLoading ? 'Creating...' : 'Create'}
@@ -143,7 +151,7 @@ const TaxrateCreateModal: React.FC<TaxrateCreateModalProps> = ({
                 onDidDismiss={() => setShowToast(false)}
                 message={toastMessage}
                 duration={3000}
-                color={isError ? 'green' : 'success'}
+                color={isError ? 'danger' : 'success'}
             />
         </>
     );
