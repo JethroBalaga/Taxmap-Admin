@@ -19,6 +19,7 @@ import './../../CSS/Setup2.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 import { useLocation } from 'react-router-dom';
+import AssessmentCreateModal from '../../components/AssesmentLevelModals/AssesmentCreateModal';
 
 interface AssessmentLevelItem {
   assessment_level_id: number;
@@ -36,6 +37,7 @@ const AssessmentLevel: React.FC = () => {
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const [isError, setIsError] = useState(false);
   const location = useLocation();
@@ -45,31 +47,31 @@ const AssessmentLevel: React.FC = () => {
   const kindId = queryParams.get('kind_id');
 
   // Fetch data
+  const fetchAssessmentLevels = async () => {
+    if (!kindId) return;
+    
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('assessmentleveltbl')
+        .select('*')
+        .eq('kind_id', kindId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setAssessmentLevels(data || []);
+    } catch (error) {
+      console.error('Error fetching assessment levels:', error);
+      setToastMessage('Failed to load assessment levels');
+      setIsError(true);
+      setShowToast(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchAssessmentLevels = async () => {
-      if (!kindId) return;
-      
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('assessmentleveltbl')
-          .select('*')
-          .eq('kind_id', kindId)
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        setAssessmentLevels(data || []);
-      } catch (error) {
-        console.error('Error fetching assessment levels:', error);
-        setToastMessage('Failed to load assessment levels');
-        setIsError(true);
-        setShowToast(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchAssessmentLevels();
   }, [kindId]);
 
@@ -91,7 +93,6 @@ const AssessmentLevel: React.FC = () => {
 
   const handleUpdateClick = () => {
     if (!selectedRow) return;
-    // Update functionality will be added here
     setToastMessage('Update functionality to be implemented');
     setShowToast(true);
   };
@@ -113,14 +114,7 @@ const AssessmentLevel: React.FC = () => {
 
       if (error) throw error;
 
-      // Refresh the list
-      const { data } = await supabase
-        .from('assessmentleveltbl')
-        .select('*')
-        .eq('kind_id', kindId)
-        .order('created_at', { ascending: false });
-
-      setAssessmentLevels(data || []);
+      await fetchAssessmentLevels();
       setSelectedRow(null);
       setToastMessage('Assessment level deleted successfully');
       setIsError(false);
@@ -159,10 +153,7 @@ const AssessmentLevel: React.FC = () => {
                 <IonIcon
                   icon={add}
                   className="icon-yellow"
-                  onClick={() => {
-                    setToastMessage('Add functionality to be implemented');
-                    setShowToast(true);
-                  }}
+                  onClick={() => setShowCreateModal(true)}
                   title="Add Assessment Level"
                 />
                 <IonIcon
@@ -192,6 +183,16 @@ const AssessmentLevel: React.FC = () => {
             </IonCol>
           </IonRow>
         </IonGrid>
+
+        {/* Create Modal */}
+        {kindId && (
+          <AssessmentCreateModal
+            isOpen={showCreateModal}
+            onClose={() => setShowCreateModal(false)}
+            onAssessmentLevelCreated={fetchAssessmentLevels}
+            kind_id={kindId}
+          />
+        )}
 
         <IonLoading isOpen={isLoading} message="Loading..." />
 

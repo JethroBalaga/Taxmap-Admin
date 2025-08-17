@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     IonModal,
     IonHeader,
@@ -13,12 +13,18 @@ import {
     IonLabel,
     IonItem,
     IonDatetime,
-    IonInput
+    IonInput,
+    IonSelect,
+    IonSelectOption
 } from '@ionic/react';
-import Input from '../Globalcomponents/Input';
 import './../../CSS/Modal.css';
 import Button from '../Globalcomponents/Button';
 import { supabase } from './../../utils/supaBaseClient';
+
+interface ClassItem {
+    class_id: number;
+    classification: string;
+}
 
 interface AssessmentLevelCreateModalProps {
     isOpen: boolean;
@@ -34,7 +40,8 @@ const AssessmentCreateModal: React.FC<AssessmentLevelCreateModalProps> = ({
     kind_id
 }) => {
     const [selectedYear, setSelectedYear] = useState<string>('');
-    const [classification, setClassification] = useState('');
+    const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
+    const [classes, setClasses] = useState<ClassItem[]>([]);
     const [range1, setRange1] = useState('');
     const [range2, setRange2] = useState('');
     const [ratePercent, setRatePercent] = useState('');
@@ -42,9 +49,37 @@ const AssessmentCreateModal: React.FC<AssessmentLevelCreateModalProps> = ({
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [isError, setIsError] = useState(false);
+    const [isFetchingClasses, setIsFetchingClasses] = useState(false);
+
+    // Fetch classes from classtbl
+    useEffect(() => {
+        const fetchClasses = async () => {
+            setIsFetchingClasses(true);
+            try {
+                const { data, error } = await supabase
+                    .from('classtbl')
+                    .select('class_id, classification')
+                    .order('classification', { ascending: true });
+
+                if (error) throw error;
+                setClasses(data || []);
+            } catch (error) {
+                console.error('Error fetching classes:', error);
+                setToastMessage('Failed to load classes');
+                setIsError(true);
+                setShowToast(true);
+            } finally {
+                setIsFetchingClasses(false);
+            }
+        };
+
+        if (isOpen) {
+            fetchClasses();
+        }
+    }, [isOpen]);
 
     const handleCreate = async () => {
-        if (!selectedYear || !classification || !range1 || !range2 || !ratePercent) return;
+        if (!selectedYear || !selectedClassId || !range1 || !range2 || !ratePercent) return;
 
         setIsLoading(true);
         try {
@@ -52,8 +87,8 @@ const AssessmentCreateModal: React.FC<AssessmentLevelCreateModalProps> = ({
                 .from('assessmentleveltbl')
                 .insert([{
                     kind_id,
+                    class_id: selectedClassId,
                     effective_year: selectedYear,
-                    class: classification,
                     range1: parseFloat(range1),
                     range2: parseFloat(range2),
                     rate_percent: `${ratePercent}%`
@@ -63,7 +98,7 @@ const AssessmentCreateModal: React.FC<AssessmentLevelCreateModalProps> = ({
 
             setToastMessage('Assessment level created successfully!');
             setSelectedYear('');
-            setClassification('');
+            setSelectedClassId(null);
             setRange1('');
             setRange2('');
             setRatePercent('');
@@ -81,7 +116,9 @@ const AssessmentCreateModal: React.FC<AssessmentLevelCreateModalProps> = ({
 
     const handleRateChange = (e: CustomEvent) => {
         const value = (e.target as HTMLInputElement).value;
-        setRatePercent(value.replace(/[^0-9.]/g, ''));
+        // Remove percentage sign before processing
+        const numericValue = value.replace(/[^0-9.]/g, '');
+        setRatePercent(numericValue);
     };
 
     const handleRange1Change = (e: CustomEvent) => {
@@ -92,10 +129,6 @@ const AssessmentCreateModal: React.FC<AssessmentLevelCreateModalProps> = ({
     const handleRange2Change = (e: CustomEvent) => {
         const value = (e.target as HTMLInputElement).value;
         setRange2(value.replace(/[^0-9.]/g, ''));
-    };
-
-    const handleClassificationChange = (e: CustomEvent) => {
-        setClassification((e.target as HTMLInputElement).value);
     };
 
     const handleYearChange = (e: CustomEvent) => {
@@ -133,15 +166,22 @@ const AssessmentCreateModal: React.FC<AssessmentLevelCreateModalProps> = ({
                                     />
                                 </div>
 
-                                {/* Classification Input */}
+                                {/* Classification Dropdown */}
                                 <div className="input-wrapper">
                                     <IonLabel className="input-label">Classification</IonLabel>
-                                    <IonInput
-                                        value={classification}
-                                        onIonChange={handleClassificationChange}
-                                        placeholder="Enter class (e.g., Residential)"
+                                    <IonSelect
+                                        value={selectedClassId}
+                                        placeholder="Select Class"
+                                        onIonChange={e => setSelectedClassId(e.detail.value)}
                                         className="modal-input"
-                                    />
+                                        disabled={isFetchingClasses}
+                                    >
+                                        {classes.map(cls => (
+                                            <IonSelectOption key={cls.class_id} value={cls.class_id}>
+                                                {cls.classification}
+                                            </IonSelectOption>
+                                        ))}
+                                    </IonSelect>
                                 </div>
 
                                 {/* Range 1 Input */}
@@ -172,7 +212,7 @@ const AssessmentCreateModal: React.FC<AssessmentLevelCreateModalProps> = ({
                                 <div className="input-wrapper">
                                     <IonLabel className="input-label">Rate Percent</IonLabel>
                                     <IonInput
-                                        value={ratePercent}
+                                        value={ratePercent ? `${ratePercent}%` : ''}
                                         onIonChange={handleRateChange}
                                         placeholder="Enter rate (e.g., 12)"
                                         className="modal-input"
@@ -192,7 +232,7 @@ const AssessmentCreateModal: React.FC<AssessmentLevelCreateModalProps> = ({
                                     <Button
                                         variant="primary"
                                         onClick={handleCreate}
-                                        disabled={!selectedYear || !classification || !range1 || !range2 || !ratePercent || isLoading}
+                                        disabled={!selectedYear || !selectedClassId || !range1 || !range2 || !ratePercent || isLoading}
                                         className="create-btn"
                                     >
                                         {isLoading ? 'Creating...' : 'Create'}
@@ -204,7 +244,7 @@ const AssessmentCreateModal: React.FC<AssessmentLevelCreateModalProps> = ({
                 </IonContent>
             </IonModal>
 
-            <IonLoading isOpen={isLoading} message="Creating assessment level..." />
+            <IonLoading isOpen={isLoading || isFetchingClasses} message={isFetchingClasses ? "Loading classes..." : "Creating assessment level..."} />
             <IonToast
                 isOpen={showToast}
                 onDidDismiss={() => setShowToast(false)}
