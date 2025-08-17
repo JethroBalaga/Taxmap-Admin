@@ -82,16 +82,30 @@ const AssessmentLevel: React.FC = () => {
     }, [kindId]);
 
     // Filter data based on search term
-    const filteredData = useMemo(() => {
-        if (!searchTerm.trim()) return assessmentLevels;
+// Filter data based on search term
+const filteredData = useMemo(() => {
+    if (!searchTerm.trim()) return assessmentLevels;
 
-        const term = searchTerm.toLowerCase();
-        return assessmentLevels.filter(item =>
-            item.assessment_level_id.toString().includes(term) ||
-            item.effective_year.toLowerCase().includes(term) ||
-            item.rate_percent.toLowerCase().includes(term)
+    const term = searchTerm.toLowerCase();
+    return assessmentLevels.filter(item => {
+        // Convert all values to strings for comparison
+        const assessmentLevelId = item.assessment_level_id?.toString().toLowerCase() || '';
+        const classId = item.class_id?.toString().toLowerCase() || '';
+        const effectiveYear = item.effective_year?.toString().toLowerCase() || '';
+        const range1 = item.range1?.toString().toLowerCase() || '';
+        const range2 = item.range2?.toString().toLowerCase() || '';
+        const ratePercent = item.rate_percent?.toString().toLowerCase() || '';
+
+        return (
+            assessmentLevelId.includes(term) ||
+            classId.includes(term) ||
+            effectiveYear.includes(term) ||
+            range1.includes(term) ||
+            range2.includes(term) ||
+            ratePercent.includes(term)
         );
-    }, [assessmentLevels, searchTerm]);
+    });
+}, [assessmentLevels, searchTerm]);
 
     const handleRowClick = (rowData: AssessmentLevelItem) => {
         setSelectedRow(rowData);
