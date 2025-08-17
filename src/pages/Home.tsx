@@ -15,6 +15,7 @@ import Kind from './Home.tabs/Kind';
 import Subclass from './Home.tabs/Subclass';
 import Taxrate from './Home.tabs/Taxrate';
 import Barangay from './Home.tabs/Barangay';
+import AssessmentLevel from './Home.tabs/AssesmentLevel';
 
 const Home: React.FC = () => {
 
@@ -44,6 +45,7 @@ const Home: React.FC = () => {
           <Route exact path="/menu/home/subclass" component={Subclass} />
           <Route exact path="/menu/home/taxrate" component={Taxrate} />
           <Route exact path="/menu/home/barangay" component={Barangay} />
+          <Route exact path="/menu/home/assesmentlevel" component={AssessmentLevel} />
 
           <Route exact path="/menu/home">
             <Redirect to="/menu/home/classification" />

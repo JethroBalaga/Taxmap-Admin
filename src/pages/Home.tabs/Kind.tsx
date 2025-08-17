@@ -93,7 +93,7 @@ const Kind: React.FC = () => {
   const handleManageAssessmentLevels = () => {
     if (!selectedRow) return;
     // Navigate to AssessmentLevel page with kind_id as parameter
-    history.push(`/assessment-level?kind_id=${selectedRow.kind_id}`);
+    history.push(`/menu/home/assesmentlevel?kind_id=${selectedRow.kind_id}`);
   };
 
   const handleDeleteConfirm = async () => {
