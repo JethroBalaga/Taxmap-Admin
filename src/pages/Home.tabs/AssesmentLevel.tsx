@@ -1,68 +1,99 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   IonContent,
   IonHeader,
   IonPage,
   IonTitle,
   IonToolbar,
-  IonSearchbar,
-  IonIcon,
   IonGrid,
   IonRow,
   IonCol,
+  IonIcon,
   IonLoading,
+  IonSearchbar,
   IonAlert,
   IonToast
 } from '@ionic/react';
-import { useLocation } from 'react-router-dom';
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
-import './../../CSS/Setup.css';
+import './../../CSS/Setup2.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
+import { supabase } from '../../utils/supaBaseClient';
+import { useLocation } from 'react-router-dom';
 
 interface AssessmentLevelItem {
-  assessment_level_id: string;
+  assessment_level_id: number;
+  kind_id: number;
   effective_year: string;
   level_percent: string;
   created_at?: string;
 }
 
 const AssessmentLevel: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
   const [assessmentLevels, setAssessmentLevels] = useState<AssessmentLevelItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedRow, setSelectedRow] = useState<AssessmentLevelItem | null>(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
-  const location = useLocation();
   const [isError, setIsError] = useState(false);
+  const location = useLocation();
 
-  // Get district_id from URL
+  // Get kind_id from URL
   const queryParams = new URLSearchParams(location.search);
-  const districtId = queryParams.get('district_id');
+  const kindId = queryParams.get('kind_id');
 
+  // Fetch data
+  useEffect(() => {
+    const fetchAssessmentLevels = async () => {
+      if (!kindId) return;
+      
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('assessmentleveltbl')
+          .select('*')
+          .eq('kind_id', kindId)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        setAssessmentLevels(data || []);
+      } catch (error) {
+        console.error('Error fetching assessment levels:', error);
+        setToastMessage('Failed to load assessment levels');
+        setIsError(true);
+        setShowToast(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAssessmentLevels();
+  }, [kindId]);
+
+  // Filter data based on search term
   const filteredData = useMemo(() => {
     if (!searchTerm.trim()) return assessmentLevels;
+
     const term = searchTerm.toLowerCase();
-
-    return assessmentLevels.filter(item => {
-      const assessmentLevelId = item.assessment_level_id?.toString().toLowerCase() || '';
-      const effectiveYear = item.effective_year?.toString().toLowerCase() || '';
-      const levelPercent = item.level_percent?.toString().toLowerCase() || '';
-
-      return (
-        assessmentLevelId.includes(term) ||
-        effectiveYear.includes(term) ||
-        levelPercent.includes(term)
-      );
-    });
+    return assessmentLevels.filter(item =>
+      item.assessment_level_id.toString().includes(term) ||
+      item.effective_year.toLowerCase().includes(term) ||
+      item.level_percent.toLowerCase().includes(term)
+    );
   }, [assessmentLevels, searchTerm]);
 
   const handleRowClick = (rowData: AssessmentLevelItem) => {
     setSelectedRow(rowData);
+  };
+
+  const handleUpdateClick = () => {
+    if (!selectedRow) return;
+    // Update functionality will be added here
+    setToastMessage('Update functionality to be implemented');
+    setShowToast(true);
   };
 
   const handleDeleteClick = () => {
@@ -70,20 +101,46 @@ const AssessmentLevel: React.FC = () => {
     setShowDeleteAlert(true);
   };
 
-  const handleUpdateClick = () => {
-    if (!selectedRow) return;
-    setShowUpdateModal(true);
-  };
-
   const handleDeleteConfirm = async () => {
-    // Delete functionality will be added here
+    if (!selectedRow) return;
+
+    try {
+      setIsLoading(true);
+      const { error } = await supabase
+        .from('assessmentleveltbl')
+        .delete()
+        .eq('assessment_level_id', selectedRow.assessment_level_id);
+
+      if (error) throw error;
+
+      // Refresh the list
+      const { data } = await supabase
+        .from('assessmentleveltbl')
+        .select('*')
+        .eq('kind_id', kindId)
+        .order('created_at', { ascending: false });
+
+      setAssessmentLevels(data || []);
+      setSelectedRow(null);
+      setToastMessage('Assessment level deleted successfully');
+      setIsError(false);
+      setShowToast(true);
+    } catch (error) {
+      console.error('Error deleting assessment level:', error);
+      setToastMessage('Failed to delete assessment level');
+      setIsError(true);
+      setShowToast(true);
+    } finally {
+      setIsLoading(false);
+      setShowDeleteAlert(false);
+    }
   };
 
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Assessment Levels - District {districtId}</IonTitle>
+          <IonTitle>Assessment Levels - Kind {kindId}</IonTitle>
         </IonToolbar>
       </IonHeader>
 
@@ -102,17 +159,23 @@ const AssessmentLevel: React.FC = () => {
                 <IonIcon
                   icon={add}
                   className="icon-yellow"
-                  onClick={() => setShowCreateModal(true)}
+                  onClick={() => {
+                    setToastMessage('Add functionality to be implemented');
+                    setShowToast(true);
+                  }}
+                  title="Add Assessment Level"
                 />
                 <IonIcon
                   icon={arrowUpCircle}
                   className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
                   onClick={handleUpdateClick}
+                  title="Edit Assessment Level"
                 />
                 <IonIcon
                   icon={trash}
                   className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
                   onClick={handleDeleteClick}
+                  title="Delete Assessment Level"
                 />
               </div>
             </IonCol>
