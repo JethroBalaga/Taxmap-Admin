@@ -113,7 +113,6 @@ const AssessmentUpdateModal: React.FC<AssessmentLevelUpdateModalProps> = ({
                     range1: parseFloat(range1),
                     range2: parseFloat(range2),
                     rate_percent: `${ratePercent}%`,
-                    updated_at: new Date().toISOString()
                 })
                 .eq('assessment_level_id', assessmentLevelData.assessment_level_id);
 
