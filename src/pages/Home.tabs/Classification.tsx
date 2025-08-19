@@ -20,6 +20,7 @@ import ClassificationCreateModal from '../../components/ClassificationModals/Cla
 import ClassificationUpdateModal from '../../components/ClassificationModals/ClassificationUpdateModal';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
+import { useHistory } from 'react-router-dom';
 
 interface ClassificationItem {
   class_id: string;
@@ -28,6 +29,7 @@ interface ClassificationItem {
 }
 
 const Classification: React.FC = () => {
+  const history = useHistory();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [classifications, setClassifications] = useState<ClassificationItem[]>([]);
@@ -64,6 +66,7 @@ const Classification: React.FC = () => {
     } catch (error) {
       console.error('Error fetching classifications:', error);
       setToastMessage('Failed to load classifications');
+      setIsError(true);
       setShowToast(true);
     } finally {
       setIsLoading(false);
@@ -77,18 +80,14 @@ const Classification: React.FC = () => {
   // Check if classification is used in other tables
   const checkIfClassificationIsUsed = async (classId: string) => {
     try {
-      // Check in related tables (replace with your actual table names)
-      const { count: count1 } = await supabase
-        .from('related_table1')
+      // Check in subclass table first
+      const { count: subclassCount } = await supabase
+        .from('subclasstbl')
         .select('*', { count: 'exact', head: true })
         .eq('class_id', classId);
 
-      const { count: count2 } = await supabase
-        .from('related_table2')
-        .select('*', { count: 'exact', head: true })
-        .eq('class_id', classId);
-
-      return (count1 || 0) + (count2 || 0) > 0;
+      // Add other related tables if needed
+      return (subclassCount || 0) > 0;
     } catch (error) {
       console.error('Error checking classification usage:', error);
       return true;
@@ -97,13 +96,12 @@ const Classification: React.FC = () => {
 
   // Filter data based on search term
   const filteredData = useMemo(() => {
-    if (!searchTerm.trim()) {
-      return classifications;
-    }
+    if (!searchTerm.trim()) return classifications;
 
+    const term = searchTerm.toLowerCase();
     return classifications.filter(item =>
-      item.class_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.classification.toLowerCase().includes(searchTerm.toLowerCase())
+      item.class_id.toLowerCase().includes(term) ||
+      item.classification.toLowerCase().includes(term)
     );
   }, [classifications, searchTerm]);
 
@@ -133,6 +131,7 @@ const Classification: React.FC = () => {
     } catch (error) {
       console.error('Error checking classification usage:', error);
       setToastMessage('Error checking if classification can be deleted');
+      setIsError(true);
       setShowToast(true);
     } finally {
       setIsLoading(false);
@@ -153,11 +152,12 @@ const Classification: React.FC = () => {
 
       await fetchClassifications();
       setSelectedRow(null);
-      setToastMessage('Classification deleted successfully');
+      setToastMessage(`${selectedRow.classification} deleted successfully!`);
       setShowToast(true);
     } catch (error) {
       console.error('Error deleting classification:', error);
       setToastMessage('Failed to delete classification');
+      setIsError(true);
       setShowToast(true);
     } finally {
       setIsLoading(false);
@@ -165,17 +165,47 @@ const Classification: React.FC = () => {
     }
   };
 
-  const addSubclass = () => {
-
+  const navigateToSubclass = () => {
+    if (selectedRow) {
+      history.push({
+        pathname: '/menu/home/subclass',
+        search: `?class_id=${selectedRow.class_id}`,
+        state: { 
+          classificationData: {
+            class_id: selectedRow.class_id,
+            classification: selectedRow.classification
+          }
+        }
+      });
+    }
   };
 
   const iconButtons = [
-    { icon: add, onClick: () => setShowCreateModal(true), disabled: false, title: "Add Classification" },
-    { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Classification" },
-    { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Classification" },
-    { icon: layersOutline, onClick: addSubclass, disabled: !selectedRow, title: "Manage Subclass" }
+    { 
+      icon: add, 
+      onClick: () => setShowCreateModal(true), 
+      disabled: false, 
+      title: "Add Classification" 
+    },
+    { 
+      icon: arrowUpCircle, 
+      onClick: handleUpdateClick, 
+      disabled: !selectedRow, 
+      title: "Edit Classification" 
+    },
+    { 
+      icon: trash, 
+      onClick: handleDeleteClick, 
+      disabled: !selectedRow, 
+      title: "Delete Classification" 
+    },
+    { 
+      icon: layersOutline, 
+      onClick: navigateToSubclass, 
+      disabled: !selectedRow, 
+      title: "Manage Subclasses" 
+    }
   ];
-
 
   return (
     <IonPage>
@@ -206,7 +236,6 @@ const Classification: React.FC = () => {
                     title={btn.title}
                   />
                 ))}
-
               </div>
             </IonCol>
           </IonRow>
@@ -260,7 +289,7 @@ const Classification: React.FC = () => {
           isOpen={showCannotDeleteAlert}
           onDidDismiss={() => setShowCannotDeleteAlert(false)}
           header={'Cannot Delete'}
-          message={`The classification <strong>${selectedRow?.classification}</strong> cannot be deleted because it is being used in other records.`}
+          message={`The classification <strong>${selectedRow?.classification}</strong> cannot be deleted because it has associated subclasses.`}
           buttons={['OK']}
         />
 
@@ -269,7 +298,7 @@ const Classification: React.FC = () => {
           onDidDismiss={() => setShowToast(false)}
           message={toastMessage}
           duration={3000}
-          color={isError ? 'green' : 'success'}
+          color={isError ? 'danger' : 'success'}
         />
       </IonContent>
     </IonPage>
