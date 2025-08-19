@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { 
   IonContent, 
@@ -10,17 +10,37 @@ import {
   IonRow,
   IonCol,
   IonIcon,
-  IonSearchbar
+  IonSearchbar,
+  IonLoading,
+  IonToast,
+  IonAlert
 } from '@ionic/react';
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import SubclassCreateModal from '../../components/SubclassModals/SubclassCreateModal';
+import DynamicTable from '../../components/Globalcomponents/DynamicTable';
+import { supabase } from '../../utils/supaBaseClient';
+
+interface SubclassItem {
+  subclass_id: string;
+  subclass: string;
+  class_id: string;
+  barangay_id: string | null;
+  created_at: string;
+}
 
 const Subclass: React.FC = () => {
   const location = useLocation();
   const [classId, setClassId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [subclasses, setSubclasses] = useState<SubclassItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedRow, setSelectedRow] = useState<SubclassItem | null>(null);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [isError, setIsError] = useState(false);
 
   // Get class_id from URL when component mounts
   useEffect(() => {
@@ -28,16 +48,96 @@ const Subclass: React.FC = () => {
     const id = queryParams.get('class_id');
     if (id) {
       setClassId(id);
-      console.log('Received class_id:', id);
     }
   }, [location]);
 
-  const handleSubclassCreated = () => {
-    // Refresh your subclass list here if needed
-    console.log('Subclass created, refresh list');
+  // Fetch subclasses when classId changes
+  const fetchSubclasses = useCallback(async () => {
+    if (!classId) return;
+    
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('subclasstbl')
+        .select('subclass_id, class_id, barangay_id, subclass, created_at')
+        .eq('class_id', classId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setSubclasses(data || []);
+    } catch (error) {
+      console.error('Error fetching subclasses:', error);
+      setToastMessage('Failed to load subclasses');
+      setIsError(true);
+      setShowToast(true);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [classId]);
+
+  useEffect(() => {
+    fetchSubclasses();
+  }, [fetchSubclasses]);
+
+  // Filter data based on search term
+  const filteredData = useMemo(() => {
+    if (!searchTerm.trim()) return subclasses;
+
+    const term = searchTerm.toLowerCase();
+    return subclasses.filter(item =>
+      item.subclass_id.toLowerCase().includes(term) ||
+      item.subclass.toLowerCase().includes(term)
+    );
+  }, [subclasses, searchTerm]);
+
+  const handleRowClick = (rowData: SubclassItem) => {
+    setSelectedRow(rowData);
   };
 
-  // Updated icon buttons with modal opener
+  const handleUpdateClick = () => {
+    console.log('Update clicked for:', selectedRow);
+  };
+
+  const handleDeleteClick = () => {
+    if (selectedRow) {
+      setShowDeleteAlert(true);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedRow) return;
+
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('subclasstbl')
+        .delete()
+        .eq('subclass_id', selectedRow.subclass_id);
+
+      if (error) throw error;
+
+      await fetchSubclasses();
+      setSelectedRow(null);
+      setToastMessage('Subclass deleted successfully!');
+      setShowToast(true);
+    } catch (error) {
+      console.error('Error deleting subclass:', error);
+      setToastMessage('Failed to delete subclass');
+      setIsError(true);
+      setShowToast(true);
+    } finally {
+      setIsLoading(false);
+      setShowDeleteAlert(false);
+    }
+  };
+
+  const handleSubclassCreated = () => {
+    fetchSubclasses();
+    setToastMessage('Subclass created successfully!');
+    setShowToast(true);
+  };
+
   const iconButtons = [
     { 
       icon: add, 
@@ -47,14 +147,14 @@ const Subclass: React.FC = () => {
     },
     { 
       icon: arrowUpCircle, 
-      onClick: () => console.log('Edit subclass for class', classId), 
-      disabled: true, 
+      onClick: handleUpdateClick, 
+      disabled: !selectedRow, 
       title: "Edit Subclass" 
     },
     { 
       icon: trash, 
-      onClick: () => console.log('Delete subclass for class', classId), 
-      disabled: true, 
+      onClick: handleDeleteClick, 
+      disabled: !selectedRow, 
       title: "Delete Subclass" 
     },
   ];
@@ -95,13 +195,18 @@ const Subclass: React.FC = () => {
 
           <IonRow>
             <IonCol size="12">
-              {/* Table content will go here */}
-              <p>Subclasses for class ID: {classId}</p>
+              <DynamicTable
+                data={filteredData}
+                title="Subclasses"
+                keyField="subclass_id"
+                onRowClick={handleRowClick}
+              />
             </IonCol>
           </IonRow>
         </IonGrid>
 
-        {/* Add the modal component */}
+        <IonLoading isOpen={isLoading} message="Loading..." />
+
         {classId && (
           <SubclassCreateModal
             isOpen={isModalOpen}
@@ -110,6 +215,32 @@ const Subclass: React.FC = () => {
             class_id={classId}
           />
         )}
+
+        <IonAlert
+          isOpen={showDeleteAlert}
+          onDidDismiss={() => setShowDeleteAlert(false)}
+          header={'Confirm Delete'}
+          message={`Are you sure you want to delete the subclass <strong>${selectedRow?.subclass}</strong>?`}
+          buttons={[
+            {
+              text: 'Cancel',
+              role: 'cancel',
+              cssClass: 'secondary',
+            },
+            {
+              text: 'Delete',
+              handler: handleDeleteConfirm
+            }
+          ]}
+        />
+
+        <IonToast
+          isOpen={showToast}
+          onDidDismiss={() => setShowToast(false)}
+          message={toastMessage}
+          duration={3000}
+          color={isError ? 'danger' : 'success'}
+        />
       </IonContent>
     </IonPage>
   );
