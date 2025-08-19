@@ -40,7 +40,6 @@ const SubclassCreateModal: React.FC<SubclassCreateModalProps> = ({
 }) => {
   const [subclass_id, setSubclassId] = useState('');
   const [subclass, setSubclass] = useState('');
-  const [ratePercent, setRatePercent] = useState('');
   const [selectedBarangay, setSelectedBarangay] = useState<string | null>(null);
   const [barangays, setBarangays] = useState<BarangayItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -74,17 +73,13 @@ const SubclassCreateModal: React.FC<SubclassCreateModalProps> = ({
 
     setIsLoading(true);
     try {
-      // Format rate percent with % sign if it exists
-      const formattedRate = ratePercent ? `${ratePercent}%` : null;
-
       const { error } = await supabase
         .from('subclasstbl')
         .insert([{
           subclass_id,
-          subclass_name: subclass,
+          subclass: subclass,
           class_id,
-          barangay_id: selectedBarangay,
-          rate_percent: formattedRate
+          barangay_id: selectedBarangay
         }]);
 
       if (error) throw error;
@@ -92,7 +87,6 @@ const SubclassCreateModal: React.FC<SubclassCreateModalProps> = ({
       setToastMessage('Subclass created successfully!');
       setSubclassId('');
       setSubclass('');
-      setRatePercent('');
       setSelectedBarangay(null);
       onSubclassCreated();
       setTimeout(onClose, 1000);
@@ -104,12 +98,6 @@ const SubclassCreateModal: React.FC<SubclassCreateModalProps> = ({
       setIsLoading(false);
       setShowToast(true);
     }
-  };
-
-  const handleRatePercentChange = (value: string) => {
-    // Remove any existing % signs and limit to numbers only
-    const cleanValue = value.replace(/%/g, '').replace(/[^0-9.]/g, '');
-    setRatePercent(cleanValue);
   };
 
   return (
@@ -169,18 +157,6 @@ const SubclassCreateModal: React.FC<SubclassCreateModalProps> = ({
                       ))}
                     </IonSelect>
                   </IonItem>
-                </div>
-
-                <div className="input-wrapper">
-                  <Input
-                    label="Rate Percent"
-                    value={ratePercent}
-                    onChange={handleRatePercentChange}
-                    placeholder="Enter rate (e.g. 2)"
-                    className="modal-input"
-                    type="text"
-                  />
-                  {ratePercent && <span className="percent-sign">%</span>}
                 </div>
 
                 <div className="button-group">

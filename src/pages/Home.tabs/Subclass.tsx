@@ -14,11 +14,13 @@ import {
 } from '@ionic/react';
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
+import SubclassCreateModal from '../../components/SubclassModals/SubclassCreateModal';
 
 const Subclass: React.FC = () => {
   const location = useLocation();
   const [classId, setClassId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Get class_id from URL when component mounts
   useEffect(() => {
@@ -26,15 +28,20 @@ const Subclass: React.FC = () => {
     const id = queryParams.get('class_id');
     if (id) {
       setClassId(id);
-      console.log('Received class_id:', id); // For debugging
+      console.log('Received class_id:', id);
     }
   }, [location]);
 
-  // Placeholder functions for buttons
+  const handleSubclassCreated = () => {
+    // Refresh your subclass list here if needed
+    console.log('Subclass created, refresh list');
+  };
+
+  // Updated icon buttons with modal opener
   const iconButtons = [
     { 
       icon: add, 
-      onClick: () => console.log('Add subclass for class', classId), 
+      onClick: () => setIsModalOpen(true), 
       disabled: !classId, 
       title: "Add Subclass" 
     },
@@ -93,6 +100,16 @@ const Subclass: React.FC = () => {
             </IonCol>
           </IonRow>
         </IonGrid>
+
+        {/* Add the modal component */}
+        {classId && (
+          <SubclassCreateModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            onSubclassCreated={handleSubclassCreated}
+            class_id={classId}
+          />
+        )}
       </IonContent>
     </IonPage>
   );
