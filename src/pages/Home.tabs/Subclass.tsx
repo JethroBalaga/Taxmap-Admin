@@ -18,6 +18,7 @@ import {
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import SubclassCreateModal from '../../components/SubclassModals/SubclassCreateModal';
+import SubclassUpdateModal from '../../components/SubclassModals/SubclassUpdateModal'; // Add this import
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 
@@ -33,7 +34,8 @@ const Subclass: React.FC = () => {
   const location = useLocation();
   const [classId, setClassId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false); // New state for update modal
   const [subclasses, setSubclasses] = useState<SubclassItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRow, setSelectedRow] = useState<SubclassItem | null>(null);
@@ -96,7 +98,9 @@ const Subclass: React.FC = () => {
   };
 
   const handleUpdateClick = () => {
-    console.log('Update clicked for:', selectedRow);
+    if (selectedRow) {
+      setIsUpdateModalOpen(true);
+    }
   };
 
   const handleDeleteClick = () => {
@@ -138,10 +142,17 @@ const Subclass: React.FC = () => {
     setShowToast(true);
   };
 
+  const handleSubclassUpdated = () => {
+    fetchSubclasses();
+    setToastMessage('Subclass updated successfully!');
+    setShowToast(true);
+    setIsUpdateModalOpen(false);
+  };
+
   const iconButtons = [
     { 
       icon: add, 
-      onClick: () => setIsModalOpen(true), 
+      onClick: () => setIsCreateModalOpen(true), 
       disabled: !classId, 
       title: "Add Subclass" 
     },
@@ -208,12 +219,21 @@ const Subclass: React.FC = () => {
         <IonLoading isOpen={isLoading} message="Loading..." />
 
         {classId && (
-          <SubclassCreateModal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            onSubclassCreated={handleSubclassCreated}
-            class_id={classId}
-          />
+          <>
+            <SubclassCreateModal
+              isOpen={isCreateModalOpen}
+              onClose={() => setIsCreateModalOpen(false)}
+              onSubclassCreated={handleSubclassCreated}
+              class_id={classId}
+            />
+            
+            <SubclassUpdateModal
+              isOpen={isUpdateModalOpen}
+              onClose={() => setIsUpdateModalOpen(false)}
+              subclassData={selectedRow}
+              onSubclassUpdated={handleSubclassUpdated}
+            />
+          </>
         )}
 
         <IonAlert
