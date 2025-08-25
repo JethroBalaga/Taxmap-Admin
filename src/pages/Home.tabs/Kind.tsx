@@ -3,8 +3,8 @@ import {
   IonContent,
   IonHeader,
   IonPage,
-  IonTitle,
   IonToolbar,
+  IonTitle,
   IonGrid,
   IonRow,
   IonCol,
@@ -19,6 +19,7 @@ import './../../CSS/Setup2.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 import { useHistory } from 'react-router-dom';
+import KindUpdateModal from '../../components/KindModals/KindUpdateModal';
 
 interface KindItem {
   kind_id: number;
@@ -34,33 +35,34 @@ const Kind: React.FC = () => {
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const [isError, setIsError] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false); // State for update modal
+  const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const history = useHistory();
 
   // Fetch data
+  const fetchKinds = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('kindtbl')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setKinds(data || []);
+    } catch (error) {
+      console.error('Error fetching kinds:', error);
+      setToastMessage('Failed to load kinds');
+      setIsError(true);
+      setShowToast(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchKinds = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('kindtbl')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        setKinds(data || []);
-      } catch (error) {
-        console.error('Error fetching kinds:', error);
-        setToastMessage('Failed to load kinds');
-        setIsError(true);
-        setShowToast(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchKinds();
   }, []);
 
@@ -81,8 +83,7 @@ const Kind: React.FC = () => {
 
   const handleUpdateClick = () => {
     if (!selectedRow) return;
-    setToastMessage('Update functionality to be implemented');
-    setShowToast(true);
+    setShowUpdateModal(true); // Open the update modal
   };
 
   const handleDeleteClick = () => {
@@ -92,7 +93,6 @@ const Kind: React.FC = () => {
 
   const handleManageAssessmentLevels = () => {
     if (!selectedRow) return;
-    // Navigate to AssessmentLevel page with kind_id as parameter
     history.push(`/menu/home/assesmentlevel?kind_id=${selectedRow.kind_id}`);
   };
 
@@ -109,12 +109,7 @@ const Kind: React.FC = () => {
       if (error) throw error;
 
       // Refresh the list
-      const { data } = await supabase
-        .from('kindtbl')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      setKinds(data || []);
+      await fetchKinds();
       setSelectedRow(null);
       setToastMessage('Kind deleted successfully');
       setIsError(false);
@@ -130,15 +125,43 @@ const Kind: React.FC = () => {
     }
   };
 
+  const handleKindUpdated = () => {
+    // Refresh the list after update
+    fetchKinds();
+    setSelectedRow(null);
+    setToastMessage('Kind updated successfully');
+    setIsError(false);
+    setShowToast(true);
+  };
+
   const iconButtons = [
-    { icon: add, onClick: () => {
+    { 
+      icon: add, 
+      onClick: () => {
         setToastMessage('Add functionality to be implemented');
         setShowToast(true);
-      }, disabled: false, title: "Add Kind" 
+      }, 
+      disabled: false, 
+      title: "Add Kind" 
     },
-    { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Kind" },
-    { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Kind" },
-    { icon: readerOutline, onClick: handleManageAssessmentLevels, disabled: !selectedRow, title: "Manage Assessment Levels" }
+    { 
+      icon: arrowUpCircle, 
+      onClick: handleUpdateClick, 
+      disabled: !selectedRow, 
+      title: "Edit Kind" 
+    },
+    { 
+      icon: trash, 
+      onClick: handleDeleteClick, 
+      disabled: !selectedRow, 
+      title: "Delete Kind" 
+    },
+    { 
+      icon: readerOutline, 
+      onClick: handleManageAssessmentLevels, 
+      disabled: !selectedRow, 
+      title: "Manage Assessment Levels" 
+    }
   ];
 
   return (
@@ -187,6 +210,14 @@ const Kind: React.FC = () => {
         </IonGrid>
 
         <IonLoading isOpen={isLoading} message="Loading..." />
+
+        {/* Update Modal */}
+        <KindUpdateModal
+          isOpen={showUpdateModal}
+          onClose={() => setShowUpdateModal(false)}
+          kindData={selectedRow}
+          onKindUpdated={handleKindUpdated}
+        />
 
         <IonAlert
           isOpen={showDeleteAlert}

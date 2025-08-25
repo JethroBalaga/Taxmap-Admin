@@ -57,7 +57,7 @@ const KindUpdateModal: React.FC<KindUpdateModalProps> = ({
     try {
       const { error } = await supabase
         .from('kindtbl')
-        .update({ description })
+        .update({ description: description.toUpperCase() }) // Convert to uppercase
         .eq('kind_id', kindData.kind_id);
 
       if (error) throw error;
@@ -72,6 +72,10 @@ const KindUpdateModal: React.FC<KindUpdateModalProps> = ({
       setIsLoading(false);
       setShowToast(true);
     }
+  };
+
+  const handleDescriptionChange = (value: string) => {
+    setDescription(value.toUpperCase()); // Convert to uppercase
   };
 
   return (
@@ -95,7 +99,7 @@ const KindUpdateModal: React.FC<KindUpdateModalProps> = ({
                   <Input
                     label="Description"
                     value={description}
-                    onChange={setDescription}
+                    onChange={handleDescriptionChange}
                     placeholder="Enter kind description"
                     className="modal-input"
                   />
