@@ -62,25 +62,28 @@ const ClassificationUpdateModal: React.FC<ClassificationUpdateModalProps> = ({
         const { count } = await supabase
           .from('classtbl')
           .select('*', { count: 'exact', head: true })
-          .eq('class_id', code);
+          .eq('class_id', code.toUpperCase()); // Convert to uppercase for comparison
 
         if (count && count > 0) {
-          throw new Error('This ID already exists!');
+          throw new Error('THIS ID ALREADY EXISTS!');
         }
       }
 
       const { error } = await supabase
         .from('classtbl')
-        .update({ class_id: code, classification })
+        .update({ 
+          class_id: code.toUpperCase(), // Convert to uppercase
+          classification: classification.toUpperCase() // Convert to uppercase
+        })
         .eq('class_id', classificationData.class_id);
 
       if (error) throw error;
 
-      setToastMessage('Classification updated successfully!');
+      setToastMessage('CLASSIFICATION UPDATED SUCCESSFULLY!');
       onClassificationUpdated();
       setTimeout(onClose, 1000);
     } catch (error: any) {
-      setToastMessage(error.message || 'Failed to update classification');
+      setToastMessage(error.message || 'FAILED TO UPDATE CLASSIFICATION');
       setIsError(true);
     } finally {
       setIsLoading(false);
@@ -89,11 +92,11 @@ const ClassificationUpdateModal: React.FC<ClassificationUpdateModalProps> = ({
   };
 
   const handleCodeChange = (value: string) => {
-    setCode(value.toUpperCase());
+    setCode(value.toUpperCase()); // Convert to uppercase
   };
 
   const handleClassificationChange = (value: string) => {
-    setClassification(value);
+    setClassification(value.toUpperCase()); // Convert to uppercase
   };
 
   const isChangingId = code !== (classificationData?.class_id || '');
@@ -107,7 +110,7 @@ const ClassificationUpdateModal: React.FC<ClassificationUpdateModalProps> = ({
       >
         <IonHeader>
           <IonToolbar className="modal-header">
-            <IonTitle className="modal-title">Update Classification</IonTitle>
+            <IonTitle className="modal-title">UPDATE CLASSIFICATION</IonTitle>
           </IonToolbar>
         </IonHeader>
 
@@ -118,26 +121,26 @@ const ClassificationUpdateModal: React.FC<ClassificationUpdateModalProps> = ({
                 {isChangingId && (
                   <div className="id-change-notice">
                     <IonIcon icon={warning} className="warning-icon" />
-                    <span>Changing ID will update all related records</span>
+                    <span>CHANGING ID WILL UPDATE ALL RELATED RECORDS</span>
                   </div>
                 )}
 
                 <div className="input-wrapper">
                   <Input
-                    label="Code"
+                    label="CODE"
                     value={code}
                     onChange={handleCodeChange}
-                    placeholder="Enter classification code"
+                    placeholder="ENTER CLASSIFICATION CODE"
                     className="modal-input"
                   />
                 </div>
 
                 <div className="input-wrapper">
                   <Input
-                    label="Classification"
+                    label="CLASSIFICATION"
                     value={classification}
                     onChange={handleClassificationChange}
-                    placeholder="Enter classification name"
+                    placeholder="ENTER CLASSIFICATION NAME"
                     className="modal-input"
                   />
                 </div>
@@ -149,7 +152,7 @@ const ClassificationUpdateModal: React.FC<ClassificationUpdateModalProps> = ({
                     className="cancel-btn"
                     disabled={isLoading}
                   >
-                    Cancel
+                    CANCEL
                   </Button>
 
                   <Button
@@ -158,7 +161,7 @@ const ClassificationUpdateModal: React.FC<ClassificationUpdateModalProps> = ({
                     disabled={!isFormValid || isLoading}
                     className="create-btn"
                   >
-                    {isLoading ? 'Updating...' : 'Update'}
+                    {isLoading ? 'UPDATING...' : 'UPDATE'}
                   </Button>
                 </div>
               </IonCol>
@@ -167,7 +170,7 @@ const ClassificationUpdateModal: React.FC<ClassificationUpdateModalProps> = ({
         </IonContent>
       </IonModal>
 
-      <IonLoading isOpen={isLoading} message="Updating classification..." />
+      <IonLoading isOpen={isLoading} message="UPDATING CLASSIFICATION..." />
 
       <IonToast
         isOpen={showToast}
