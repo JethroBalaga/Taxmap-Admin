@@ -43,7 +43,7 @@ const KindCreateModal: React.FC<KindCreateModalProps> = ({
       const { data, error } = await supabase
         .from('kindtbl')
         .insert([{ 
-          description: description 
+          description: description.toUpperCase() // Convert to uppercase
         }])
         .select();
 
@@ -62,6 +62,10 @@ const KindCreateModal: React.FC<KindCreateModalProps> = ({
       setIsLoading(false);
       setShowToast(true);
     }
+  };
+
+  const handleDescriptionChange = (value: string) => {
+    setDescription(value.toUpperCase()); // Convert to uppercase
   };
 
   return (
@@ -85,7 +89,7 @@ const KindCreateModal: React.FC<KindCreateModalProps> = ({
                   <Input
                     label="Description"
                     value={description}
-                    onChange={setDescription}
+                    onChange={handleDescriptionChange}
                     placeholder="Enter kind description"
                     className="modal-input"
                   />
