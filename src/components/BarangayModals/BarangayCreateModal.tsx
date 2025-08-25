@@ -46,8 +46,8 @@ const BarangayCreateModal: React.FC<BarangayCreateModalProps> = ({
       const { error } = await supabase
         .from('barangaytbl')
         .insert([{
-          barangay_id,
-          barangay,
+          barangay_id: barangay_id.toUpperCase(), // Ensure uppercase when saving
+          barangay: barangay.toUpperCase(), // Ensure uppercase when saving
           district_id
         }]);
 
@@ -69,11 +69,11 @@ const BarangayCreateModal: React.FC<BarangayCreateModalProps> = ({
   };
 
   const handleBarangayIdChange = (value: string) => {
-    setBarangayId(value);
+    setBarangayId(value.toUpperCase()); // Convert to uppercase on change
   };
 
   const handleBarangayChange = (value: string) => {
-    setBarangay(value);
+    setBarangay(value.toUpperCase()); // Convert to uppercase on change
   };
 
   return (
@@ -81,7 +81,7 @@ const BarangayCreateModal: React.FC<BarangayCreateModalProps> = ({
       <IonModal isOpen={isOpen} onDidDismiss={onClose} className="classification-modal">
         <IonHeader>
           <IonToolbar className="modal-header">
-            <IonTitle className="modal-title">Create Barangay</IonTitle>
+            <IonTitle className="modal-title">CREATE BARANGAY</IonTitle>
           </IonToolbar>
         </IonHeader>
 
@@ -90,25 +90,25 @@ const BarangayCreateModal: React.FC<BarangayCreateModalProps> = ({
             <IonRow>
               <IonCol className="form-column">
                 <IonItem lines="none" className="district-label-item">
-                  <IonLabel className="district-label">District ID: {district_id}</IonLabel>
+                  <IonLabel className="district-label">DISTRICT ID: {district_id}</IonLabel>
                 </IonItem>
 
                 <div className="input-wrapper">
                   <Input
-                    label="Barangay ID"
+                    label="BARANGAY ID"
                     value={barangay_id}
                     onChange={handleBarangayIdChange}
-                    placeholder="Enter barangay ID"
+                    placeholder="ENTER BARANGAY ID"
                     className="modal-input"
                   />
                 </div>
 
                 <div className="input-wrapper">
                   <Input
-                    label="Barangay"
+                    label="BARANGAY"
                     value={barangay}
                     onChange={handleBarangayChange}
-                    placeholder="Enter barangay"
+                    placeholder="ENTER BARANGAY"
                     className="modal-input"
                   />
                 </div>
@@ -120,7 +120,7 @@ const BarangayCreateModal: React.FC<BarangayCreateModalProps> = ({
                     className="cancel-btn"
                     disabled={isLoading}
                   >
-                    Cancel
+                    CANCEL
                   </Button>
 
                   <Button
@@ -129,7 +129,7 @@ const BarangayCreateModal: React.FC<BarangayCreateModalProps> = ({
                     disabled={!barangay_id || !barangay || isLoading}
                     className="create-btn"
                   >
-                    {isLoading ? 'Creating...' : 'Create'}
+                    {isLoading ? 'CREATING...' : 'CREATE'}
                   </Button>
                 </div>
               </IonCol>
@@ -138,7 +138,7 @@ const BarangayCreateModal: React.FC<BarangayCreateModalProps> = ({
         </IonContent>
       </IonModal>
 
-      <IonLoading isOpen={isLoading} message="Creating barangay..." />
+      <IonLoading isOpen={isLoading} message="CREATING BARANGAY..." />
       <IonToast
         isOpen={showToast}
         onDidDismiss={() => setShowToast(false)}
