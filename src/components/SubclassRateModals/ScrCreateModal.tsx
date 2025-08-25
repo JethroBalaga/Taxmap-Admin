@@ -34,14 +34,16 @@ const ScrCreateModal: React.FC<ScrCreateModalProps> = ({
 }) => {
     const [selectedYear, setSelectedYear] = useState<string>('');
     const [rate, setRate] = useState('');
-    const [subclassrateId, setSubclassrateId] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [isError, setIsError] = useState(false);
 
+    // Automatically generate subclassrate_id when subclass_id or year changes
+    const subclassrateId = selectedYear ? `${subclass_id}${selectedYear}` : '';
+
     const handleCreate = async () => {
-        if (!selectedYear || !rate || !subclassrateId) return;
+        if (!selectedYear || !rate) return;
 
         setIsLoading(true);
         try {
@@ -59,7 +61,6 @@ const ScrCreateModal: React.FC<ScrCreateModalProps> = ({
             setToastMessage('Subclass rate created successfully!');
             setSelectedYear('');
             setRate('');
-            setSubclassrateId('');
             onScrCreated();
             setTimeout(onClose, 1000);
         } catch (error: any) {
@@ -108,20 +109,19 @@ const ScrCreateModal: React.FC<ScrCreateModalProps> = ({
                                     <IonLabel className="district-label">Subclass ID: {subclass_id}</IonLabel>
                                 </IonItem>
 
-                                {/* Subclass Rate ID Input */}
+                                {/* Generated Subclass Rate ID Display */}
                                 <div className="input-wrapper">
-                                    <Input
-                                        label="Subclass Rate ID"
-                                        value={subclassrateId}
-                                        onChange={(value) => setSubclassrateId(value)}
-                                        placeholder="Enter subclass rate ID"
-                                        className="modal-input"
-                                    />
+                                    <IonLabel className="input-label">Subclass Rate ID (Auto-generated)</IonLabel>
+                                    <IonItem lines="none" className="readonly-item">
+                                        <IonLabel className="readonly-value">
+                                            {subclassrateId || 'Select year to generate ID'}
+                                        </IonLabel>
+                                    </IonItem>
                                 </div>
 
                                 {/* Year Picker */}
                                 <div className="input-wrapper">
-                                    <IonLabel className="input-label">Effective Year</IonLabel>
+                                    <IonLabel className="input-label">Effective Year *</IonLabel>
                                     <IonDatetime
                                         presentation="year"
                                         value={selectedYear}
@@ -133,7 +133,7 @@ const ScrCreateModal: React.FC<ScrCreateModalProps> = ({
                                 {/* Rate Input */}
                                 <div className="input-wrapper">
                                     <Input
-                                        label="Rate"
+                                        label="Rate *"
                                         value={rate}
                                         onChange={handleRateChange}
                                         placeholder="Enter rate (e.g., 12.5)"
@@ -155,7 +155,7 @@ const ScrCreateModal: React.FC<ScrCreateModalProps> = ({
                                     <Button
                                         variant="primary"
                                         onClick={handleCreate}
-                                        disabled={!selectedYear || !rate || !subclassrateId || isLoading}
+                                        disabled={!selectedYear || !rate || isLoading}
                                         className="create-btn"
                                     >
                                         {isLoading ? 'Creating...' : 'Create'}

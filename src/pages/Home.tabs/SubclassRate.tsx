@@ -22,10 +22,10 @@ import ScrCreateModal from '../../components/SubclassRateModals/ScrCreateModal';
 import { supabase } from '../../utils/supaBaseClient';
 
 interface SubclassRateItem {
-  rate_id: string;
+ subclasratetbl_id: string;
   subclass_id: string;
   rate: number;
-  effective_date: string;
+  eff_year: string;
   created_at: string;
 }
 
@@ -58,10 +58,10 @@ const SubclassRate: React.FC = () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from('subclass_rates')
-        .select('rate_id, subclass_id, rate, effective_date, created_at')
+        .from('subclasratetbl')
+        .select('subclasratetbl_id, subclass_id, rate, eff_year, created_at')
         .eq('subclass_id', subclassId)
-        .order('effective_date', { ascending: false });
+        .order('eff_year', { ascending: false });
 
       if (error) throw error;
 
@@ -86,9 +86,9 @@ const SubclassRate: React.FC = () => {
 
     const term = searchTerm.toLowerCase();
     return rates.filter(item =>
-      item.rate_id.toLowerCase().includes(term) ||
+      item.subclasratetbl_id.toLowerCase().includes(term) ||
       item.rate.toString().includes(term) ||
-      item.effective_date.toLowerCase().includes(term)
+      item.eff_year.toLowerCase().includes(term)
     );
   }, [rates, searchTerm]);
 
@@ -113,9 +113,9 @@ const SubclassRate: React.FC = () => {
     setIsLoading(true);
     try {
       const { error } = await supabase
-        .from('subclass_rates')
+        .from('subclasratetbl')
         .delete()
-        .eq('rate_id', selectedRow.rate_id);
+        .eq('subclasratetbl_id', selectedRow.subclasratetbl_id);
 
       if (error) throw error;
 
