@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useHistory } from 'react-router-dom'; // Added useHistory
 import { 
   IonContent, 
   IonHeader, 
@@ -18,7 +18,7 @@ import {
 import { add, arrowUpCircle, cashOutline, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import SubclassCreateModal from '../../components/SubclassModals/SubclassCreateModal';
-import SubclassUpdateModal from '../../components/SubclassModals/SubclassUpdateModal'; // Add this import
+import SubclassUpdateModal from '../../components/SubclassModals/SubclassUpdateModal';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 
@@ -32,10 +32,11 @@ interface SubclassItem {
 
 const Subclass: React.FC = () => {
   const location = useLocation();
+  const history = useHistory(); // Added history for navigation
   const [classId, setClassId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false); // New state for update modal
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [subclasses, setSubclasses] = useState<SubclassItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRow, setSelectedRow] = useState<SubclassItem | null>(null);
@@ -150,8 +151,11 @@ const Subclass: React.FC = () => {
   };
 
   const handleRate = () => {
-
-  }
+    if (selectedRow) {
+      // Navigate to SubclassRate page with subclass_id as a parameter
+      history.push(`/subclass-rates?subclass_id=${selectedRow.subclass_id}`);
+    }
+  };
 
   const iconButtons = [
     { 
@@ -176,7 +180,7 @@ const Subclass: React.FC = () => {
       icon: cashOutline, 
       onClick: handleRate, 
       disabled: !selectedRow, 
-      title: "Add Rate" 
+      title: "View Rates" 
     },
   ];
 
