@@ -152,8 +152,7 @@ const Subclass: React.FC = () => {
 
   const handleRate = () => {
     if (selectedRow) {
-      // Navigate to SubclassRate page with subclass_id as a parameter
-      history.push(`/subclass-rates?subclass_id=${selectedRow.subclass_id}`);
+      history.push(`/menu/home/subclassrate?subclass_id=${selectedRow.subclass_id}`);
     }
   };
 
