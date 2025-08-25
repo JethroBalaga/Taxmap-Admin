@@ -90,7 +90,7 @@ const DistrictUpdateModal: React.FC<DistrictUpdateModalProps> = ({
         .from('districttbl')
         .update({ 
           district_id: districtId, 
-          district_name: districtName,
+          district_name: districtName.toUpperCase(), // Convert to uppercase
           founded: formattedDate
         })
         .eq('district_id', districtData.district_id);
@@ -115,7 +115,7 @@ const DistrictUpdateModal: React.FC<DistrictUpdateModalProps> = ({
   };
 
   const handleDistrictNameChange = (value: string) => {
-    setDistrictName(value);
+    setDistrictName(value.toUpperCase()); // Convert to uppercase
   };
 
   const isChangingId = districtId !== (districtData?.district_id || null);
