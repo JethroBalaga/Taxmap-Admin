@@ -44,31 +44,31 @@ const ClassificationCreateModal: React.FC<ClassificationCreateModalProps> = ({
       const { data: existingData, error: existingError } = await supabase
         .from('classtbl')
         .select('class_id')
-        .eq('class_id', code)
+        .eq('class_id', code.toUpperCase()) // Convert to uppercase for comparison
         .maybeSingle();
 
       if (existingData) {
-        throw new Error('Classification code already exists');
+        throw new Error('CLASSIFICATION CODE ALREADY EXISTS');
       }
 
       // Insert new classification
       const { data, error } = await supabase
         .from('classtbl')
         .insert([{ 
-          class_id: code, 
-          classification: classification 
+          class_id: code.toUpperCase(), // Convert to uppercase
+          classification: classification.toUpperCase() // Convert to uppercase
         }])
         .select();
 
       if (error) throw error;
 
-      setToastMessage('Classification created successfully!');
+      setToastMessage('CLASSIFICATION CREATED SUCCESSFULLY!');
       setCode('');
       setClassification('');
       onClassificationCreated(); // Safe to call now
       setTimeout(onClose, 1000);
     } catch (error: any) {
-      const errorMessage = error.message || 'Failed to create classification';
+      const errorMessage = error.message || 'FAILED TO CREATE CLASSIFICATION';
       setToastMessage(errorMessage);
       setIsError(true);
       console.error('Error creating classification:', error);
@@ -79,7 +79,11 @@ const ClassificationCreateModal: React.FC<ClassificationCreateModalProps> = ({
   };
 
   const handleCodeChange = (value: string) => {
-    setCode(value.toUpperCase());
+    setCode(value.toUpperCase()); // Convert to uppercase
+  };
+
+  const handleClassificationChange = (value: string) => {
+    setClassification(value.toUpperCase()); // Convert to uppercase
   };
 
   return (
@@ -91,7 +95,7 @@ const ClassificationCreateModal: React.FC<ClassificationCreateModalProps> = ({
       >
         <IonHeader>
           <IonToolbar className="modal-header">
-            <IonTitle className="modal-title">Create New Classification</IonTitle>
+            <IonTitle className="modal-title">CREATE NEW CLASSIFICATION</IonTitle>
           </IonToolbar>
         </IonHeader>
 
@@ -101,20 +105,20 @@ const ClassificationCreateModal: React.FC<ClassificationCreateModalProps> = ({
               <IonCol className="form-column">
                 <div className="input-wrapper">
                   <Input
-                    label="Code"
+                    label="CODE"
                     value={code}
                     onChange={handleCodeChange}
-                    placeholder="Enter classification code (e.g., R, I)"
+                    placeholder="ENTER CLASSIFICATION CODE (E.G., R, I)"
                     className="modal-input"
                   />
                 </div>
                 
                 <div className="input-wrapper">
                   <Input
-                    label="Classification"
+                    label="CLASSIFICATION"
                     value={classification}
-                    onChange={setClassification}
-                    placeholder="Enter classification name"
+                    onChange={handleClassificationChange}
+                    placeholder="ENTER CLASSIFICATION NAME"
                     className="modal-input"
                   />
                 </div>
@@ -126,7 +130,7 @@ const ClassificationCreateModal: React.FC<ClassificationCreateModalProps> = ({
                     className="cancel-btn"
                     disabled={isLoading}
                   >
-                    Cancel
+                    CANCEL
                   </Button>
                   
                   <Button 
@@ -135,7 +139,7 @@ const ClassificationCreateModal: React.FC<ClassificationCreateModalProps> = ({
                     disabled={!code || !classification || isLoading}
                     className="create-btn"
                   >
-                    {isLoading ? 'Creating...' : 'Create'}
+                    {isLoading ? 'CREATING...' : 'CREATE'}
                   </Button>
                 </div>
               </IonCol>
@@ -144,14 +148,14 @@ const ClassificationCreateModal: React.FC<ClassificationCreateModalProps> = ({
         </IonContent>
       </IonModal>
 
-      <IonLoading isOpen={isLoading} message="Creating classification..." />
+      <IonLoading isOpen={isLoading} message="CREATING CLASSIFICATION..." />
       
       <IonToast
         isOpen={showToast}
         onDidDismiss={() => setShowToast(false)}
         message={toastMessage}
         duration={3000}
-        color={isError ? 'green' : 'success'}
+        color={isError ? 'danger' : 'success'} // Fixed color from 'green' to 'danger' for errors
       />
     </>
   );
