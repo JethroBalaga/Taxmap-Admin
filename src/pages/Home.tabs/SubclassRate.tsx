@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useHistory } from 'react-router-dom'; // Added useHistory
 import {
   IonContent,
   IonHeader,
@@ -13,12 +13,14 @@ import {
   IonSearchbar,
   IonLoading,
   IonToast,
-  IonAlert
+  IonAlert,
+  IonButtons,
+  IonButton
 } from '@ionic/react';
-import { add, arrowUpCircle, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, trash, arrowBack } from 'ionicons/icons'; // Added arrowBack
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
-import ScrCreateModal from '../../components/SubclassRateModals/ScrCreateModal'; // Import the modal
+import ScrCreateModal from '../../components/SubclassRateModals/ScrCreateModal';
 import { supabase } from '../../utils/supaBaseClient';
 
 interface SubclassRateItem {
@@ -31,6 +33,7 @@ interface SubclassRateItem {
 
 const SubclassRate: React.FC = () => {
   const location = useLocation();
+  const history = useHistory(); // Added history for navigation
   const [subclassId, setSubclassId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [rates, setRates] = useState<SubclassRateItem[]>([]);
@@ -40,7 +43,7 @@ const SubclassRate: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [isError, setIsError] = useState(false);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false); // State for modal
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Get subclass_id from URL when component mounts
   useEffect(() => {
@@ -81,23 +84,24 @@ const SubclassRate: React.FC = () => {
   }, [fetchRates]);
 
   // Filter data based on search term
-const filteredData = useMemo(() => {
-  if (!searchTerm.trim()) return rates;
+  const filteredData = useMemo(() => {
+    if (!searchTerm.trim()) return rates;
 
-  const term = searchTerm.toLowerCase();
-  return rates.filter(item => {
-    // Convert all values to string for comparison
-    const subclassrateIdStr = item.subclassrate_id?.toString().toLowerCase() || '';
-    const rateStr = item.rate?.toString() || '';
-    const effYearStr = item.eff_year?.toString() || '';
-    
-    return (
-      subclassrateIdStr.includes(term) ||
-      rateStr.includes(term) ||
-      effYearStr.includes(term)
-    );
-  });
-}, [rates, searchTerm]);
+    const term = searchTerm.toLowerCase();
+    return rates.filter(item => {
+      // Convert all values to string for comparison
+      const subclassrateIdStr = item.subclassrate_id?.toString().toLowerCase() || '';
+      const rateStr = item.rate?.toString() || '';
+      const effYearStr = item.eff_year?.toString() || '';
+
+      return (
+        subclassrateIdStr.includes(term) ||
+        rateStr.includes(term) ||
+        effYearStr.includes(term)
+      );
+    });
+  }, [rates, searchTerm]);
+
   const handleRowClick = (rowData: SubclassRateItem) => {
     setSelectedRow(rowData);
   };
@@ -150,6 +154,19 @@ const filteredData = useMemo(() => {
     setShowToast(true);
   };
 
+  const handleBackClick = () => {
+    // Extract class_id from the current URL to navigate back to the subclass page
+    const queryParams = new URLSearchParams(location.search);
+    const classId = queryParams.get('class_id');
+
+    if (classId) {
+      history.push(`/menu/home/subclass?class_id=${classId}`);
+    } else {
+      // Fallback: go to the subclass list page if no class_id is found
+      history.push('/menu/home/subclass');
+    }
+  };
+
   const iconButtons = [
     {
       icon: add,
@@ -175,6 +192,11 @@ const filteredData = useMemo(() => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
+          <IonButtons slot="start">
+            <IonButton onClick={handleBackClick}>
+              <IonIcon icon={arrowBack} />
+            </IonButton>
+          </IonButtons>
           <IonTitle>
             {subclassId ? `Subclass Rates (Subclass ID: ${subclassId})` : 'Subclass Rates'}
           </IonTitle>
