@@ -81,17 +81,23 @@ const SubclassRate: React.FC = () => {
   }, [fetchRates]);
 
   // Filter data based on search term
-  const filteredData = useMemo(() => {
-    if (!searchTerm.trim()) return rates;
+const filteredData = useMemo(() => {
+  if (!searchTerm.trim()) return rates;
 
-    const term = searchTerm.toLowerCase();
-    return rates.filter(item =>
-      item.subclassrate_id.toLowerCase().includes(term) ||
-      item.rate.toString().includes(term) ||
-      item.eff_year.toLowerCase().includes(term)
+  const term = searchTerm.toLowerCase();
+  return rates.filter(item => {
+    // Convert all values to string for comparison
+    const subclassrateIdStr = item.subclassrate_id?.toString().toLowerCase() || '';
+    const rateStr = item.rate?.toString() || '';
+    const effYearStr = item.eff_year?.toString() || '';
+    
+    return (
+      subclassrateIdStr.includes(term) ||
+      rateStr.includes(term) ||
+      effYearStr.includes(term)
     );
-  }, [rates, searchTerm]);
-
+  });
+}, [rates, searchTerm]);
   const handleRowClick = (rowData: SubclassRateItem) => {
     setSelectedRow(rowData);
   };
