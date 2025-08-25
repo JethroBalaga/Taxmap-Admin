@@ -76,9 +76,9 @@ const SubclassCreateModal: React.FC<SubclassCreateModalProps> = ({
       const { error } = await supabase
         .from('subclasstbl')
         .insert([{
-          subclass_id,
-          subclass: subclass,
-          class_id,
+          subclass_id: subclass_id.toUpperCase(), // Convert to uppercase
+          subclass: subclass.toUpperCase(), // Convert to uppercase
+          class_id: class_id.toUpperCase(), // Convert to uppercase
           barangay_id: selectedBarangay
         }]);
 
@@ -98,6 +98,14 @@ const SubclassCreateModal: React.FC<SubclassCreateModalProps> = ({
       setIsLoading(false);
       setShowToast(true);
     }
+  };
+
+  const handleSubclassIdChange = (value: string) => {
+    setSubclassId(value.toUpperCase()); // Convert to uppercase
+  };
+
+  const handleSubclassChange = (value: string) => {
+    setSubclass(value.toUpperCase()); // Convert to uppercase
   };
 
   return (
@@ -121,7 +129,7 @@ const SubclassCreateModal: React.FC<SubclassCreateModalProps> = ({
                   <Input
                     label="Subclass ID"
                     value={subclass_id}
-                    onChange={(e) => setSubclassId(e)}
+                    onChange={handleSubclassIdChange}
                     placeholder="Enter subclass ID"
                     className="modal-input"
                   />
@@ -131,7 +139,7 @@ const SubclassCreateModal: React.FC<SubclassCreateModalProps> = ({
                   <Input
                     label="Subclass Name"
                     value={subclass}
-                    onChange={(e) => setSubclass(e)}
+                    onChange={handleSubclassChange}
                     placeholder="Enter subclass name"
                     className="modal-input"
                   />
