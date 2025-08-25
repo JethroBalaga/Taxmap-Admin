@@ -15,7 +15,7 @@ import {
   IonToast,
   IonAlert
 } from '@ionic/react';
-import { add, arrowUpCircle, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, cashOutline, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import SubclassCreateModal from '../../components/SubclassModals/SubclassCreateModal';
 import SubclassUpdateModal from '../../components/SubclassModals/SubclassUpdateModal'; // Add this import
@@ -149,6 +149,10 @@ const Subclass: React.FC = () => {
     setIsUpdateModalOpen(false);
   };
 
+  const handleRate = () => {
+
+  }
+
   const iconButtons = [
     { 
       icon: add, 
@@ -167,6 +171,12 @@ const Subclass: React.FC = () => {
       onClick: handleDeleteClick, 
       disabled: !selectedRow, 
       title: "Delete Subclass" 
+    },
+    { 
+      icon: cashOutline, 
+      onClick: handleRate, 
+      disabled: !selectedRow, 
+      title: "Add Rate" 
     },
   ];
 
