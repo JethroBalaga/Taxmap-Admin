@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useLocation, useHistory } from 'react-router-dom'; // Added useHistory
+import { useLocation, useHistory } from 'react-router-dom';
 import {
   IonContent,
   IonHeader,
@@ -17,10 +17,11 @@ import {
   IonButtons,
   IonButton
 } from '@ionic/react';
-import { add, arrowUpCircle, trash, arrowBack } from 'ionicons/icons'; // Added arrowBack
+import { add, arrowUpCircle, trash, arrowBack } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import ScrCreateModal from '../../components/SubclassRateModals/ScrCreateModal';
+import ScrUpdateModal from '../../components/SubclassRateModals/ScrUpdateModal'; // Import the update modal
 import { supabase } from '../../utils/supaBaseClient';
 
 interface SubclassRateItem {
@@ -33,7 +34,7 @@ interface SubclassRateItem {
 
 const SubclassRate: React.FC = () => {
   const location = useLocation();
-  const history = useHistory(); // Added history for navigation
+  const history = useHistory();
   const [subclassId, setSubclassId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [rates, setRates] = useState<SubclassRateItem[]>([]);
@@ -44,6 +45,7 @@ const SubclassRate: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [isError, setIsError] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false); // State for update modal
 
   // Get subclass_id from URL when component mounts
   useEffect(() => {
@@ -89,7 +91,6 @@ const SubclassRate: React.FC = () => {
 
     const term = searchTerm.toLowerCase();
     return rates.filter(item => {
-      // Convert all values to string for comparison
       const subclassrateIdStr = item.subclassrate_id?.toString().toLowerCase() || '';
       const rateStr = item.rate?.toString() || '';
       const effYearStr = item.eff_year?.toString() || '';
@@ -107,8 +108,9 @@ const SubclassRate: React.FC = () => {
   };
 
   const handleUpdateClick = () => {
-    // Update functionality to be implemented
-    console.log('Update clicked for:', selectedRow);
+    if (selectedRow) {
+      setIsUpdateModalOpen(true);
+    }
   };
 
   const handleDeleteClick = () => {
@@ -154,15 +156,20 @@ const SubclassRate: React.FC = () => {
     setShowToast(true);
   };
 
+  const handleScrUpdated = () => {
+    fetchRates();
+    setToastMessage('Subclass rate updated successfully!');
+    setShowToast(true);
+    setIsUpdateModalOpen(false);
+  };
+
   const handleBackClick = () => {
-    // Extract class_id from the current URL to navigate back to the subclass page
     const queryParams = new URLSearchParams(location.search);
     const classId = queryParams.get('class_id');
 
     if (classId) {
       history.push(`/menu/home/subclass?class_id=${classId}`);
     } else {
-      // Fallback: go to the subclass list page if no class_id is found
       history.push('/menu/home/subclass');
     }
   };
@@ -250,6 +257,14 @@ const SubclassRate: React.FC = () => {
             subclass_id={subclassId}
           />
         )}
+
+        {/* ScrUpdateModal */}
+        <ScrUpdateModal
+          isOpen={isUpdateModalOpen}
+          onClose={() => setIsUpdateModalOpen(false)}
+          onScrUpdated={handleScrUpdated}
+          subclassRateData={selectedRow}
+        />
 
         <IonAlert
           isOpen={showDeleteAlert}
