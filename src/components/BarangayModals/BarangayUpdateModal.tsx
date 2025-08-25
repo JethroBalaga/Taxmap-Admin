@@ -63,19 +63,19 @@ const BarangayUpdateModal: React.FC<BarangayUpdateModalProps> = ({
       const { error } = await supabase
         .from('barangaytbl')
         .update({ 
-          barangay_id: barangayId,
-          barangay: barangayName,  // Changed to match your table column
+          barangay_id: barangayId.toUpperCase(), // Convert to uppercase
+          barangay: barangayName.toUpperCase(),  // Convert to uppercase
           district_id: districtId
         })
         .eq('barangay_id', barangayData.barangay_id);
 
       if (error) throw error;
 
-      setToastMessage('Barangay updated successfully!');
+      setToastMessage('BARANGAY UPDATED SUCCESSFULLY!');
       onBarangayUpdated();
       setTimeout(onClose, 1000);
     } catch (error: any) {
-      setToastMessage(error.message || 'Failed to update barangay');
+      setToastMessage(error.message || 'FAILED TO UPDATE BARANGAY');
       setIsError(true);
     } finally {
       setIsLoading(false);
@@ -83,12 +83,20 @@ const BarangayUpdateModal: React.FC<BarangayUpdateModalProps> = ({
     }
   };
 
+  const handleBarangayIdChange = (value: string) => {
+    setBarangayId(value.toUpperCase()); // Convert to uppercase
+  };
+
+  const handleBarangayNameChange = (value: string) => {
+    setBarangayName(value.toUpperCase()); // Convert to uppercase
+  };
+
   return (
     <>
       <IonModal isOpen={isOpen} onDidDismiss={onClose} className="classification-modal">
         <IonHeader>
           <IonToolbar className="modal-header">
-            <IonTitle className="modal-title">Update Barangay</IonTitle>
+            <IonTitle className="modal-title">UPDATE BARANGAY</IonTitle>
           </IonToolbar>
         </IonHeader>
 
@@ -97,25 +105,25 @@ const BarangayUpdateModal: React.FC<BarangayUpdateModalProps> = ({
             <IonRow>
               <IonCol className="form-column">
                 <IonItem lines="none" className="district-label-item">
-                  <IonLabel className="district-label">District ID: {districtId}</IonLabel>
+                  <IonLabel className="district-label">DISTRICT ID: {districtId}</IonLabel>
                 </IonItem>
 
                 <div className="input-wrapper">
                   <Input
-                    label="Barangay ID"
+                    label="BARANGAY ID"
                     value={barangayId}
-                    onChange={setBarangayId}
-                    placeholder="Enter barangay ID"
+                    onChange={handleBarangayIdChange}
+                    placeholder="ENTER BARANGAY ID"
                     className="modal-input"
                   />
                 </div>
 
                 <div className="input-wrapper">
                   <Input
-                    label="Barangay Name"
+                    label="BARANGAY NAME"
                     value={barangayName}
-                    onChange={setBarangayName}
-                    placeholder="Enter barangay name"
+                    onChange={handleBarangayNameChange}
+                    placeholder="ENTER BARANGAY NAME"
                     className="modal-input"
                   />
                 </div>
@@ -127,7 +135,7 @@ const BarangayUpdateModal: React.FC<BarangayUpdateModalProps> = ({
                     className="cancel-btn"
                     disabled={isLoading}
                   >
-                    Cancel
+                    CANCEL
                   </Button>
 
                   <Button
@@ -136,7 +144,7 @@ const BarangayUpdateModal: React.FC<BarangayUpdateModalProps> = ({
                     disabled={!isFormValid || isLoading}
                     className="update-btn"
                   >
-                    {isLoading ? 'Updating...' : 'Update'}
+                    {isLoading ? 'UPDATING...' : 'UPDATE'}
                   </Button>
                 </div>
               </IonCol>
@@ -145,7 +153,7 @@ const BarangayUpdateModal: React.FC<BarangayUpdateModalProps> = ({
         </IonContent>
       </IonModal>
 
-      <IonLoading isOpen={isLoading} message="Updating barangay..." />
+      <IonLoading isOpen={isLoading} message="UPDATING BARANGAY..." />
       <IonToast
         isOpen={showToast}
         onDidDismiss={() => setShowToast(false)}
