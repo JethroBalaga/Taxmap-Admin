@@ -87,8 +87,8 @@ const SubclassUpdateModal: React.FC<SubclassUpdateModalProps> = ({
       const { error } = await supabase
         .from('subclasstbl')
         .update({ 
-          subclass_id: subclassId,
-          subclass: subclassName,
+          subclass_id: subclassId.toUpperCase(), // Convert to uppercase
+          subclass: subclassName.toUpperCase(), // Convert to uppercase
           barangay_id: selectedBarangay
         })
         .eq('subclass_id', subclassData.subclass_id);
@@ -106,6 +106,14 @@ const SubclassUpdateModal: React.FC<SubclassUpdateModalProps> = ({
       setIsLoading(false);
       setShowToast(true);
     }
+  };
+
+  const handleSubclassIdChange = (value: string) => {
+    setSubclassId(value.toUpperCase()); // Convert to uppercase
+  };
+
+  const handleSubclassNameChange = (value: string) => {
+    setSubclassName(value.toUpperCase()); // Convert to uppercase
   };
 
   return (
@@ -129,7 +137,7 @@ const SubclassUpdateModal: React.FC<SubclassUpdateModalProps> = ({
                   <Input
                     label="Subclass ID"
                     value={subclassId}
-                    onChange={setSubclassId}
+                    onChange={handleSubclassIdChange}
                     placeholder="Enter subclass ID"
                     className="modal-input"
                   />
@@ -139,7 +147,7 @@ const SubclassUpdateModal: React.FC<SubclassUpdateModalProps> = ({
                   <Input
                     label="Subclass Name"
                     value={subclassName}
-                    onChange={setSubclassName}
+                    onChange={handleSubclassNameChange}
                     placeholder="Enter subclass name"
                     className="modal-input"
                   />
