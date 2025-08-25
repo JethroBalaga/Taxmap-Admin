@@ -18,6 +18,7 @@ import {
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
+import ScrCreateModal from '../../components/SubclassRateModals/ScrCreateModal'; // Import the modal
 import { supabase } from '../../utils/supaBaseClient';
 
 interface SubclassRateItem {
@@ -39,6 +40,7 @@ const SubclassRate: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [isError, setIsError] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false); // State for modal
 
   // Get subclass_id from URL when component mounts
   useEffect(() => {
@@ -133,8 +135,13 @@ const SubclassRate: React.FC = () => {
   };
 
   const handleAddRate = () => {
-    // Add rate functionality to be implemented
-    console.log('Add rate clicked');
+    setIsCreateModalOpen(true);
+  };
+
+  const handleScrCreated = () => {
+    fetchRates();
+    setToastMessage('Subclass rate created successfully!');
+    setShowToast(true);
   };
 
   const iconButtons = [
@@ -205,6 +212,16 @@ const SubclassRate: React.FC = () => {
         </IonGrid>
 
         <IonLoading isOpen={isLoading} message="Loading..." />
+
+        {/* ScrCreateModal */}
+        {subclassId && (
+          <ScrCreateModal
+            isOpen={isCreateModalOpen}
+            onClose={() => setIsCreateModalOpen(false)}
+            onScrCreated={handleScrCreated}
+            subclass_id={subclassId}
+          />
+        )}
 
         <IonAlert
           isOpen={showDeleteAlert}
