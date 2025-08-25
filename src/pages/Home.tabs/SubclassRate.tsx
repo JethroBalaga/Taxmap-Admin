@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { 
-  IonContent, 
-  IonHeader, 
-  IonPage, 
-  IonTitle, 
+import {
+  IonContent,
+  IonHeader,
+  IonPage,
+  IonTitle,
   IonToolbar,
   IonGrid,
   IonRow,
@@ -22,7 +22,7 @@ import ScrCreateModal from '../../components/SubclassRateModals/ScrCreateModal';
 import { supabase } from '../../utils/supaBaseClient';
 
 interface SubclassRateItem {
- subclasratetbl_id: string;
+  subclassrate_id: string;
   subclass_id: string;
   rate: number;
   eff_year: string;
@@ -54,12 +54,12 @@ const SubclassRate: React.FC = () => {
   // Fetch rates when subclassId changes
   const fetchRates = useCallback(async () => {
     if (!subclassId) return;
-    
+
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from('subclasratetbl')
-        .select('subclasratetbl_id, subclass_id, rate, eff_year, created_at')
+        .from('subclassratetbl')
+        .select('subclassrate_id, subclass_id, rate, eff_year, created_at')
         .eq('subclass_id', subclassId)
         .order('eff_year', { ascending: false });
 
@@ -86,7 +86,7 @@ const SubclassRate: React.FC = () => {
 
     const term = searchTerm.toLowerCase();
     return rates.filter(item =>
-      item.subclasratetbl_id.toLowerCase().includes(term) ||
+      item.subclassrate_id.toLowerCase().includes(term) ||
       item.rate.toString().includes(term) ||
       item.eff_year.toLowerCase().includes(term)
     );
@@ -113,9 +113,9 @@ const SubclassRate: React.FC = () => {
     setIsLoading(true);
     try {
       const { error } = await supabase
-        .from('subclasratetbl')
+        .from('subclassratetbl')
         .delete()
-        .eq('subclasratetbl_id', selectedRow.subclasratetbl_id);
+        .eq('subclassrate_id', selectedRow.subclassrate_id);
 
       if (error) throw error;
 
@@ -145,23 +145,23 @@ const SubclassRate: React.FC = () => {
   };
 
   const iconButtons = [
-    { 
-      icon: add, 
-      onClick: handleAddRate, 
-      disabled: !subclassId, 
-      title: "Add Rate" 
+    {
+      icon: add,
+      onClick: handleAddRate,
+      disabled: !subclassId,
+      title: "Add Rate"
     },
-    { 
-      icon: arrowUpCircle, 
-      onClick: handleUpdateClick, 
-      disabled: !selectedRow, 
-      title: "Edit Rate" 
+    {
+      icon: arrowUpCircle,
+      onClick: handleUpdateClick,
+      disabled: !selectedRow,
+      title: "Edit Rate"
     },
-    { 
-      icon: trash, 
-      onClick: handleDeleteClick, 
-      disabled: !selectedRow, 
-      title: "Delete Rate" 
+    {
+      icon: trash,
+      onClick: handleDeleteClick,
+      disabled: !selectedRow,
+      title: "Delete Rate"
     },
   ];
 
@@ -204,7 +204,7 @@ const SubclassRate: React.FC = () => {
               <DynamicTable
                 data={filteredData}
                 title="Subclass Rates"
-                keyField="rate_id"
+                keyField="subclassrate_id"
                 onRowClick={handleRowClick}
               />
             </IonCol>
