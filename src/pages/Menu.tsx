@@ -13,13 +13,14 @@ import {
       IonTitle, 
       IonToolbar 
   } from '@ionic/react'
-  import {homeOutline, informationOutline, logOutOutline, rocketOutline} from 'ionicons/icons';
+  import {homeOutline, informationOutline, logOutOutline, peopleOutline, rocketOutline} from 'ionicons/icons';
 import { Redirect, Route } from 'react-router';
 import Home from './Home';
-import Taxrate from './Home.tabs/Taxrate';
+import People from './People';
   const Menu: React.FC = () => {
     const path = [
         {name:'Home', url: '/menu/home', icon: homeOutline},
+        {name:'People', url: '/menu/people', icon: peopleOutline},
     ]
 
     return (
@@ -57,6 +58,7 @@ import Taxrate from './Home.tabs/Taxrate';
         <IonContent className="ion-padding">
         <IonRouterOutlet id="main">
         <Route exact path="/menu/home" component={Home} />
+        <Route exact path="/menu/people" component={People} />
                     <Route exact path="/menu">
                         <Redirect to="/menu/home"/>
                     </Route>
