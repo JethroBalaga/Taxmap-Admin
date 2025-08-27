@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocation, useHistory } from 'react-router-dom'; // Added useHistory
-import { 
-  IonContent, 
-  IonHeader, 
-  IonPage, 
-  IonTitle, 
+import {
+  IonContent,
+  IonHeader,
+  IonPage,
+  IonTitle,
   IonToolbar,
   IonGrid,
   IonRow,
@@ -57,7 +57,7 @@ const Subclass: React.FC = () => {
   // Fetch subclasses when classId changes
   const fetchSubclasses = useCallback(async () => {
     if (!classId) return;
-    
+
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -157,10 +157,10 @@ const Subclass: React.FC = () => {
   };
 
   const iconButtons = [
-   { icon: add, onClick: () => setIsCreateModalOpen(true), disabled: !classId, title: "Add Subclass" }, 
-{ icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Subclass" }, 
-{ icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Subclass" }, 
-{ icon: cashOutline, onClick: handleRate, disabled: !selectedRow, title: "View Rates" }
+    { icon: add, onClick: () => setIsCreateModalOpen(true), disabled: !classId, title: "Add Subclass" },
+    { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Subclass" },
+    { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Subclass" },
+    { icon: cashOutline, onClick: handleRate, disabled: !selectedRow, title: "View Rates" }
 
   ];
 
@@ -220,7 +220,7 @@ const Subclass: React.FC = () => {
               onSubclassCreated={handleSubclassCreated}
               class_id={classId}
             />
-            
+
             <SubclassUpdateModal
               isOpen={isUpdateModalOpen}
               onClose={() => setIsUpdateModalOpen(false)}
