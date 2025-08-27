@@ -38,6 +38,7 @@ const Declarant: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const [isError, setIsError] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
 
   // Focus search input on mount
   useEffect(() => {
