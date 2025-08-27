@@ -18,7 +18,7 @@ import { useLocation } from 'react-router-dom';
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import TaxrateCreateModal from '../../components/TaxrateModals/TaxrateCreateModal';
-import TaxrateUpdateModal from '../../components/TaxrateModals/TaxrateUpdateModal'; // Add this import
+import TaxrateUpdateModal from '../../components/TaxrateModals/TaxrateUpdateModal';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 
@@ -29,12 +29,19 @@ interface TaxrateItem {
   created_at?: string;
 }
 
+interface IconButton {
+  icon: string;
+  onClick: () => void;
+  disabled: boolean;
+  title: string;
+}
+
 const Taxrate: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [taxrates, setTaxrates] = useState<TaxrateItem[]>([]);
   const [selectedRow, setSelectedRow] = useState<TaxrateItem | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showUpdateModal, setShowUpdateModal] = useState(false); // Add this state
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -46,6 +53,13 @@ const Taxrate: React.FC = () => {
   // Get district_id from URL
   const queryParams = new URLSearchParams(location.search);
   const districtId = queryParams.get('district_id');
+
+  // Icon buttons constructor
+  const iconButtons = useMemo((): IconButton[] => [
+    { icon: add, onClick: () => setShowCreateModal(true), disabled: false, title: "Add Tax Rate" }, 
+    { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Tax Rate" }, 
+    { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Tax Rate" }
+  ], [selectedRow]);
 
   // Fetch tax rates
   const fetchTaxrates = async () => {
@@ -155,21 +169,15 @@ const Taxrate: React.FC = () => {
               />
 
               <div className="icon-group">
-                <IonIcon
-                  icon={add}
-                  className="icon-yellow"
-                  onClick={() => setShowCreateModal(true)}
-                />
-                <IonIcon
-                  icon={arrowUpCircle}
-                  className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
-                  onClick={handleUpdateClick}
-                />
-                <IonIcon
-                  icon={trash}
-                  className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
-                  onClick={handleDeleteClick}
-                />
+                {iconButtons.map((button, index) => (
+                  <IonIcon
+                    key={index}
+                    icon={button.icon}
+                    className={`icon-yellow ${button.disabled ? 'icon-disabled' : ''}`}
+                    onClick={button.disabled ? undefined : button.onClick}
+                    title={button.title}
+                  />
+                ))}
               </div>
             </IonCol>
           </IonRow>
@@ -202,7 +210,7 @@ const Taxrate: React.FC = () => {
             isOpen={showUpdateModal}
             onClose={() => setShowUpdateModal(false)}
             taxrateData={{
-              tax_rate_id: selectedRow.tax_rate_id,  // Changed from id to tax_rate_id
+              tax_rate_id: selectedRow.tax_rate_id,
               district_id: districtId,
               effective_year: selectedRow.effective_year,
               rate_percent: selectedRow.rate_percent
