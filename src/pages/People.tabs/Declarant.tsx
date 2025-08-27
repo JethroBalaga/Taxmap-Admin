@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   IonPage,
   IonHeader,
@@ -13,12 +13,15 @@ import {
 } from '@ionic/react';
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
+import DeclarantCreateModal from '../../components/DeclarantModals/DeclarantCreateModal';
 
 const Declarant: React.FC = () => {
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
   const iconButtons = [
     { 
       icon: add, 
-      onClick: () => console.log('Add clicked'), 
+      onClick: () => setShowCreateModal(true), 
       disabled: false, 
       title: "Add Declarant" 
     },
@@ -77,6 +80,12 @@ const Declarant: React.FC = () => {
             </IonCol>
           </IonRow>
         </IonGrid>
+
+        <DeclarantCreateModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onDeclarantCreated={() => console.log('Declarant created - refresh data here')}
+        />
       </IonContent>
     </IonPage>
   );
