@@ -1,14 +1,16 @@
 import React from 'react';
 import {
-  IonIcon,
-  IonLabel,
-  IonRouterOutlet,
-  IonTabBar,
-  IonTabButton,
-  IonTabs,
+    IonIcon,
+    IonLabel,
+    IonRouterOutlet,
+    IonTabBar,
+    IonTabButton,
+    IonTabs,
 } from '@ionic/react';
+import { Route, Redirect } from 'react-router';
 import { IonReactRouter } from '@ionic/react-router';
 import { documentOutline } from 'ionicons/icons';
+import Declarant from './People.tabs/Declarant';
 
 const People: React.FC = () => {
 
@@ -29,7 +31,10 @@ const People: React.FC = () => {
 
                 </IonTabBar>
                 <IonRouterOutlet>
-
+                    <Route exact path="/menu/people/declarant" component={Declarant} />
+                    <Route exact path="/menu/people">
+                        <Redirect to="/menu/people/declarant" />
+                    </Route>
 
                 </IonRouterOutlet>
             </IonTabs>
