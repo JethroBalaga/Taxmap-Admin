@@ -21,7 +21,7 @@ import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 
 interface DeclarantItem {
-  declarant_id: string;
+  declarant_id: string; // Changed to string to match the filter logic
   firstname: string;
   lastname: string;
   created_at?: string;
@@ -57,7 +57,14 @@ const Declarant: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setDeclarants(data || []);
+      
+      // Convert declarant_id to string to ensure consistency
+      const declarantsWithStringId = (data || []).map(item => ({
+        ...item,
+        declarant_id: String(item.declarant_id)
+      }));
+      
+      setDeclarants(declarantsWithStringId);
     } catch (error) {
       console.error('Error fetching declarants:', error);
       setToastMessage('Failed to load declarants');
@@ -72,7 +79,7 @@ const Declarant: React.FC = () => {
     fetchDeclarants();
   }, [fetchDeclarants]);
 
-  // Filter data based on search term
+  // Filter data based on search term - FIXED VERSION
   const filteredData = useMemo(() => {
     if (!searchTerm.trim()) return declarants;
 
@@ -80,7 +87,7 @@ const Declarant: React.FC = () => {
     return declarants.filter(item =>
       item.firstname.toLowerCase().includes(term) ||
       item.lastname.toLowerCase().includes(term) ||
-      item.declarant_id.toLowerCase().includes(term)
+      item.declarant_id.toLowerCase().includes(term) // Now safe since we converted to string
     );
   }, [declarants, searchTerm]);
 
