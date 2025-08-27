@@ -82,36 +82,39 @@ const AssessmentLevel: React.FC = () => {
     }, [kindId]);
 
     // Filter data based on search term
-// Filter data based on search term
-const filteredData = useMemo(() => {
-    if (!searchTerm.trim()) return assessmentLevels;
+    const filteredData = useMemo(() => {
+        if (!searchTerm.trim()) return assessmentLevels;
 
-    const term = searchTerm.toLowerCase();
-    return assessmentLevels.filter(item => {
-        // Convert all values to strings for comparison
-        const assessmentLevelId = item.assessment_level_id?.toString().toLowerCase() || '';
-        const classId = item.class_id?.toString().toLowerCase() || '';
-        const effectiveYear = item.effective_year?.toString().toLowerCase() || '';
-        const range1 = item.range1?.toString().toLowerCase() || '';
-        const range2 = item.range2?.toString().toLowerCase() || '';
-        const ratePercent = item.rate_percent?.toString().toLowerCase() || '';
+        const term = searchTerm.toLowerCase();
+        return assessmentLevels.filter(item => {
+            // Convert all values to strings for comparison
+            const assessmentLevelId = item.assessment_level_id?.toString().toLowerCase() || '';
+            const classId = item.class_id?.toString().toLowerCase() || '';
+            const effectiveYear = item.effective_year?.toString().toLowerCase() || '';
+            const range1 = item.range1?.toString().toLowerCase() || '';
+            const range2 = item.range2?.toString().toLowerCase() || '';
+            const ratePercent = item.rate_percent?.toString().toLowerCase() || '';
 
-        return (
-            assessmentLevelId.includes(term) ||
-            classId.includes(term) ||
-            effectiveYear.includes(term) ||
-            range1.includes(term) ||
-            range2.includes(term) ||
-            ratePercent.includes(term)
-        );
-    });
-}, [assessmentLevels, searchTerm]);
+            return (
+                assessmentLevelId.includes(term) ||
+                classId.includes(term) ||
+                effectiveYear.includes(term) ||
+                range1.includes(term) ||
+                range2.includes(term) ||
+                ratePercent.includes(term)
+            );
+        });
+    }, [assessmentLevels, searchTerm]);
 
     const handleRowClick = (rowData: AssessmentLevelItem) => {
         setSelectedRow(rowData);
     };
 
-    const handleUpdateClick = () => {
+    const handleCreateClick = () => {
+        setShowCreateModal(true);
+    };
+
+    const handleEditClick = () => {
         if (!selectedRow) return;
         setSelectedAssessmentLevel(selectedRow);
         setShowUpdateModal(true);
@@ -150,6 +153,14 @@ const filteredData = useMemo(() => {
         }
     };
 
+    // Icon buttons configuration
+    const iconButtons = [
+        { icon: add, onClick: handleCreateClick, disabled: false, title: "Add Assessment Level" },
+        { icon: arrowUpCircle, onClick: handleEditClick, disabled: !selectedRow, title: "Edit Assessment Level" },
+        { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Assessment Level" }
+
+    ];
+
     return (
         <IonPage>
             <IonHeader>
@@ -170,24 +181,15 @@ const filteredData = useMemo(() => {
                             />
 
                             <div className="icon-group">
-                                <IonIcon
-                                    icon={add}
-                                    className="icon-yellow"
-                                    onClick={() => setShowCreateModal(true)}
-                                    title="Add Assessment Level"
-                                />
-                                <IonIcon
-                                    icon={arrowUpCircle}
-                                    className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
-                                    onClick={handleUpdateClick}
-                                    title="Edit Assessment Level"
-                                />
-                                <IonIcon
-                                    icon={trash}
-                                    className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
-                                    onClick={handleDeleteClick}
-                                    title="Delete Assessment Level"
-                                />
+                                {iconButtons.map((button, index) => (
+                                    <IonIcon
+                                        key={index}
+                                        icon={button.icon}
+                                        className={`icon-yellow ${button.disabled ? 'icon-disabled' : ''}`}
+                                        onClick={button.disabled ? undefined : button.onClick}
+                                        title={button.title}
+                                    />
+                                ))}
                             </div>
                         </IonCol>
                     </IonRow>

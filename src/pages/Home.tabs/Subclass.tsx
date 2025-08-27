@@ -157,30 +157,11 @@ const Subclass: React.FC = () => {
   };
 
   const iconButtons = [
-    { 
-      icon: add, 
-      onClick: () => setIsCreateModalOpen(true), 
-      disabled: !classId, 
-      title: "Add Subclass" 
-    },
-    { 
-      icon: arrowUpCircle, 
-      onClick: handleUpdateClick, 
-      disabled: !selectedRow, 
-      title: "Edit Subclass" 
-    },
-    { 
-      icon: trash, 
-      onClick: handleDeleteClick, 
-      disabled: !selectedRow, 
-      title: "Delete Subclass" 
-    },
-    { 
-      icon: cashOutline, 
-      onClick: handleRate, 
-      disabled: !selectedRow, 
-      title: "View Rates" 
-    },
+   { icon: add, onClick: () => setIsCreateModalOpen(true), disabled: !classId, title: "Add Subclass" }, 
+{ icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Subclass" }, 
+{ icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Subclass" }, 
+{ icon: cashOutline, onClick: handleRate, disabled: !selectedRow, title: "View Rates" }
+
   ];
 
   return (

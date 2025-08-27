@@ -170,7 +170,7 @@ const Classification: React.FC = () => {
       history.push({
         pathname: '/menu/home/subclass',
         search: `?class_id=${selectedRow.class_id}`,
-        state: { 
+        state: {
           classificationData: {
             class_id: selectedRow.class_id,
             classification: selectedRow.classification
@@ -181,30 +181,11 @@ const Classification: React.FC = () => {
   };
 
   const iconButtons = [
-    { 
-      icon: add, 
-      onClick: () => setShowCreateModal(true), 
-      disabled: false, 
-      title: "Add Classification" 
-    },
-    { 
-      icon: arrowUpCircle, 
-      onClick: handleUpdateClick, 
-      disabled: !selectedRow, 
-      title: "Edit Classification" 
-    },
-    { 
-      icon: trash, 
-      onClick: handleDeleteClick, 
-      disabled: !selectedRow, 
-      title: "Delete Classification" 
-    },
-    { 
-      icon: layersOutline, 
-      onClick: navigateToSubclass, 
-      disabled: !selectedRow, 
-      title: "Manage Subclasses" 
-    }
+    { icon: add, onClick: () => setShowCreateModal(true), disabled: false, title: "Add Classification" },
+    { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Classification" },
+    { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Classification" },
+    { icon: layersOutline, onClick: navigateToSubclass, disabled: !selectedRow, title: "Manage Subclasses" }
+
   ];
 
   return (

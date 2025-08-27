@@ -175,24 +175,10 @@ const SubclassRate: React.FC = () => {
   };
 
   const iconButtons = [
-    {
-      icon: add,
-      onClick: handleAddRate,
-      disabled: !subclassId,
-      title: "Add Rate"
-    },
-    {
-      icon: arrowUpCircle,
-      onClick: handleUpdateClick,
-      disabled: !selectedRow,
-      title: "Edit Rate"
-    },
-    {
-      icon: trash,
-      onClick: handleDeleteClick,
-      disabled: !selectedRow,
-      title: "Delete Rate"
-    },
+    { icon: add, onClick: handleAddRate, disabled: !subclassId, title: "Add Rate" },
+    { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Rate" },
+    { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Rate" }
+
   ];
 
   return (

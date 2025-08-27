@@ -53,7 +53,7 @@ const Barangay: React.FC = () => {
   // Fetch barangays when districtId changes
   const fetchBarangays = useCallback(async () => {
     if (!districtId) return;
-    
+
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -108,7 +108,7 @@ const Barangay: React.FC = () => {
 
   const handleDeleteConfirm = async () => {
     if (!selectedRow) return;
-    
+
     setIsLoading(true);
     try {
       const { error } = await supabase
@@ -148,24 +148,9 @@ const Barangay: React.FC = () => {
   const [isError, setIsError] = useState(false);
 
   const iconButtons = [
-    { 
-      icon: add, 
-      onClick: handleCreateClick, 
-      disabled: false, 
-      title: "Add Barangay" 
-    },
-    { 
-      icon: arrowUpCircle, 
-      onClick: handleEditClick, 
-      disabled: !selectedRow, 
-      title: "Edit Barangay" 
-    },
-    { 
-      icon: trash, 
-      onClick: handleDeleteClick, 
-      disabled: !selectedRow, 
-      title: "Delete Barangay" 
-    },
+    { icon: add, onClick: handleCreateClick, disabled: false, title: "Add Barangay" },
+    { icon: arrowUpCircle, onClick: handleEditClick, disabled: !selectedRow, title: "Edit Barangay" },
+    { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Barangay" }
   ];
 
   return (

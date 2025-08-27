@@ -135,33 +135,10 @@ const Kind: React.FC = () => {
   };
 
   const iconButtons = [
-    { 
-      icon: add, 
-      onClick: () => {
-        setToastMessage('Add functionality to be implemented');
-        setShowToast(true);
-      }, 
-      disabled: false, 
-      title: "Add Kind" 
-    },
-    { 
-      icon: arrowUpCircle, 
-      onClick: handleUpdateClick, 
-      disabled: !selectedRow, 
-      title: "Edit Kind" 
-    },
-    { 
-      icon: trash, 
-      onClick: handleDeleteClick, 
-      disabled: !selectedRow, 
-      title: "Delete Kind" 
-    },
-    { 
-      icon: readerOutline, 
-      onClick: handleManageAssessmentLevels, 
-      disabled: !selectedRow, 
-      title: "Manage Assessment Levels" 
-    }
+    { icon: add, onClick: () => { setToastMessage('Add functionality to be implemented'); setShowToast(true); }, disabled: false, title: "Add Kind" },
+    { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Kind" },
+    { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Kind" },
+    { icon: readerOutline, onClick: handleManageAssessmentLevels, disabled: !selectedRow, title: "Manage Assessment Levels" }
   ];
 
   return (
