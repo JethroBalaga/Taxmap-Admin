@@ -7,7 +7,7 @@ import {
   IonTabs,
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import { albumsOutline, bookOutline, layersOutline, trailSignOutline } from 'ionicons/icons';
+import { albumsOutline, bookOutline, trailSignOutline } from 'ionicons/icons';
 import { Route, Redirect } from 'react-router';
 import Classification from './Home.tabs/Classification';
 import District from './Home.tabs/District';
