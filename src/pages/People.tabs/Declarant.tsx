@@ -97,11 +97,10 @@ const Declarant: React.FC = () => {
   };
 
   const handleUpdateClick = () => {
-    if (selectedRow) {
-      console.log('Edit declarant:', selectedRow);
-      // Add update modal functionality later
-    }
-  };
+  if (selectedRow) {
+    setShowUpdateModal(true);
+  }
+};
 
   const handleDeleteClick = async () => {
     if (!selectedRow) return;
