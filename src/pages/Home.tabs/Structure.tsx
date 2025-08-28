@@ -219,7 +219,7 @@ const Structure: React.FC = () => {
               <DynamicTable
                 data={displayData}
                 title="Structures"
-                keyField="structure_type_id"
+                keyField="structure_code"
                 onRowClick={handleRowClick}
               />
             </IonCol>
