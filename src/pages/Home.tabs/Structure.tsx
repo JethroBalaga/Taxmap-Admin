@@ -14,6 +14,7 @@ import {
 import { useLocation } from 'react-router-dom';
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
+import StructureCreateModal from '../../components/StructureModals/StructureCreateModal'; // Import the modal
 
 // Define the type for the kind data
 interface KindData {
@@ -28,6 +29,7 @@ interface LocationState {
 
 const Structure: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false); // State for modal
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const location = useLocation();
   
@@ -38,6 +40,15 @@ const Structure: React.FC = () => {
   // Get kind data from navigation state with proper typing
   const locationState = location.state as LocationState;
   const kindData = locationState?.kindData;
+
+  const handleAddClick = () => {
+    setShowCreateModal(true);
+  };
+
+  const handleStructureCreated = () => {
+    // Refresh the structure list here when implemented
+    console.log('Structure created, refresh list');
+  };
 
   return (
     <IonPage>
@@ -64,6 +75,7 @@ const Structure: React.FC = () => {
                   icon={add}
                   className="icon-yellow"
                   title="Add Structure"
+                  onClick={handleAddClick}
                 />
                 <IonIcon
                   icon={arrowUpCircle}
@@ -92,6 +104,16 @@ const Structure: React.FC = () => {
             </IonCol>
           </IonRow>
         </IonGrid>
+
+        {/* Structure Create Modal */}
+        {kindId && (
+          <StructureCreateModal
+            isOpen={showCreateModal}
+            onClose={() => setShowCreateModal(false)}
+            onStructureCreated={handleStructureCreated}
+            kind_id={kindId}
+          />
+        )}
       </IonContent>
     </IonPage>
   );
