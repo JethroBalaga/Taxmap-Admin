@@ -20,6 +20,7 @@ import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 import StructureCreateModal from '../../components/StructureModals/StructureCreateModal';
+import StructureUpdateModal from '../../components/StructureModals/StructureUpdateModal'; // Import the update modal
 
 // Define the type for the kind data
 interface KindData {
@@ -45,6 +46,7 @@ interface StructureItem {
 const Structure: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false); // State for update modal
   const [structures, setStructures] = useState<StructureItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedRow, setSelectedRow] = useState<StructureItem | null>(null);
@@ -121,10 +123,8 @@ const Structure: React.FC = () => {
   };
 
   const handleEditClick = () => {
-    // Edit functionality to be implemented
     if (selectedRow) {
-      setToastMessage('Edit functionality to be implemented');
-      setShowToast(true);
+      setShowUpdateModal(true);
     }
   };
 
@@ -163,6 +163,14 @@ const Structure: React.FC = () => {
   const handleStructureCreated = () => {
     fetchStructures();
     setShowCreateModal(false);
+  };
+
+  const handleStructureUpdated = () => {
+    fetchStructures();
+    setSelectedRow(null);
+    setShowUpdateModal(false);
+    setToastMessage('Structure updated successfully!');
+    setShowToast(true);
   };
 
   const iconButtons = [
@@ -227,6 +235,17 @@ const Structure: React.FC = () => {
             kind_id={kindId}
           />
         )}
+
+        {/* Structure Update Modal */}
+        <StructureUpdateModal
+          isOpen={showUpdateModal}
+          onClose={() => setShowUpdateModal(false)}
+          onStructureUpdated={handleStructureUpdated}
+          structureData={selectedRow ? {
+            structure_code: selectedRow.structure_code,
+            description: selectedRow.description
+          } : null}
+        />
 
         {/* Delete Confirmation */}
         <IonAlert

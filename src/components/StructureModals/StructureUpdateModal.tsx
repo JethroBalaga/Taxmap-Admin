@@ -23,7 +23,6 @@ interface StructureUpdateModalProps {
   onClose: () => void;
   onStructureUpdated?: () => void;
   structureData: {
-    structure_type_id: number;
     structure_code: string;
     description: string;
   } | null;
@@ -35,6 +34,7 @@ const StructureUpdateModal: React.FC<StructureUpdateModalProps> = ({
   onStructureUpdated = () => {},
   structureData
 }) => {
+  const [originalStructureCode, setOriginalStructureCode] = useState(structureData?.structure_code || '');
   const [structureCode, setStructureCode] = useState(structureData?.structure_code || '');
   const [description, setDescription] = useState(structureData?.description || '');
   const [isLoading, setIsLoading] = useState(false);
@@ -45,6 +45,7 @@ const StructureUpdateModal: React.FC<StructureUpdateModalProps> = ({
   // Update form fields when structureData changes
   React.useEffect(() => {
     if (structureData) {
+      setOriginalStructureCode(structureData.structure_code);
       setStructureCode(structureData.structure_code);
       setDescription(structureData.description);
     }
@@ -55,13 +56,29 @@ const StructureUpdateModal: React.FC<StructureUpdateModalProps> = ({
 
     setIsLoading(true);
     try {
+      // First check if the new structure code already exists (if it was changed)
+      if (structureCode !== originalStructureCode) {
+        const { data: existingData, error: checkError } = await supabase
+          .from('structure_typetbl')
+          .select('structure_code')
+          .eq('structure_code', structureCode.toUpperCase())
+          .maybeSingle();
+
+        if (checkError) throw checkError;
+        
+        if (existingData) {
+          throw new Error('Structure code already exists');
+        }
+      }
+
+      // Update the record using the original structure code as identifier
       const { error } = await supabase
         .from('structure_typetbl')
         .update({
           structure_code: structureCode.toUpperCase(),
           description: description.toUpperCase()
         })
-        .eq('structure_type_id', structureData.structure_type_id);
+        .eq('structure_code', originalStructureCode);
 
       if (error) throw error;
 
@@ -89,6 +106,7 @@ const StructureUpdateModal: React.FC<StructureUpdateModalProps> = ({
   const handleClose = () => {
     // Reset form fields when closing
     if (structureData) {
+      setOriginalStructureCode(structureData.structure_code);
       setStructureCode(structureData.structure_code);
       setDescription(structureData.description);
     }
@@ -108,12 +126,7 @@ const StructureUpdateModal: React.FC<StructureUpdateModalProps> = ({
           <IonGrid className="form-grid">
             <IonRow>
               <IonCol className="form-column">
-                {/* Structure Type ID Label */}
-                <IonItem lines="none" className="district-label-item">
-                  <IonLabel className="district-label">STRUCTURE TYPE ID: {structureData?.structure_type_id}</IonLabel>
-                </IonItem>
-
-                {/* Structure Code Input */}
+                {/* Structure Code Input (Editable) */}
                 <div className="input-wrapper">
                   <Input
                     label="STRUCTURE CODE"
