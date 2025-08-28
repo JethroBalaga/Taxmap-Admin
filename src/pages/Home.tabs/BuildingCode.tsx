@@ -23,6 +23,7 @@ import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 import BuildingCreateModal from '../../components/BuildingCodeModals/BuildingCreateModal';
+import BuildingUpdateModal from '../../components/BuildingCodeModals/BuildingUpdateModal';
 
 // Define the type for the location state
 interface LocationState {
@@ -244,12 +245,12 @@ const BuildingCode: React.FC = () => {
                 )}
 
                 {/* Building Code Update Modal - To be implemented */}
-                {/* <BuildingCodeUpdateModal
+                <BuildingUpdateModal
                     isOpen={showUpdateModal}
                     onClose={() => setShowUpdateModal(false)}
                     onBuildingCodeUpdated={handleBuildingCodeUpdated}
                     buildingCodeData={selectedRow}
-                /> */}
+                />
 
                 {/* Delete Confirmation */}
                 <IonAlert
