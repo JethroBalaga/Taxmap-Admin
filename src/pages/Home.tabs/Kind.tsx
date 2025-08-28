@@ -14,7 +14,7 @@ import {
   IonAlert,
   IonToast
 } from '@ionic/react';
-import { add, arrowUpCircle, readerOutline, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, businessOutline, readerOutline, trash } from 'ionicons/icons';
 import './../../CSS/Setup2.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
@@ -36,9 +36,12 @@ const Kind: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [isError, setIsError] = useState(false);
-  const [showUpdateModal, setShowUpdateModal] = useState(false); // State for update modal
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const history = useHistory();
+
+  // Check if selected row has kind_id: 2
+  const isKindIdTwo = selectedRow && selectedRow.kind_id === 2;
 
   // Fetch data
   const fetchKinds = async () => {
@@ -83,7 +86,7 @@ const Kind: React.FC = () => {
 
   const handleUpdateClick = () => {
     if (!selectedRow) return;
-    setShowUpdateModal(true); // Open the update modal
+    setShowUpdateModal(true);
   };
 
   const handleDeleteClick = () => {
@@ -94,6 +97,14 @@ const Kind: React.FC = () => {
   const handleManageAssessmentLevels = () => {
     if (!selectedRow) return;
     history.push(`/menu/home/assesmentlevel?kind_id=${selectedRow.kind_id}`);
+  };
+
+  const handleBuildingStructuralType = () => {
+    if (!selectedRow || !isKindIdTwo) return;
+    // Add your building structural type logic here
+    console.log('Building structural type clicked for kind:', selectedRow.kind_id);
+    setToastMessage('Building structural type functionality to be implemented');
+    setShowToast(true);
   };
 
   const handleDeleteConfirm = async () => {
@@ -108,7 +119,6 @@ const Kind: React.FC = () => {
 
       if (error) throw error;
 
-      // Refresh the list
       await fetchKinds();
       setSelectedRow(null);
       setToastMessage('Kind deleted successfully');
@@ -126,7 +136,6 @@ const Kind: React.FC = () => {
   };
 
   const handleKindUpdated = () => {
-    // Refresh the list after update
     fetchKinds();
     setSelectedRow(null);
     setToastMessage('Kind updated successfully');
@@ -138,7 +147,8 @@ const Kind: React.FC = () => {
     { icon: add, onClick: () => { setToastMessage('Add functionality to be implemented'); setShowToast(true); }, disabled: false, title: "Add Kind" },
     { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Kind" },
     { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Kind" },
-    { icon: readerOutline, onClick: handleManageAssessmentLevels, disabled: !selectedRow, title: "Manage Assessment Levels" }
+    { icon: readerOutline, onClick: handleManageAssessmentLevels, disabled: !selectedRow, title: "Manage Assessment Levels" },
+    { icon: businessOutline, onClick: handleBuildingStructuralType, disabled: !isKindIdTwo, title: "Building Structural Type" }
   ];
 
   return (
@@ -188,7 +198,6 @@ const Kind: React.FC = () => {
 
         <IonLoading isOpen={isLoading} message="Loading..." />
 
-        {/* Update Modal */}
         <KindUpdateModal
           isOpen={showUpdateModal}
           onClose={() => setShowUpdateModal(false)}

@@ -15,7 +15,7 @@ import {
   IonToast
 } from '@ionic/react';
 import { useLocation } from 'react-router-dom';
-import { add, arrowUpCircle, businessOutline, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import TaxrateCreateModal from '../../components/TaxrateModals/TaxrateCreateModal';
 import TaxrateUpdateModal from '../../components/TaxrateModals/TaxrateUpdateModal';
@@ -59,7 +59,6 @@ const Taxrate: React.FC = () => {
     { icon: add, onClick: () => setShowCreateModal(true), disabled: false, title: "Add Tax Rate" },
     { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Tax Rate" },
     { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Tax Rate" },
-    { icon: businessOutline, onClick: handleDeleteClick, disabled: !selectedRow, title: "Building Strucural Type" }
   ], [selectedRow]);
 
   // Fetch tax rates
