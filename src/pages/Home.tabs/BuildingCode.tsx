@@ -36,10 +36,9 @@ interface LocationState {
 
 // Define the type for building code data
 interface BuildingCodeItem {
-    building_code: number;
-    structure_code: string;
+    building_code: string; // Changed from number to string
     description: string;
-    rate: string;
+    rate: number; // Changed from string to number
     created_at?: string;
 }
 
@@ -74,7 +73,7 @@ const BuildingCode: React.FC = () => {
         try {
             const { data, error } = await supabase
                 .from('building_codetbl')
-                .select('building_code, structure_code, description, rate, created_at')
+                .select('building_code, description, rate, created_at') // Removed structure_code from select
                 .eq('structure_code', structureCode)
                 .order('created_at', { ascending: false });
 
@@ -100,10 +99,9 @@ const BuildingCode: React.FC = () => {
 
         const term = searchTerm.toLowerCase();
         return buildingCodes.filter(item =>
-            item.building_code.toString().includes(term) ||
-            item.structure_code.toLowerCase().includes(term) ||
+            item.building_code.toLowerCase().includes(term) ||
             item.description.toLowerCase().includes(term) ||
-            item.rate.toLowerCase().includes(term)
+            item.rate.toString().toLowerCase().includes(term)
         );
     }, [buildingCodes, searchTerm]);
 
@@ -138,7 +136,8 @@ const BuildingCode: React.FC = () => {
             const { error } = await supabase
                 .from('building_codetbl')
                 .delete()
-                .eq('building_code_id', selectedRow.building_code);
+                .eq('building_code', selectedRow.building_code) // Changed to use building_code instead of building_code_id
+                .eq('structure_code', structureCode); // Added structure_code to ensure we delete the correct record
 
             if (error) throw error;
 
@@ -227,14 +226,14 @@ const BuildingCode: React.FC = () => {
                             <DynamicTable
                                 data={filteredData}
                                 title="Building Codes"
-                                keyField="building_code_id"
+                                keyField="building_code" // Changed to use building_code as key
                                 onRowClick={handleRowClick}
                             />
                         </IonCol>
                     </IonRow>
                 </IonGrid>
 
-                {/* Building Code Create Modal - To be implemented */}
+                {/* Building Code Create Modal */}
                 {structureCode && (
                     <BuildingCreateModal
                         isOpen={showCreateModal}
