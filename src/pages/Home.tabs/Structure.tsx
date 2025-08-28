@@ -15,7 +15,7 @@ import {
     IonToast
 } from '@ionic/react';
 import { useLocation } from 'react-router-dom';
-import { add, arrowUpCircle, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, constructOutline, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
@@ -164,7 +164,8 @@ const Structure: React.FC = () => {
     const iconButtons = [
         { icon: add, onClick: handleAddClick, disabled: false, title: "Add Structure" },
         { icon: arrowUpCircle, onClick: handleEditClick, disabled: !selectedRow, title: "Edit Structure" },
-        { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Structure" }
+        { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Structure" },
+        { icon: constructOutline, onClick: handleDeleteClick, disabled: !selectedRow, title: "Building Code" }
     ];
 
     return (
