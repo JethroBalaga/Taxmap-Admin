@@ -14,7 +14,7 @@ import {
     IonAlert,
     IonToast
 } from '@ionic/react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useHistory } from 'react-router-dom'; // Added useHistory
 import { add, arrowUpCircle, constructOutline, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
@@ -54,6 +54,7 @@ const Structure: React.FC = () => {
     const [isError, setIsError] = useState(false);
     const searchRef = useRef<HTMLIonSearchbarElement>(null);
     const location = useLocation();
+    const history = useHistory(); // Added history for navigation
 
     // Get kind_id from URL parameters
     const queryParams = new URLSearchParams(location.search);
@@ -122,6 +123,19 @@ const Structure: React.FC = () => {
         setShowDeleteAlert(true);
     };
 
+    // NEW: Handle construct icon click to navigate to BuildingCode
+    const handleConstructClick = () => {
+        if (!selectedRow) return;
+        
+        // Navigate to BuildingCode page with structure_code as parameter
+        // and pass the selected structure data in state
+        history.push({
+            pathname: '/menu/home/buildingcode',
+            search: `?structure_code=${selectedRow.structure_code}`,
+            state: { structureData: selectedRow }
+        });
+    };
+
     const handleDeleteConfirm = async () => {
         if (!selectedRow) return;
 
@@ -165,7 +179,7 @@ const Structure: React.FC = () => {
         { icon: add, onClick: handleAddClick, disabled: false, title: "Add Structure" },
         { icon: arrowUpCircle, onClick: handleEditClick, disabled: !selectedRow, title: "Edit Structure" },
         { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Structure" },
-        { icon: constructOutline, onClick: handleDeleteClick, disabled: !selectedRow, title: "Building Code" }
+        { icon: constructOutline, onClick: handleConstructClick, disabled: !selectedRow, title: "Building Code" } // Updated onClick
     ];
 
     return (
