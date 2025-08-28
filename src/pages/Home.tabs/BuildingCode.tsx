@@ -22,23 +22,24 @@ import { add, arrowUpCircle, trash, arrowBack } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
+import BuildingCreateModal from '../../components/BuildingCodeModals/BuildingCreateModal';
 
 // Define the type for the location state
 interface LocationState {
     structureData?: {
         structure_code: string;
         description: string;
-        eff_date: string;
+        rate: string;
         created_at?: string;
     };
 }
 
 // Define the type for building code data
 interface BuildingCodeItem {
-    building_code_id: number;
+    building_code: number;
     structure_code: string;
     description: string;
-    eff_date: string;
+    rate: string;
     created_at?: string;
 }
 
@@ -73,7 +74,7 @@ const BuildingCode: React.FC = () => {
         try {
             const { data, error } = await supabase
                 .from('building_codetbl')
-                .select('building_code_id, structure_code, description, eff_date, created_at')
+                .select('building_code, structure_code, description, rate, created_at')
                 .eq('structure_code', structureCode)
                 .order('created_at', { ascending: false });
 
@@ -99,10 +100,10 @@ const BuildingCode: React.FC = () => {
 
         const term = searchTerm.toLowerCase();
         return buildingCodes.filter(item =>
-            item.building_code_id.toString().includes(term) ||
+            item.building_code.toString().includes(term) ||
             item.structure_code.toLowerCase().includes(term) ||
             item.description.toLowerCase().includes(term) ||
-            item.eff_date.toLowerCase().includes(term)
+            item.rate.toLowerCase().includes(term)
         );
     }, [buildingCodes, searchTerm]);
 
@@ -137,7 +138,7 @@ const BuildingCode: React.FC = () => {
             const { error } = await supabase
                 .from('building_codetbl')
                 .delete()
-                .eq('building_code_id', selectedRow.building_code_id);
+                .eq('building_code_id', selectedRow.building_code);
 
             if (error) throw error;
 
@@ -234,14 +235,14 @@ const BuildingCode: React.FC = () => {
                 </IonGrid>
 
                 {/* Building Code Create Modal - To be implemented */}
-                {/* {structureCode && (
-                    <BuildingCodeCreateModal
+                {structureCode && (
+                    <BuildingCreateModal
                         isOpen={showCreateModal}
                         onClose={() => setShowCreateModal(false)}
                         onBuildingCodeCreated={handleBuildingCodeCreated}
                         structure_code={structureCode}
                     />
-                )} */}
+                )}
 
                 {/* Building Code Update Modal - To be implemented */}
                 {/* <BuildingCodeUpdateModal
