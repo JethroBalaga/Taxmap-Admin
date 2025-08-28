@@ -101,10 +101,18 @@ const Kind: React.FC = () => {
 
   const handleBuildingStructuralType = () => {
     if (!selectedRow || !isKindIdTwo) return;
-    // Add your building structural type logic here
-    console.log('Building structural type clicked for kind:', selectedRow.kind_id);
-    setToastMessage('Building structural type functionality to be implemented');
-    setShowToast(true);
+    
+    // Navigate to Structure tab with kind_id as a parameter
+    history.push({
+      pathname: '/menu/home/structure',
+      search: `?kind_id=${selectedRow.kind_id}`,
+      state: {
+        kindData: {
+          kind_id: selectedRow.kind_id,
+          description: selectedRow.description
+        }
+      }
+    });
   };
 
   const handleDeleteConfirm = async () => {
