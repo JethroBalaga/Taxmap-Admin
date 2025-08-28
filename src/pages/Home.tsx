@@ -18,6 +18,7 @@ import Barangay from './Home.tabs/Barangay';
 import AssessmentLevel from './Home.tabs/AssesmentLevel';
 import SubclassRate from './Home.tabs/SubclassRate';
 import Structure from './Home.tabs/Structure';
+import BuildingCode from './Home.tabs/BuildingCode';
 
 const Home: React.FC = () => {
 
@@ -50,6 +51,8 @@ const Home: React.FC = () => {
           <Route exact path="/menu/home/assesmentlevel" component={AssessmentLevel} />
           <Route exact path="/menu/home/subclassrate" component={SubclassRate} />
           <Route exact path="/menu/home/structure" component={Structure} />
+          <Route exact path="/menu/home/buildingcode" component={BuildingCode} />
+
 
           <Route exact path="/menu/home">
             <Redirect to="/menu/home/classification" />
