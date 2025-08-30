@@ -126,7 +126,7 @@ const BuildingCode: React.FC = () => {
     };
 
     const handleBackClick = () => {
-        history.goBack(); // Navigate back to the Structure page
+        history.goBack();
     };
 
     const handleDeleteConfirm = async () => {

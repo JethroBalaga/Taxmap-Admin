@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   IonContent,
   IonHeader,
@@ -29,13 +29,6 @@ interface TaxrateItem {
   created_at?: string;
 }
 
-interface IconButton {
-  icon: string;
-  onClick: () => void;
-  disabled: boolean;
-  title: string;
-}
-
 const Taxrate: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [taxrates, setTaxrates] = useState<TaxrateItem[]>([]);
@@ -54,15 +47,16 @@ const Taxrate: React.FC = () => {
   const queryParams = new URLSearchParams(location.search);
   const districtId = queryParams.get('district_id');
 
-  // Icon buttons constructor
-  const iconButtons = useMemo((): IconButton[] => [
-    { icon: add, onClick: () => setShowCreateModal(true), disabled: false, title: "Add Tax Rate" },
-    { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Tax Rate" },
-    { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Tax Rate" },
-  ], [selectedRow]);
-
   // Fetch tax rates
   const fetchTaxrates = async () => {
+    if (!districtId) {
+      setToastMessage('District ID is missing');
+      setIsError(true);
+      setShowToast(true);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -84,9 +78,7 @@ const Taxrate: React.FC = () => {
   };
 
   useEffect(() => {
-    if (districtId) {
-      fetchTaxrates();
-    }
+    fetchTaxrates();
   }, [districtId]);
 
   // Filter data based on search term
@@ -149,11 +141,26 @@ const Taxrate: React.FC = () => {
     }
   };
 
+  // Icon buttons - moved after function declarations
+  const iconButtons = [
+    { icon: add, onClick: () => setShowCreateModal(true), disabled: false, title: "Add Tax Rate" },
+    { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Tax Rate" },
+    { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Tax Rate" },
+  ];
+
+  // Add debug logging
+  console.log('Taxrate component rendering', {
+    districtId,
+    taxratesCount: taxrates.length,
+    filteredDataCount: filteredData.length,
+    isLoading
+  });
+
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Tax Rates - District {districtId}</IonTitle>
+          <IonTitle>{districtId ? `Tax Rates - District ${districtId}` : 'Tax Rates'}</IonTitle>
         </IonToolbar>
       </IonHeader>
 
@@ -164,6 +171,7 @@ const Taxrate: React.FC = () => {
               <IonSearchbar
                 ref={searchRef}
                 placeholder="Search by year, ID, or rate..."
+                value={searchTerm}
                 onIonInput={(e) => setSearchTerm(e.detail.value || '')}
                 debounce={200}
               />
@@ -184,12 +192,18 @@ const Taxrate: React.FC = () => {
 
           <IonRow>
             <IonCol size="12">
-              <DynamicTable
-                data={filteredData}
-                title="Tax Rates"
-                keyField="tax_rate_id"
-                onRowClick={handleRowClick}
-              />
+              {filteredData.length > 0 ? (
+                <DynamicTable
+                  data={filteredData}
+                  title="Tax Rates"
+                  keyField="tax_rate_id"
+                  onRowClick={handleRowClick}
+                />
+              ) : (
+                <div style={{ padding: '20px', textAlign: 'center' }}>
+                  {isLoading ? 'Loading...' : 'No tax rates found for this district'}
+                </div>
+              )}
             </IonCol>
           </IonRow>
         </IonGrid>
