@@ -18,7 +18,8 @@ import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../../utils/supaBaseClient';
-import ActualUsedCreateModal from '../../components/ActualUsedModals/ActualUsedCreateModal'; // Import the modal
+import ActualUsedCreateModal from '../../components/ActualUsedModals/ActualUsedCreateModal';
+import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 
 interface ClassificationData {
   class_id: string;
@@ -27,7 +28,7 @@ interface ClassificationData {
 
 interface ActualUsedItem {
   actual_used_id: string;
-  actual_used: string;
+  description: string; // Changed from actual_used to description
   class_id: string;
   created_at: string;
 }
@@ -44,7 +45,7 @@ const ActualUsed: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [isError, setIsError] = useState(false);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false); // Modal state
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Get classification data from URL and location state when component mounts
   useEffect(() => {
@@ -87,8 +88,8 @@ const ActualUsed: React.FC = () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from('actual_usedtbl') // Replace with your actual table name
-        .select('*')
+        .from('actual_usedtbl')
+        .select('actual_used_id, description, class_id, created_at')
         .eq('class_id', classificationData.class_id)
         .order('created_at', { ascending: false });
 
@@ -113,7 +114,7 @@ const ActualUsed: React.FC = () => {
   const filteredData = actualUsedItems.filter(item =>
     !searchTerm.trim() ||
     item.actual_used_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.actual_used.toLowerCase().includes(searchTerm.toLowerCase())
+    item.description.toLowerCase().includes(searchTerm.toLowerCase()) // Changed from actual_used to description
   );
 
   const handleRowClick = (rowData: ActualUsedItem) => {
@@ -136,9 +137,8 @@ const ActualUsed: React.FC = () => {
 
     setIsLoading(true);
     try {
-      // Replace with your actual delete operation
       const { error } = await supabase
-        .from('actual_used_tbl')
+        .from('actual_usedtbl') // Changed from actual_used_tbl to actual_usedtbl
         .delete()
         .eq('actual_used_id', selectedRow.actual_used_id);
 
@@ -212,12 +212,12 @@ const ActualUsed: React.FC = () => {
 
           <IonRow>
             <IonCol size="12">
-              {/* Replace with your actual table component */}
-              <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
-                <h3>Actual Used Items Table</h3>
-                <p>This would display the actual used items for the selected classification</p>
-                <p>Total items: {filteredData.length}</p>
-              </div>
+              <DynamicTable
+                data={filteredData}
+                title="Actual Used Items"
+                keyField="actual_used_id"
+                onRowClick={handleRowClick}
+              />
             </IonCol>
           </IonRow>
         </IonGrid>
@@ -238,7 +238,7 @@ const ActualUsed: React.FC = () => {
           isOpen={showDeleteAlert}
           onDidDismiss={() => setShowDeleteAlert(false)}
           header={'Confirm Delete'}
-          message={`Are you sure you want to delete the actual used item <strong>${selectedRow?.actual_used}</strong>?`}
+          message={`Are you sure you want to delete the actual used item <strong>${selectedRow?.description}</strong>?`} // Changed from actual_used to description
           buttons={[
             {
               text: 'Cancel',
