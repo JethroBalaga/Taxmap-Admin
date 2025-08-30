@@ -200,7 +200,7 @@ const Classification: React.FC = () => {
     { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Classification" },
     { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Classification" },
     { icon: layersOutline, onClick: navigateToSubclass, disabled: !selectedRow, title: "Manage Subclasses" },
-    { icon: briefcaseOutline, onClick: navigateToActualUsed, disabled: !selectedRow, title: "Add Actual Used" }
+    { icon: briefcaseOutline, onClick: navigateToActualUsed, disabled: !selectedRow, title: "Manage Actual Used" }
   ];
 
   return (
