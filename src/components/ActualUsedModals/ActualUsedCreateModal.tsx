@@ -44,7 +44,7 @@ const ActualUsedCreateModal: React.FC<ActualUsedCreateModalProps> = ({
     setIsLoading(true);
     try {
       const { error } = await supabase
-        .from('actual_used_tbl') // Replace with your actual table name
+        .from('actual_usedtbl') // Replace with your actual table name
         .insert([{
           actual_used_id: actual_used_id.toUpperCase(), // Convert to uppercase
           description: description.toUpperCase(), // Convert to uppercase

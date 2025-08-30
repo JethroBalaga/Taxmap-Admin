@@ -87,7 +87,7 @@ const ActualUsed: React.FC = () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from('actual_used_tbl') // Replace with your actual table name
+        .from('actual_usedtbl') // Replace with your actual table name
         .select('*')
         .eq('class_id', classificationData.class_id)
         .order('created_at', { ascending: false });
