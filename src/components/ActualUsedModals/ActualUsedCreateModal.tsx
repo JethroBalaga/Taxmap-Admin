@@ -11,8 +11,7 @@ import {
   IonLoading,
   IonToast,
   IonLabel,
-  IonItem,
-  IonTextarea
+  IonItem
 } from '@ionic/react';
 import Input from '../Globalcomponents/Input';
 import './../../CSS/Modal.css';
@@ -73,8 +72,8 @@ const ActualUsedCreateModal: React.FC<ActualUsedCreateModalProps> = ({
     setActualUsedId(value.toUpperCase()); // Convert to uppercase
   };
 
-  const handleDescriptionChange = (e: CustomEvent) => {
-    setDescription(e.detail.value.toUpperCase()); // Convert to uppercase
+  const handleDescriptionChange = (value: string) => {
+    setDescription(value.toUpperCase()); // Convert to uppercase
   };
 
   const resetForm = () => {
@@ -115,16 +114,13 @@ const ActualUsedCreateModal: React.FC<ActualUsedCreateModalProps> = ({
                 </div>
 
                 <div className="input-wrapper">
-                  <IonItem>
-                    <IonLabel position="stacked">Description</IonLabel>
-                    <IonTextarea
-                      value={description}
-                      placeholder="Enter description"
-                      onIonInput={handleDescriptionChange}
-                      rows={4}
-                      className="modal-textarea"
-                    />
-                  </IonItem>
+                  <Input
+                    label="Description"
+                    value={description}
+                    onChange={handleDescriptionChange}
+                    placeholder="Enter description"
+                    className="modal-input"
+                  />
                 </div>
 
                 <div className="button-group">
