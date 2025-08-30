@@ -19,6 +19,7 @@ import './../../CSS/Setup.css';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../../utils/supaBaseClient';
 import ActualUsedCreateModal from '../../components/ActualUsedModals/ActualUsedCreateModal';
+import ActualUsedUpdateModal from '../../components/ActualUsedModals/ActualUsedUpdateModal'; // Import the update modal
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 
 interface ClassificationData {
@@ -28,7 +29,7 @@ interface ClassificationData {
 
 interface ActualUsedItem {
   actual_used_id: string;
-  description: string; // Changed from actual_used to description
+  description: string;
   class_id: string;
   created_at: string;
 }
@@ -46,6 +47,7 @@ const ActualUsed: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [isError, setIsError] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false); // State for update modal
 
   // Get classification data from URL and location state when component mounts
   useEffect(() => {
@@ -114,7 +116,7 @@ const ActualUsed: React.FC = () => {
   const filteredData = actualUsedItems.filter(item =>
     !searchTerm.trim() ||
     item.actual_used_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.description.toLowerCase().includes(searchTerm.toLowerCase()) // Changed from actual_used to description
+    item.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleRowClick = (rowData: ActualUsedItem) => {
@@ -122,8 +124,9 @@ const ActualUsed: React.FC = () => {
   };
 
   const handleUpdateClick = () => {
-    // To be implemented
-    console.log('Update clicked for:', selectedRow);
+    if (selectedRow) {
+      setIsUpdateModalOpen(true);
+    }
   };
 
   const handleDeleteClick = () => {
@@ -138,7 +141,7 @@ const ActualUsed: React.FC = () => {
     setIsLoading(true);
     try {
       const { error } = await supabase
-        .from('actual_usedtbl') // Changed from actual_used_tbl to actual_usedtbl
+        .from('actual_usedtbl')
         .delete()
         .eq('actual_used_id', selectedRow.actual_used_id);
 
@@ -167,6 +170,13 @@ const ActualUsed: React.FC = () => {
     fetchActualUsedItems();
     setToastMessage('Actual Used created successfully!');
     setShowToast(true);
+  };
+
+  const handleActualUsedUpdated = () => {
+    fetchActualUsedItems();
+    setToastMessage('Actual Used updated successfully!');
+    setShowToast(true);
+    setIsUpdateModalOpen(false);
   };
 
   const iconButtons = [
@@ -234,11 +244,21 @@ const ActualUsed: React.FC = () => {
           />
         )}
 
+        {/* Actual Used Update Modal */}
+        {selectedRow && (
+          <ActualUsedUpdateModal
+            isOpen={isUpdateModalOpen}
+            onClose={() => setIsUpdateModalOpen(false)}
+            onActualUsedUpdated={handleActualUsedUpdated}
+            actualUsedData={selectedRow}
+          />
+        )}
+
         <IonAlert
           isOpen={showDeleteAlert}
           onDidDismiss={() => setShowDeleteAlert(false)}
           header={'Confirm Delete'}
-          message={`Are you sure you want to delete the actual used item <strong>${selectedRow?.description}</strong>?`} // Changed from actual_used to description
+          message={`Are you sure you want to delete the actual used item <strong>${selectedRow?.description}</strong>?`}
           buttons={[
             {
               text: 'Cancel',
