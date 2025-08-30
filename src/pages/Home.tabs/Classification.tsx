@@ -14,7 +14,7 @@ import {
   IonAlert,
   IonToast
 } from '@ionic/react';
-import { add, arrowUpCircle, layersOutline, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, layersOutline, trash, briefcaseOutline } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import ClassificationCreateModal from '../../components/ClassificationModals/ClassificationCreateModal';
 import ClassificationUpdateModal from '../../components/ClassificationModals/ClassificationUpdateModal';
@@ -180,12 +180,17 @@ const Classification: React.FC = () => {
     }
   };
 
+  const handleAddActualUsed = () => {
+    // Functionality for adding actual used will be implemented later
+    console.log('Add Actual Used clicked');
+  };
+
   const iconButtons = [
     { icon: add, onClick: () => setShowCreateModal(true), disabled: false, title: "Add Classification" },
     { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Classification" },
     { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Classification" },
-    { icon: layersOutline, onClick: navigateToSubclass, disabled: !selectedRow, title: "Manage Subclasses" }
-
+    { icon: layersOutline, onClick: navigateToSubclass, disabled: !selectedRow, title: "Manage Subclasses" },
+    { icon: briefcaseOutline, onClick: handleAddActualUsed, disabled: false, title: "Add Actual Used" }
   ];
 
   return (
