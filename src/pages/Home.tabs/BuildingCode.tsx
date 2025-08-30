@@ -126,7 +126,20 @@ const BuildingCode: React.FC = () => {
     };
 
     const handleBackClick = () => {
-        history.goBack();
+        const queryParams = new URLSearchParams(location.search);
+        const structureCode = queryParams.get('structure_code');
+
+        if (structureCode) {
+            // Navigate back to the structure page with the structure_code
+            history.push(`/menu/home/structure?structure_code=${structureCode}`);
+        } else {
+            // Fallback: go back in history or navigate to default structure page
+            if (history.length > 1) {
+                history.goBack();
+            } else {
+                history.push('/menu/home/structure');
+            }
+        }
     };
 
     const handleDeleteConfirm = async () => {
