@@ -18,6 +18,7 @@ import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../../utils/supaBaseClient';
+import ActualUsedCreateModal from '../../components/ActualUsedModals/ActualUsedCreateModal'; // Import the modal
 
 interface ClassificationData {
   class_id: string;
@@ -43,6 +44,7 @@ const ActualUsed: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [isError, setIsError] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false); // Modal state
 
   // Get classification data from URL and location state when component mounts
   useEffect(() => {
@@ -157,8 +159,18 @@ const ActualUsed: React.FC = () => {
     }
   };
 
+  const handleCreateClick = () => {
+    setIsCreateModalOpen(true);
+  };
+
+  const handleActualUsedCreated = () => {
+    fetchActualUsedItems();
+    setToastMessage('Actual Used created successfully!');
+    setShowToast(true);
+  };
+
   const iconButtons = [
-    { icon: add, onClick: () => {}, disabled: !classificationData, title: "Add Actual Used" },
+    { icon: add, onClick: handleCreateClick, disabled: !classificationData, title: "Add Actual Used" },
     { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Actual Used" },
     { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Actual Used" },
   ];
@@ -211,6 +223,16 @@ const ActualUsed: React.FC = () => {
         </IonGrid>
 
         <IonLoading isOpen={isLoading} message="Loading..." />
+
+        {/* Actual Used Create Modal */}
+        {classificationData && (
+          <ActualUsedCreateModal
+            isOpen={isCreateModalOpen}
+            onClose={() => setIsCreateModalOpen(false)}
+            onActualUsedCreated={handleActualUsedCreated}
+            class_id={classificationData.class_id}
+          />
+        )}
 
         <IonAlert
           isOpen={showDeleteAlert}
