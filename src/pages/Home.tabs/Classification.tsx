@@ -180,9 +180,19 @@ const Classification: React.FC = () => {
     }
   };
 
-  const handleAddActualUsed = () => {
-    // Functionality for adding actual used will be implemented later
-    console.log('Add Actual Used clicked');
+  const navigateToActualUsed = () => {
+    if (selectedRow) {
+      history.push({
+        pathname: '/menu/home/actualused',
+        search: `?class_id=${selectedRow.class_id}`,
+        state: {
+          classificationData: {
+            class_id: selectedRow.class_id,
+            classification: selectedRow.classification
+          }
+        }
+      });
+    }
   };
 
   const iconButtons = [
@@ -190,7 +200,7 @@ const Classification: React.FC = () => {
     { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Classification" },
     { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Classification" },
     { icon: layersOutline, onClick: navigateToSubclass, disabled: !selectedRow, title: "Manage Subclasses" },
-    { icon: briefcaseOutline, onClick: handleAddActualUsed, disabled: false, title: "Add Actual Used" }
+    { icon: briefcaseOutline, onClick: navigateToActualUsed, disabled: !selectedRow, title: "Add Actual Used" }
   ];
 
   return (
