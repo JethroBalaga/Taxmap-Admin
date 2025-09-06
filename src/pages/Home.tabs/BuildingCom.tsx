@@ -17,6 +17,7 @@ import {
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
+import BuildingComCreateModal from '../../components/BuildingComModals/BuildingComCreateModal'; // Import the modal
 
 // Define the type for building component data
 interface BuildingComItem {
@@ -114,7 +115,8 @@ const BuildingCom: React.FC = () => {
         // Placeholder for create functionality
         console.log('Building component created');
         setShowCreateModal(false);
-        setToastMessage('Create functionality not implemented yet');
+        fetchBuildingComponents(); // Refresh the data
+        setToastMessage('Building component created successfully!');
         setShowToast(true);
     };
 
@@ -178,13 +180,12 @@ const BuildingCom: React.FC = () => {
                     </IonRow>
                 </IonGrid>
 
-                {/* Create Modal (Placeholder) */}
-                {showCreateModal && (
-                    <div className="modal-placeholder">
-                        <p>Create Modal - Functionality not implemented yet</p>
-                        <button onClick={() => setShowCreateModal(false)}>Close</button>
-                    </div>
-                )}
+                {/* BuildingCom Create Modal */}
+                <BuildingComCreateModal
+                    isOpen={showCreateModal}
+                    onClose={() => setShowCreateModal(false)}
+                    onBuildingComCreated={handleBuildingComCreated}
+                />
 
                 {/* Update Modal (Placeholder) */}
                 {showUpdateModal && (
