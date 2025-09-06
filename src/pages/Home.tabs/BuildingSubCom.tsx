@@ -26,7 +26,7 @@ import BuildingSubComCreateModal from '../../components/BuildingSubcomModals/Bui
 
 // Define the type for building subcomponent data
 interface BuildingSubComItem {
-    building_subcom_id: string; // Updated column name
+    building_subcom_id: string;
     description: string;
     rate: number;
     building_com_id: string;
@@ -51,6 +51,7 @@ const BuildingSubCom: React.FC = () => {
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [isError, setIsError] = useState(false);
+    const [showDeleteAlert, setShowDeleteAlert] = useState(false); // Added delete alert state
     const searchRef = useRef<HTMLIonSearchbarElement>(null);
     const history = useHistory();
     const location = useLocation();
@@ -70,8 +71,8 @@ const BuildingSubCom: React.FC = () => {
         setIsLoading(true);
         try {
             const { data, error } = await supabase
-                .from('building_subcomponenttbl') // Updated table name
-                .select('building_subcom_id, description, rate, building_com_id, created_at') // Updated column name
+                .from('building_subcomponenttbl')
+                .select('building_subcom_id, description, rate, building_com_id, created_at')
                 .eq('building_com_id', buildingComId)
                 .order('created_at', { ascending: false });
 
@@ -98,7 +99,7 @@ const BuildingSubCom: React.FC = () => {
 
         const term = searchTerm.toLowerCase();
         return buildingSubComponents.filter(item =>
-            item.building_subcom_id.toLowerCase().includes(term) || // Updated column name
+            item.building_subcom_id.toLowerCase().includes(term) ||
             item.description.toLowerCase().includes(term) ||
             item.rate.toString().includes(term) ||
             item.building_com_id.toLowerCase().includes(term)
@@ -115,13 +116,45 @@ const BuildingSubCom: React.FC = () => {
 
     const handleEditClick = () => {
         if (selectedRow) {
-            console.log('Edit clicked for:', selectedRow.building_subcom_id); // Updated column name
+            console.log('Edit clicked for:', selectedRow.building_subcom_id);
+            // Edit functionality will be implemented later
         }
     };
 
     const handleDeleteClick = () => {
         if (selectedRow) {
-            console.log('Delete clicked for:', selectedRow.building_subcom_id); // Updated column name
+            setShowDeleteAlert(true); // Show delete confirmation alert
+        }
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!selectedRow || !buildingComId) return;
+
+        setIsLoading(true);
+        try {
+            const { error } = await supabase
+                .from('building_subcomponenttbl')
+                .delete()
+                .eq('building_subcom_id', selectedRow.building_subcom_id)
+                .eq('building_com_id', buildingComId); // Ensure we're deleting the correct record
+
+            if (error) throw error;
+
+            // Refresh the data
+            await fetchBuildingSubComponents();
+            
+            // Clear selection and show success message
+            setSelectedRow(null);
+            setToastMessage(`"${selectedRow.description}" deleted successfully!`);
+            setShowToast(true);
+        } catch (error: any) {
+            console.error('Error deleting building sub-component:', error);
+            setToastMessage(error.message || 'Failed to delete building sub-component');
+            setIsError(true);
+            setShowToast(true);
+        } finally {
+            setIsLoading(false);
+            setShowDeleteAlert(false);
         }
     };
 
@@ -193,7 +226,7 @@ const BuildingSubCom: React.FC = () => {
                             <DynamicTable
                                 data={filteredData}
                                 title="Building Sub-Components"
-                                keyField="building_subcom_id" // Updated column name
+                                keyField="building_subcom_id"
                                 onRowClick={handleRowClick}
                             />
                         </IonCol>
@@ -209,6 +242,26 @@ const BuildingSubCom: React.FC = () => {
                         building_com_id={buildingComId}
                     />
                 )}
+
+                {/* Delete Confirmation Alert */}
+                <IonAlert
+                    isOpen={showDeleteAlert}
+                    onDidDismiss={() => setShowDeleteAlert(false)}
+                    header="Confirm Delete"
+                    message={`Are you sure you want to delete "${selectedRow?.description}"?`}
+                    buttons={[
+                        {
+                            text: 'Cancel',
+                            role: 'cancel',
+                            cssClass: 'secondary'
+                        },
+                        {
+                            text: 'Delete',
+                            handler: handleDeleteConfirm,
+                            cssClass: 'danger'
+                        }
+                    ]}
+                />
 
                 <IonLoading isOpen={isLoading} message="Loading..." />
                 <IonToast
