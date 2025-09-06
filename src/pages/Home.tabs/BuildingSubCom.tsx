@@ -23,6 +23,7 @@ import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 import BuildingSubComCreateModal from '../../components/BuildingSubcomModals/BuildingSubComCreateModal';
+import BuildingSubComUpdateModal from '../../components/BuildingSubcomModals/BuildingSubComUpdateModal'; // Import the update modal
 
 // Define the type for building subcomponent data
 interface BuildingSubComItem {
@@ -45,13 +46,14 @@ interface LocationState {
 const BuildingSubCom: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showUpdateModal, setShowUpdateModal] = useState(false); // State for update modal
     const [isLoading, setIsLoading] = useState(true);
     const [buildingSubComponents, setBuildingSubComponents] = useState<BuildingSubComItem[]>([]);
     const [selectedRow, setSelectedRow] = useState<BuildingSubComItem | null>(null);
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [isError, setIsError] = useState(false);
-    const [showDeleteAlert, setShowDeleteAlert] = useState(false); // Added delete alert state
+    const [showDeleteAlert, setShowDeleteAlert] = useState(false);
     const searchRef = useRef<HTMLIonSearchbarElement>(null);
     const history = useHistory();
     const location = useLocation();
@@ -116,14 +118,13 @@ const BuildingSubCom: React.FC = () => {
 
     const handleEditClick = () => {
         if (selectedRow) {
-            console.log('Edit clicked for:', selectedRow.building_subcom_id);
-            // Edit functionality will be implemented later
+            setShowUpdateModal(true); // Open the update modal
         }
     };
 
     const handleDeleteClick = () => {
         if (selectedRow) {
-            setShowDeleteAlert(true); // Show delete confirmation alert
+            setShowDeleteAlert(true);
         }
     };
 
@@ -136,7 +137,7 @@ const BuildingSubCom: React.FC = () => {
                 .from('building_subcomponenttbl')
                 .delete()
                 .eq('building_subcom_id', selectedRow.building_subcom_id)
-                .eq('building_com_id', buildingComId); // Ensure we're deleting the correct record
+                .eq('building_com_id', buildingComId);
 
             if (error) throw error;
 
@@ -165,6 +166,14 @@ const BuildingSubCom: React.FC = () => {
     const handleBuildingSubComCreated = () => {
         fetchBuildingSubComponents();
         setToastMessage('Building Sub-Component created successfully!');
+        setShowToast(true);
+    };
+
+    const handleBuildingSubComUpdated = () => {
+        fetchBuildingSubComponents();
+        setSelectedRow(null);
+        setShowUpdateModal(false);
+        setToastMessage('Building Sub-Component updated successfully!');
         setShowToast(true);
     };
 
@@ -240,6 +249,16 @@ const BuildingSubCom: React.FC = () => {
                         onClose={() => setShowCreateModal(false)}
                         onBuildingSubComCreated={handleBuildingSubComCreated}
                         building_com_id={buildingComId}
+                    />
+                )}
+
+                {/* Update Modal */}
+                {selectedRow && (
+                    <BuildingSubComUpdateModal
+                        isOpen={showUpdateModal}
+                        onClose={() => setShowUpdateModal(false)}
+                        onBuildingSubComUpdated={handleBuildingSubComUpdated}
+                        buildingSubComData={selectedRow}
                     />
                 )}
 
