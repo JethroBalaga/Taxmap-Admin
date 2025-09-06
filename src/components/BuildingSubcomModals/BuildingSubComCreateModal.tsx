@@ -29,7 +29,7 @@ const BuildingSubComCreateModal: React.FC<BuildingSubComCreateModalProps> = ({
   onBuildingSubComCreated = () => {},
   building_com_id
 }) => {
-  const [buildingSubComId, setBuildingSubComId] = useState('');
+  const [buildingSubcomId, setBuildingSubcomId] = useState(''); // Updated variable name
   const [description, setDescription] = useState('');
   const [rate, setRate] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -38,7 +38,7 @@ const BuildingSubComCreateModal: React.FC<BuildingSubComCreateModalProps> = ({
   const [isError, setIsError] = useState(false);
 
   const handleCreate = async () => {
-    if (!buildingSubComId || !description || !rate) return;
+    if (!buildingSubcomId || !description || !rate) return;
 
     // Validate rate is a valid number
     const rateValue = parseFloat(rate);
@@ -52,18 +52,18 @@ const BuildingSubComCreateModal: React.FC<BuildingSubComCreateModalProps> = ({
     setIsLoading(true);
     try {
       const { error } = await supabase
-        .from('building_sub_componenttbl') // Assuming your table name is building_sub_componenttbl
+        .from('building_subcomponenttbl') // Updated table name
         .insert([{
-          building_sub_com_id: buildingSubComId.toUpperCase(),
+          building_subcom_id: buildingSubcomId.toUpperCase(), // Updated column name
           description: description.toUpperCase(),
           rate: rateValue,
-          building_com_id: building_com_id, // Inherited from parent
+          building_com_id: building_com_id,
         }]);
 
       if (error) throw error;
 
       setToastMessage('Building Sub-Component created successfully!');
-      setBuildingSubComId('');
+      setBuildingSubcomId('');
       setDescription('');
       setRate('');
       onBuildingSubComCreated();
@@ -78,8 +78,8 @@ const BuildingSubComCreateModal: React.FC<BuildingSubComCreateModalProps> = ({
     }
   };
 
-  const handleBuildingSubComIdChange = (value: string) => {
-    setBuildingSubComId(value.toUpperCase());
+  const handleBuildingSubcomIdChange = (value: string) => { // Updated function name
+    setBuildingSubcomId(value.toUpperCase());
   };
 
   const handleDescriptionChange = (value: string) => {
@@ -113,8 +113,8 @@ const BuildingSubComCreateModal: React.FC<BuildingSubComCreateModalProps> = ({
                 <div className="input-wrapper" style={{ textTransform: 'uppercase' }}>
                   <Input
                     label="BUILDING SUB-COMPONENT ID"
-                    value={buildingSubComId}
-                    onChange={handleBuildingSubComIdChange}
+                    value={buildingSubcomId} // Updated variable name
+                    onChange={handleBuildingSubcomIdChange} // Updated function name
                     placeholder="ENTER BUILDING SUB-COMPONENT ID"
                     className="modal-input"
                   />
@@ -168,7 +168,7 @@ const BuildingSubComCreateModal: React.FC<BuildingSubComCreateModalProps> = ({
                   <Button
                     variant="primary"
                     onClick={handleCreate}
-                    disabled={!buildingSubComId || !description || !rate || isLoading}
+                    disabled={!buildingSubcomId || !description || !rate || isLoading} // Updated variable name
                     className="create-btn"
                   >
                     {isLoading ? 'CREATING...' : 'CREATE'}

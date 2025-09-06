@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import {
     IonContent,
     IonHeader,
@@ -17,18 +17,19 @@ import {
     IonToast,
     IonAlert
 } from '@ionic/react';
-import { add, arrowUpCircle, trash, arrowBack, appsOutline } from 'ionicons/icons';
+import { add, arrowUpCircle, trash, arrowBack } from 'ionicons/icons';
 import { useHistory, useLocation } from 'react-router-dom';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
+import { supabase } from '../../utils/supaBaseClient'; // Import supabase
 import BuildingSubComCreateModal from '../../components/BuildingSubcomModals/BuildingSubComCreateModal';
 
 // Define the type for building subcomponent data
 interface BuildingSubComItem {
-    sub_component_code: string;
+    building_sub_com_id: string;
     description: string;
+    rate: number;
     building_com_id: string;
-    eff_date: string;
     created_at?: string;
 }
 
@@ -43,8 +44,9 @@ interface LocationState {
 
 const BuildingSubCom: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [showCreateModal, setShowCreateModal] = useState(false); // State for create modal
-    const [isLoading, setIsLoading] = useState(false);
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [isLoading, setIsLoading] = useState(true); // Start with loading true
+    const [buildingSubComponents, setBuildingSubComponents] = useState<BuildingSubComItem[]>([]);
     const [selectedRow, setSelectedRow] = useState<BuildingSubComItem | null>(null);
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
@@ -61,61 +63,78 @@ const BuildingSubCom: React.FC = () => {
     const locationState = location.state as LocationState;
     const buildingComData = locationState?.buildingComData;
 
-    // Mock data for demonstration
-    const mockData: BuildingSubComItem[] = [
-        { sub_component_code: 'BSC001', description: 'Concrete Foundation', building_com_id: buildingComId || 'BC001', eff_date: '2023-01-01' },
-        { sub_component_code: 'BSC002', description: 'Brick Walls', building_com_id: buildingComId || 'BC001', eff_date: '2023-01-01' },
-        { sub_component_code: 'BSC003', description: 'Metal Roof', building_com_id: buildingComId || 'BC001', eff_date: '2023-01-01' },
-        { sub_component_code: 'BSC004', description: 'Glass Windows', building_com_id: buildingComId || 'BC001', eff_date: '2023-01-01' },
-        { sub_component_code: 'BSC005', description: 'Wooden Doors', building_com_id: buildingComId || 'BC001', eff_date: '2023-01-01' },
-    ];
+    // Fetch building sub-components from Supabase
+    const fetchBuildingSubComponents = useCallback(async () => {
+        if (!buildingComId) return;
+
+        setIsLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('building_sub_componenttbl') // Replace with your actual table name
+                .select('building_sub_com_id, description, rate, building_com_id, created_at')
+                .eq('building_com_id', buildingComId)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            setBuildingSubComponents(data || []);
+        } catch (error: any) {
+            console.error('Error fetching building sub-components:', error);
+            setToastMessage(error.message || 'Failed to load building sub-components');
+            setIsError(true);
+            setShowToast(true);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [buildingComId]);
+
+    useEffect(() => {
+        fetchBuildingSubComponents();
+    }, [fetchBuildingSubComponents]);
 
     // Filter data based on search term
     const filteredData = useMemo(() => {
-        if (!searchTerm.trim()) return mockData;
+        if (!searchTerm.trim()) return buildingSubComponents;
 
         const term = searchTerm.toLowerCase();
-        return mockData.filter(item =>
-            item.sub_component_code.toLowerCase().includes(term) ||
+        return buildingSubComponents.filter(item =>
+            item.building_sub_com_id.toLowerCase().includes(term) ||
             item.description.toLowerCase().includes(term) ||
-            item.building_com_id.toLowerCase().includes(term) ||
-            item.eff_date.toLowerCase().includes(term)
+            item.rate.toString().includes(term) ||
+            item.building_com_id.toLowerCase().includes(term)
         );
-    }, [searchTerm, buildingComId]);
+    }, [buildingSubComponents, searchTerm]);
 
     const handleRowClick = (rowData: BuildingSubComItem) => {
         setSelectedRow(rowData);
     };
 
     const handleAddClick = () => {
-        setShowCreateModal(true); // Open the create modal
+        setShowCreateModal(true);
     };
 
     const handleEditClick = () => {
         if (selectedRow) {
-            console.log('Edit clicked for:', selectedRow.sub_component_code);
+            console.log('Edit clicked for:', selectedRow.building_sub_com_id);
             // Edit functionality will be implemented later
         }
     };
 
     const handleDeleteClick = () => {
         if (selectedRow) {
-            console.log('Delete clicked for:', selectedRow.sub_component_code);
+            console.log('Delete clicked for:', selectedRow.building_sub_com_id);
             // Delete functionality will be implemented later
         }
     };
 
     const handleBackClick = () => {
-        // Navigate back to the building component page
         history.push('/menu/home/buildingcom');
     };
 
     const handleBuildingSubComCreated = () => {
-        // Refresh the data or show success message
+        fetchBuildingSubComponents(); // Refresh the data
         setToastMessage('Building Sub-Component created successfully!');
         setShowToast(true);
-        // You would typically fetch data again here
-        console.log('Building Sub-Component created, refresh data');
     };
 
     const iconButtons = [
@@ -176,7 +195,7 @@ const BuildingSubCom: React.FC = () => {
                             <DynamicTable
                                 data={filteredData}
                                 title="Building Sub-Components"
-                                keyField="sub_component_code"
+                                keyField="building_sub_com_id"
                                 onRowClick={handleRowClick}
                             />
                         </IonCol>
