@@ -17,7 +17,7 @@ import {
     IonButtons,
     IonLabel
 } from '@ionic/react';
-import { add, arrowUpCircle, trash, arrowBack } from 'ionicons/icons';
+import { add, arrowUpCircle, trash, arrowBack, appsOutline } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
@@ -151,7 +151,8 @@ const BuildingCom: React.FC = () => {
     const iconButtons = [
         { icon: add, onClick: handleAddClick, disabled: false, title: "Add Building Component" },
         { icon: arrowUpCircle, onClick: handleEditClick, disabled: !selectedRow, title: "Edit Building Component" },
-        { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Building Component" }
+        { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Building Component" },
+        { icon: appsOutline, onClick: handleDeleteClick, disabled: !selectedRow, title: "Manage Subcomponent" }
     ];
 
     return (
