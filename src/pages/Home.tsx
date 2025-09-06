@@ -20,6 +20,7 @@ import SubclassRate from './Home.tabs/SubclassRate';
 import Structure from './Home.tabs/Structure';
 import BuildingCode from './Home.tabs/BuildingCode';
 import ActualUsed from './Home.tabs/ActualUsed';
+import BuildingCom from './Home.tabs/BuildingCom';
 
 const Home: React.FC = () => {
 
@@ -54,6 +55,7 @@ const Home: React.FC = () => {
           <Route exact path="/menu/home/structure" component={Structure} />
           <Route exact path="/menu/home/buildingcode" component={BuildingCode} />
           <Route exact path="/menu/home/actualused" component={ActualUsed} />
+          <Route exact path="/menu/home/buildingcom" component={BuildingCom} />
 
 
           <Route exact path="/menu/home">
