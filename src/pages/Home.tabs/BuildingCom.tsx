@@ -12,13 +12,17 @@ import {
     IonLoading,
     IonSearchbar,
     IonAlert,
-    IonToast
+    IonToast,
+    IonButton,
+    IonButtons,
+    IonLabel
 } from '@ionic/react';
-import { add, arrowUpCircle, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, trash, arrowBack } from 'ionicons/icons';
+import { useHistory } from 'react-router-dom';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import BuildingComCreateModal from '../../components/BuildingComModals/BuildingComCreateModal';
-import BuildingComUpdateModal from '../../components/BuildingComModals/BuildingComUpdateModal'; // Import the update modal
+import BuildingComUpdateModal from '../../components/BuildingComModals/BuildingComUpdateModal';
 import { supabase } from '../../utils/supaBaseClient';
 
 // Define the type for building component data
@@ -31,7 +35,7 @@ interface BuildingComItem {
 const BuildingCom: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [showUpdateModal, setShowUpdateModal] = useState(false); // State for update modal
+    const [showUpdateModal, setShowUpdateModal] = useState(false);
     const [buildingComponents, setBuildingComponents] = useState<BuildingComItem[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [selectedRow, setSelectedRow] = useState<BuildingComItem | null>(null);
@@ -40,6 +44,7 @@ const BuildingCom: React.FC = () => {
     const [toastMessage, setToastMessage] = useState('');
     const [isError, setIsError] = useState(false);
     const searchRef = useRef<HTMLIonSearchbarElement>(null);
+    const history = useHistory();
 
     // Fetch building components from Supabase
     const fetchBuildingComponents = async () => {
@@ -88,13 +93,18 @@ const BuildingCom: React.FC = () => {
 
     const handleEditClick = () => {
         if (selectedRow) {
-            setShowUpdateModal(true); // This will open the update modal
+            setShowUpdateModal(true);
         }
     };
 
     const handleDeleteClick = () => {
         if (!selectedRow) return;
         setShowDeleteAlert(true);
+    };
+
+    const handleBackClick = () => {
+        // Navigate back to the structure page
+        history.push('/menu/home/structure');
     };
 
     const handleDeleteConfirm = async () => {
@@ -148,6 +158,11 @@ const BuildingCom: React.FC = () => {
         <IonPage>
             <IonHeader>
                 <IonToolbar>
+                    <IonButtons slot="start">
+                        <IonButton onClick={handleBackClick}>
+                            <IonIcon icon={arrowBack} />
+                        </IonButton>
+                    </IonButtons>
                     <IonTitle>Building Component Setup</IonTitle>
                 </IonToolbar>
             </IonHeader>
