@@ -17,20 +17,19 @@ import {
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
-import BuildingComCreateModal from '../../components/BuildingComModals/BuildingComCreateModal'; // Import the modal
+import BuildingComCreateModal from '../../components/BuildingComModals/BuildingComCreateModal';
+import { supabase } from '../../utils/supaBaseClient';
 
 // Define the type for building component data
 interface BuildingComItem {
-    component_code: string;
+    building_com_id: string;
     description: string;
-    eff_date: string;
     created_at?: string;
 }
 
 const BuildingCom: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [showUpdateModal, setShowUpdateModal] = useState(false);
     const [buildingComponents, setBuildingComponents] = useState<BuildingComItem[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [selectedRow, setSelectedRow] = useState<BuildingComItem | null>(null);
@@ -40,29 +39,24 @@ const BuildingCom: React.FC = () => {
     const [isError, setIsError] = useState(false);
     const searchRef = useRef<HTMLIonSearchbarElement>(null);
 
-    // Mock data for demonstration (replace with actual data fetching)
-    const mockData: BuildingComItem[] = [
-        { component_code: 'BC001', description: 'Foundation', eff_date: '2023-01-01' },
-        { component_code: 'BC002', description: 'Walls', eff_date: '2023-01-01' },
-        { component_code: 'BC003', description: 'Roof', eff_date: '2023-01-01' },
-        { component_code: 'BC004', description: 'Windows', eff_date: '2023-01-01' },
-        { component_code: 'BC005', description: 'Doors', eff_date: '2023-01-01' },
-    ];
-
-    // Fetch building components (mock implementation for now)
-    const fetchBuildingComponents = () => {
+    // Fetch building components from Supabase
+    const fetchBuildingComponents = async () => {
         setIsLoading(true);
         try {
-            // Simulate API call
-            setTimeout(() => {
-                setBuildingComponents(mockData);
-                setIsLoading(false);
-            }, 1000);
-        } catch (error) {
+            const { data, error } = await supabase
+                .from('building_componenttbl')
+                .select('building_com_id, description, created_at')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            setBuildingComponents(data || []);
+        } catch (error: any) {
             console.error('Error fetching building components:', error);
-            setToastMessage('Failed to load building components');
+            setToastMessage(error.message || 'Failed to load building components');
             setIsError(true);
             setShowToast(true);
+        } finally {
             setIsLoading(false);
         }
     };
@@ -77,9 +71,8 @@ const BuildingCom: React.FC = () => {
 
         const term = searchTerm.toLowerCase();
         return buildingComponents.filter(item =>
-            item.component_code.toLowerCase().includes(term) ||
-            item.description.toLowerCase().includes(term) ||
-            item.eff_date.toLowerCase().includes(term)
+            item.building_com_id.toLowerCase().includes(term) ||
+            item.description.toLowerCase().includes(term)
         );
     }, [buildingComponents, searchTerm]);
 
@@ -93,7 +86,8 @@ const BuildingCom: React.FC = () => {
 
     const handleEditClick = () => {
         if (selectedRow) {
-            setShowUpdateModal(true);
+            setToastMessage('Update functionality not implemented yet');
+            setShowToast(true);
         }
     };
 
@@ -102,30 +96,36 @@ const BuildingCom: React.FC = () => {
         setShowDeleteAlert(true);
     };
 
-    const handleDeleteConfirm = () => {
-        // Placeholder for delete functionality
-        console.log('Delete confirmed for:', selectedRow);
-        setToastMessage(`${selectedRow?.description} delete functionality not implemented yet`);
-        setShowDeleteAlert(false);
-        setShowToast(true);
-        setSelectedRow(null);
+    const handleDeleteConfirm = async () => {
+        if (!selectedRow) return;
+
+        setIsLoading(true);
+        try {
+            const { error } = await supabase
+                .from('building_componenttbl')
+                .delete()
+                .eq('building_com_id', selectedRow.building_com_id);
+
+            if (error) throw error;
+
+            await fetchBuildingComponents();
+            setSelectedRow(null);
+            setToastMessage('Building component deleted successfully!');
+            setShowToast(true);
+        } catch (error: any) {
+            console.error('Error deleting building component:', error);
+            setToastMessage(error.message || 'Failed to delete building component');
+            setIsError(true);
+            setShowToast(true);
+        } finally {
+            setIsLoading(false);
+            setShowDeleteAlert(false);
+        }
     };
 
     const handleBuildingComCreated = () => {
-        // Placeholder for create functionality
-        console.log('Building component created');
-        setShowCreateModal(false);
-        fetchBuildingComponents(); // Refresh the data
+        fetchBuildingComponents();
         setToastMessage('Building component created successfully!');
-        setShowToast(true);
-    };
-
-    const handleBuildingComUpdated = () => {
-        // Placeholder for update functionality
-        console.log('Building component updated');
-        setSelectedRow(null);
-        setShowUpdateModal(false);
-        setToastMessage('Update functionality not implemented yet');
         setShowToast(true);
     };
 
@@ -151,7 +151,7 @@ const BuildingCom: React.FC = () => {
                                 ref={searchRef}
                                 placeholder="Search building components..."
                                 onIonInput={(e) => setSearchTerm(e.detail.value || '')}
-                                debounce={0}
+                                debounce={300}
                             />
 
                             <div className="icon-group">
@@ -173,35 +173,26 @@ const BuildingCom: React.FC = () => {
                             <DynamicTable
                                 data={filteredData}
                                 title="Building Components"
-                                keyField="component_code"
+                                keyField="building_com_id"
                                 onRowClick={handleRowClick}
                             />
                         </IonCol>
                     </IonRow>
                 </IonGrid>
 
-                {/* BuildingCom Create Modal */}
+                {/* Create Modal */}
                 <BuildingComCreateModal
                     isOpen={showCreateModal}
                     onClose={() => setShowCreateModal(false)}
                     onBuildingComCreated={handleBuildingComCreated}
                 />
 
-                {/* Update Modal (Placeholder) */}
-                {showUpdateModal && (
-                    <div className="modal-placeholder">
-                        <p>Update Modal - Functionality not implemented yet</p>
-                        <p>Selected: {selectedRow?.component_code}</p>
-                        <button onClick={() => setShowUpdateModal(false)}>Close</button>
-                    </div>
-                )}
-
                 {/* Delete Confirmation */}
                 <IonAlert
                     isOpen={showDeleteAlert}
                     onDidDismiss={() => setShowDeleteAlert(false)}
                     header="Confirm Delete"
-                    message={`Are you sure you want to delete ${selectedRow?.description}?`}
+                    message={`Are you sure you want to delete "${selectedRow?.description}"?`}
                     buttons={[
                         {
                             text: 'Cancel',
