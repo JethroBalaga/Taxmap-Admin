@@ -40,10 +40,10 @@ const BuildingComCreateModal: React.FC<BuildingComCreateModalProps> = ({
     setIsLoading(true);
     try {
       const { error } = await supabase
-        .from('building_componenttbl') // Updated to correct table name
+        .from('building_componenttbl')
         .insert([{
-          building_com_id: buildingComId.toUpperCase(),
-          description: description.toUpperCase(),
+          building_com_id: buildingComId, // Already uppercase from onChange
+          description: description, // Already uppercase from onChange
         }]);
 
       if (error) throw error;
@@ -64,11 +64,11 @@ const BuildingComCreateModal: React.FC<BuildingComCreateModalProps> = ({
   };
 
   const handleBuildingComIdChange = (value: string) => {
-    setBuildingComId(value);
+    setBuildingComId(value.toUpperCase()); // Convert to uppercase immediately
   };
 
   const handleDescriptionChange = (value: string) => {
-    setDescription(value);
+    setDescription(value.toUpperCase()); // Convert to uppercase immediately
   };
 
   return (
@@ -85,7 +85,7 @@ const BuildingComCreateModal: React.FC<BuildingComCreateModalProps> = ({
             <IonRow>
               <IonCol className="form-column">
                 {/* Building Component ID Input */}
-                <div className="input-wrapper">
+                <div className="input-wrapper" style={{ textTransform: 'uppercase' }}>
                   <Input
                     label="BUILDING COMPONENT ID"
                     value={buildingComId}
@@ -96,7 +96,7 @@ const BuildingComCreateModal: React.FC<BuildingComCreateModalProps> = ({
                 </div>
 
                 {/* Description Input */}
-                <div className="input-wrapper">
+                <div className="input-wrapper" style={{ textTransform: 'uppercase' }}>
                   <Input
                     label="DESCRIPTION"
                     value={description}
