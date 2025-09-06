@@ -105,8 +105,12 @@ const BuildingCom: React.FC = () => {
     const handleManageSubcomponents = () => {
         if (selectedRow) {
             // Navigate to BuildingSubCom with the selected building component data
-            history.push('/menu/home/buildingsubcom', {
-                buildingComData: selectedRow
+            history.push({
+                pathname: '/menu/home/buildingsubcom',
+                search: `?building_com_id=${selectedRow.building_com_id}`,
+                state: {
+                    buildingComData: selectedRow
+                }
             });
         }
     };
