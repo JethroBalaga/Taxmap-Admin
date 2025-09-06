@@ -110,6 +110,17 @@ const Structure: React.FC = () => {
         });
     };
 
+    // NEW: Handle cube outline click to navigate to BuildingCom page
+    const handleCubeOutlineClick = () => {
+        if (!selectedRow) return;
+        
+        history.push({
+            pathname: '/menu/home/buildingcom',
+            search: `?structure_code=${selectedRow.structure_code}`,
+            state: { structureData: selectedRow }
+        });
+    };
+
     const handleDeleteConfirm = async () => {
         if (!selectedRow) return;
 
@@ -154,7 +165,7 @@ const Structure: React.FC = () => {
         { icon: arrowUpCircle, onClick: handleEditClick, disabled: !selectedRow, title: "Edit Structure" },
         { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Structure" },
         { icon: constructOutline, onClick: handleConstructClick, disabled: !selectedRow, title: "Building Code" },
-        { icon: cubeOutline, onClick: handleConstructClick, disabled: !selectedRow, title: "Building component" }
+        { icon: cubeOutline, onClick: handleCubeOutlineClick, disabled: !selectedRow, title: "Building Component" } // Updated onClick
     ];
 
     return (
