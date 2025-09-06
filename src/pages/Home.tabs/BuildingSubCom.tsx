@@ -11,8 +11,12 @@ import {
     IonIcon,
     IonLoading,
     IonSearchbar,
+    IonButton,
+    IonButtons,
+    IonLabel
 } from '@ionic/react';
-import { add, arrowUpCircle, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, trash, arrowBack, appsOutline } from 'ionicons/icons';
+import { useHistory, useLocation } from 'react-router-dom';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 
@@ -25,19 +29,38 @@ interface BuildingSubComItem {
     created_at?: string;
 }
 
+// Define the type for the location state
+interface LocationState {
+    buildingComData?: {
+        building_com_id: string;
+        description: string;
+        created_at?: string;
+    };
+}
+
 const BuildingSubCom: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [selectedRow, setSelectedRow] = useState<BuildingSubComItem | null>(null);
     const searchRef = useRef<HTMLIonSearchbarElement>(null);
+    const history = useHistory();
+    const location = useLocation();
+
+    // Get building_com_id from URL parameters
+    const queryParams = new URLSearchParams(location.search);
+    const buildingComId = queryParams.get('building_com_id');
+
+    // Get building component data from navigation state
+    const locationState = location.state as LocationState;
+    const buildingComData = locationState?.buildingComData;
 
     // Mock data for demonstration
     const mockData: BuildingSubComItem[] = [
-        { sub_component_code: 'BSC001', description: 'Concrete Foundation', building_com_id: 'BC001', eff_date: '2023-01-01' },
-        { sub_component_code: 'BSC002', description: 'Brick Walls', building_com_id: 'BC002', eff_date: '2023-01-01' },
-        { sub_component_code: 'BSC003', description: 'Metal Roof', building_com_id: 'BC003', eff_date: '2023-01-01' },
-        { sub_component_code: 'BSC004', description: 'Glass Windows', building_com_id: 'BC004', eff_date: '2023-01-01' },
-        { sub_component_code: 'BSC005', description: 'Wooden Doors', building_com_id: 'BC005', eff_date: '2023-01-01' },
+        { sub_component_code: 'BSC001', description: 'Concrete Foundation', building_com_id: buildingComId || 'BC001', eff_date: '2023-01-01' },
+        { sub_component_code: 'BSC002', description: 'Brick Walls', building_com_id: buildingComId || 'BC001', eff_date: '2023-01-01' },
+        { sub_component_code: 'BSC003', description: 'Metal Roof', building_com_id: buildingComId || 'BC001', eff_date: '2023-01-01' },
+        { sub_component_code: 'BSC004', description: 'Glass Windows', building_com_id: buildingComId || 'BC001', eff_date: '2023-01-01' },
+        { sub_component_code: 'BSC005', description: 'Wooden Doors', building_com_id: buildingComId || 'BC001', eff_date: '2023-01-01' },
     ];
 
     // Filter data based on search term
@@ -51,7 +74,7 @@ const BuildingSubCom: React.FC = () => {
             item.building_com_id.toLowerCase().includes(term) ||
             item.eff_date.toLowerCase().includes(term)
         );
-    }, [searchTerm]);
+    }, [searchTerm, buildingComId]);
 
     const handleRowClick = (rowData: BuildingSubComItem) => {
         setSelectedRow(rowData);
@@ -76,6 +99,11 @@ const BuildingSubCom: React.FC = () => {
         }
     };
 
+    const handleBackClick = () => {
+        // Navigate back to the building component page
+        history.push('/menu/home/buildingcom');
+    };
+
     const iconButtons = [
         { icon: add, onClick: handleAddClick, disabled: false, title: "Add Building Sub-Component" },
         { icon: arrowUpCircle, onClick: handleEditClick, disabled: !selectedRow, title: "Edit Building Sub-Component" },
@@ -86,8 +114,22 @@ const BuildingSubCom: React.FC = () => {
         <IonPage>
             <IonHeader>
                 <IonToolbar>
-                    <IonTitle>Building Sub-Component Setup</IonTitle>
+                    <IonButtons slot="start">
+                        <IonButton onClick={handleBackClick}>
+                            <IonIcon icon={arrowBack} />
+                        </IonButton>
+                    </IonButtons>
+                    <IonTitle>
+                        Building Sub-Components
+                    </IonTitle>
                 </IonToolbar>
+                {buildingComData && (
+                    <IonToolbar>
+                        <IonLabel className="structure-label">
+                            Component: {buildingComData.building_com_id} - {buildingComData.description}
+                        </IonLabel>
+                    </IonToolbar>
+                )}
             </IonHeader>
 
             <IonContent fullscreen>
