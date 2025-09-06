@@ -18,6 +18,7 @@ import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import BuildingComCreateModal from '../../components/BuildingComModals/BuildingComCreateModal';
+import BuildingComUpdateModal from '../../components/BuildingComModals/BuildingComUpdateModal'; // Import the update modal
 import { supabase } from '../../utils/supaBaseClient';
 
 // Define the type for building component data
@@ -30,6 +31,7 @@ interface BuildingComItem {
 const BuildingCom: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showUpdateModal, setShowUpdateModal] = useState(false); // State for update modal
     const [buildingComponents, setBuildingComponents] = useState<BuildingComItem[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [selectedRow, setSelectedRow] = useState<BuildingComItem | null>(null);
@@ -86,8 +88,7 @@ const BuildingCom: React.FC = () => {
 
     const handleEditClick = () => {
         if (selectedRow) {
-            setToastMessage('Update functionality not implemented yet');
-            setShowToast(true);
+            setShowUpdateModal(true); // This will open the update modal
         }
     };
 
@@ -126,6 +127,14 @@ const BuildingCom: React.FC = () => {
     const handleBuildingComCreated = () => {
         fetchBuildingComponents();
         setToastMessage('Building component created successfully!');
+        setShowToast(true);
+    };
+
+    const handleBuildingComUpdated = () => {
+        fetchBuildingComponents();
+        setSelectedRow(null);
+        setShowUpdateModal(false);
+        setToastMessage('Building component updated successfully!');
         setShowToast(true);
     };
 
@@ -186,6 +195,16 @@ const BuildingCom: React.FC = () => {
                     onClose={() => setShowCreateModal(false)}
                     onBuildingComCreated={handleBuildingComCreated}
                 />
+
+                {/* Update Modal */}
+                {selectedRow && (
+                    <BuildingComUpdateModal
+                        isOpen={showUpdateModal}
+                        onClose={() => setShowUpdateModal(false)}
+                        onBuildingComUpdated={handleBuildingComUpdated}
+                        buildingComData={selectedRow}
+                    />
+                )}
 
                 {/* Delete Confirmation */}
                 <IonAlert
