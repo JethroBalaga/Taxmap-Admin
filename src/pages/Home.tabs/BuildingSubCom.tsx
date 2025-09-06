@@ -21,12 +21,12 @@ import { add, arrowUpCircle, trash, arrowBack } from 'ionicons/icons';
 import { useHistory, useLocation } from 'react-router-dom';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
-import { supabase } from '../../utils/supaBaseClient'; // Import supabase
+import { supabase } from '../../utils/supaBaseClient';
 import BuildingSubComCreateModal from '../../components/BuildingSubcomModals/BuildingSubComCreateModal';
 
 // Define the type for building subcomponent data
 interface BuildingSubComItem {
-    building_sub_com_id: string;
+    building_subcom_id: string; // Updated column name
     description: string;
     rate: number;
     building_com_id: string;
@@ -45,7 +45,7 @@ interface LocationState {
 const BuildingSubCom: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [isLoading, setIsLoading] = useState(true); // Start with loading true
+    const [isLoading, setIsLoading] = useState(true);
     const [buildingSubComponents, setBuildingSubComponents] = useState<BuildingSubComItem[]>([]);
     const [selectedRow, setSelectedRow] = useState<BuildingSubComItem | null>(null);
     const [showToast, setShowToast] = useState(false);
@@ -70,8 +70,8 @@ const BuildingSubCom: React.FC = () => {
         setIsLoading(true);
         try {
             const { data, error } = await supabase
-                .from('building_sub_componenttbl') // Replace with your actual table name
-                .select('building_sub_com_id, description, rate, building_com_id, created_at')
+                .from('building_subcomponenttbl') // Updated table name
+                .select('building_subcom_id, description, rate, building_com_id, created_at') // Updated column name
                 .eq('building_com_id', buildingComId)
                 .order('created_at', { ascending: false });
 
@@ -98,7 +98,7 @@ const BuildingSubCom: React.FC = () => {
 
         const term = searchTerm.toLowerCase();
         return buildingSubComponents.filter(item =>
-            item.building_sub_com_id.toLowerCase().includes(term) ||
+            item.building_subcom_id.toLowerCase().includes(term) || // Updated column name
             item.description.toLowerCase().includes(term) ||
             item.rate.toString().includes(term) ||
             item.building_com_id.toLowerCase().includes(term)
@@ -115,15 +115,13 @@ const BuildingSubCom: React.FC = () => {
 
     const handleEditClick = () => {
         if (selectedRow) {
-            console.log('Edit clicked for:', selectedRow.building_sub_com_id);
-            // Edit functionality will be implemented later
+            console.log('Edit clicked for:', selectedRow.building_subcom_id); // Updated column name
         }
     };
 
     const handleDeleteClick = () => {
         if (selectedRow) {
-            console.log('Delete clicked for:', selectedRow.building_sub_com_id);
-            // Delete functionality will be implemented later
+            console.log('Delete clicked for:', selectedRow.building_subcom_id); // Updated column name
         }
     };
 
@@ -132,7 +130,7 @@ const BuildingSubCom: React.FC = () => {
     };
 
     const handleBuildingSubComCreated = () => {
-        fetchBuildingSubComponents(); // Refresh the data
+        fetchBuildingSubComponents();
         setToastMessage('Building Sub-Component created successfully!');
         setShowToast(true);
     };
@@ -195,7 +193,7 @@ const BuildingSubCom: React.FC = () => {
                             <DynamicTable
                                 data={filteredData}
                                 title="Building Sub-Components"
-                                keyField="building_sub_com_id"
+                                keyField="building_subcom_id" // Updated column name
                                 onRowClick={handleRowClick}
                             />
                         </IonCol>
