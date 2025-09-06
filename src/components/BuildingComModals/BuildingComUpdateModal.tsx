@@ -50,14 +50,49 @@ const BuildingComUpdateModal: React.FC<BuildingComUpdateModalProps> = ({
 
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from('building_componenttbl')
-        .update({
-          description: description.toUpperCase(),
-        })
-        .eq('building_com_id', buildingComData.building_com_id);
+      // First check if the new ID already exists (if it's different from the original)
+      if (buildingComId !== buildingComData.building_com_id) {
+        const { data: existingData, error: checkError } = await supabase
+          .from('building_componenttbl')
+          .select('building_com_id')
+          .eq('building_com_id', buildingComId.toUpperCase())
+          .single();
 
-      if (error) throw error;
+        if (existingData && !checkError) {
+          throw new Error('Building Component ID already exists!');
+        }
+      }
+
+      // Update the record - we need to handle the case where ID is changed
+      if (buildingComId === buildingComData.building_com_id) {
+        // Only description changed
+        const { error } = await supabase
+          .from('building_componenttbl')
+          .update({
+            description: description.toUpperCase(),
+          })
+          .eq('building_com_id', buildingComData.building_com_id);
+
+        if (error) throw error;
+      } else {
+        // ID changed - we need to delete and recreate or use a transaction
+        // For simplicity, we'll delete the old record and create a new one
+        const { error: deleteError } = await supabase
+          .from('building_componenttbl')
+          .delete()
+          .eq('building_com_id', buildingComData.building_com_id);
+
+        if (deleteError) throw deleteError;
+
+        const { error: insertError } = await supabase
+          .from('building_componenttbl')
+          .insert([{
+            building_com_id: buildingComId.toUpperCase(),
+            description: description.toUpperCase(),
+          }]);
+
+        if (insertError) throw insertError;
+      }
 
       setToastMessage('Building Component updated successfully!');
       onBuildingComUpdated();
@@ -93,15 +128,14 @@ const BuildingComUpdateModal: React.FC<BuildingComUpdateModalProps> = ({
           <IonGrid className="form-grid">
             <IonRow>
               <IonCol className="form-column">
-                {/* Building Component ID Input (Read-only) */}
-                <div className="input-wrapper">
+                {/* Building Component ID Input (Now editable) */}
+                <div className="input-wrapper" style={{ textTransform: 'uppercase' }}>
                   <Input
                     label="BUILDING COMPONENT ID"
                     value={buildingComId}
                     onChange={handleBuildingComIdChange}
-                    placeholder="BUILDING COMPONENT ID"
+                    placeholder="ENTER BUILDING COMPONENT ID"
                     className="modal-input"
-                    disabled={true}
                   />
                 </div>
 
