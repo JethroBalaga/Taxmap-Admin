@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
     IonContent,
     IonHeader,
@@ -14,74 +14,75 @@ import {
     IonAlert,
     IonToast
 } from '@ionic/react';
-import { useLocation, useHistory } from 'react-router-dom';
-import { add, arrowUpCircle, constructOutline, cubeOutline, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
-import { supabase } from '../../utils/supaBaseClient';
-import StructureCreateModal from '../../components/StructureModals/StructureCreateModal';
-import StructureUpdateModal from '../../components/StructureModals/StructureUpdateModal';
 
-// Define the type for structure data
-interface StructureItem {
-    structure_code: string;
+// Define the type for building component data
+interface BuildingComItem {
+    component_code: string;
     description: string;
     eff_date: string;
     created_at?: string;
 }
 
-const Structure: React.FC = () => {
+const BuildingCom: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showUpdateModal, setShowUpdateModal] = useState(false);
-    const [structures, setStructures] = useState<StructureItem[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [selectedRow, setSelectedRow] = useState<StructureItem | null>(null);
+    const [buildingComponents, setBuildingComponents] = useState<BuildingComItem[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [selectedRow, setSelectedRow] = useState<BuildingComItem | null>(null);
     const [showDeleteAlert, setShowDeleteAlert] = useState(false);
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [isError, setIsError] = useState(false);
     const searchRef = useRef<HTMLIonSearchbarElement>(null);
-    const history = useHistory();
 
-    // Fetch structures
-    const fetchStructures = useCallback(async () => {
+    // Mock data for demonstration (replace with actual data fetching)
+    const mockData: BuildingComItem[] = [
+        { component_code: 'BC001', description: 'Foundation', eff_date: '2023-01-01' },
+        { component_code: 'BC002', description: 'Walls', eff_date: '2023-01-01' },
+        { component_code: 'BC003', description: 'Roof', eff_date: '2023-01-01' },
+        { component_code: 'BC004', description: 'Windows', eff_date: '2023-01-01' },
+        { component_code: 'BC005', description: 'Doors', eff_date: '2023-01-01' },
+    ];
+
+    // Fetch building components (mock implementation for now)
+    const fetchBuildingComponents = () => {
         setIsLoading(true);
         try {
-            const { data, error } = await supabase
-                .from('structure_typetbl')
-                .select('structure_code, description, eff_date, created_at')
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-            setStructures(data || []);
+            // Simulate API call
+            setTimeout(() => {
+                setBuildingComponents(mockData);
+                setIsLoading(false);
+            }, 1000);
         } catch (error) {
-            console.error('Error fetching structures:', error);
-            setToastMessage('Failed to load structures');
+            console.error('Error fetching building components:', error);
+            setToastMessage('Failed to load building components');
             setIsError(true);
             setShowToast(true);
-        } finally {
             setIsLoading(false);
         }
-    }, []);
+    };
 
     useEffect(() => {
-        fetchStructures();
-    }, [fetchStructures]);
+        fetchBuildingComponents();
+    }, []);
 
     // Filter data based on search term
     const filteredData = useMemo(() => {
-        if (!searchTerm.trim()) return structures;
+        if (!searchTerm.trim()) return buildingComponents;
 
         const term = searchTerm.toLowerCase();
-        return structures.filter(item =>
-            item.structure_code.toLowerCase().includes(term) ||
+        return buildingComponents.filter(item =>
+            item.component_code.toLowerCase().includes(term) ||
             item.description.toLowerCase().includes(term) ||
             item.eff_date.toLowerCase().includes(term)
         );
-    }, [structures, searchTerm]);
+    }, [buildingComponents, searchTerm]);
 
-    const handleRowClick = (rowData: StructureItem) => {
+    const handleRowClick = (rowData: BuildingComItem) => {
         setSelectedRow(rowData);
     };
 
@@ -100,68 +101,43 @@ const Structure: React.FC = () => {
         setShowDeleteAlert(true);
     };
 
-    const handleConstructClick = () => {
-        if (!selectedRow) return;
-        
-        history.push({
-            pathname: '/menu/home/buildingcode',
-            search: `?structure_code=${selectedRow.structure_code}`,
-            state: { structureData: selectedRow }
-        });
+    const handleDeleteConfirm = () => {
+        // Placeholder for delete functionality
+        console.log('Delete confirmed for:', selectedRow);
+        setToastMessage(`${selectedRow?.description} delete functionality not implemented yet`);
+        setShowDeleteAlert(false);
+        setShowToast(true);
+        setSelectedRow(null);
     };
 
-    const handleDeleteConfirm = async () => {
-        if (!selectedRow) return;
-
-        setIsLoading(true);
-        try {
-            const { error } = await supabase
-                .from('structure_typetbl')
-                .delete()
-                .eq('structure_code', selectedRow.structure_code);
-
-            if (error) throw error;
-
-            setToastMessage(`${selectedRow.description} deleted successfully!`);
-            setSelectedRow(null);
-            fetchStructures();
-        } catch (error) {
-            setToastMessage('Failed to delete structure');
-            setIsError(true);
-            console.error('Error deleting structure:', error);
-        } finally {
-            setIsLoading(false);
-            setShowDeleteAlert(false);
-            setShowToast(true);
-        }
-    };
-
-    const handleStructureCreated = () => {
-        fetchStructures();
+    const handleBuildingComCreated = () => {
+        // Placeholder for create functionality
+        console.log('Building component created');
         setShowCreateModal(false);
+        setToastMessage('Create functionality not implemented yet');
+        setShowToast(true);
     };
 
-    const handleStructureUpdated = () => {
-        fetchStructures();
+    const handleBuildingComUpdated = () => {
+        // Placeholder for update functionality
+        console.log('Building component updated');
         setSelectedRow(null);
         setShowUpdateModal(false);
-        setToastMessage('Structure updated successfully!');
+        setToastMessage('Update functionality not implemented yet');
         setShowToast(true);
     };
 
     const iconButtons = [
-        { icon: add, onClick: handleAddClick, disabled: false, title: "Add Structure" },
-        { icon: arrowUpCircle, onClick: handleEditClick, disabled: !selectedRow, title: "Edit Structure" },
-        { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Structure" },
-        { icon: constructOutline, onClick: handleConstructClick, disabled: !selectedRow, title: "Building Code" },
-        { icon: cubeOutline, onClick: handleConstructClick, disabled: !selectedRow, title: "Building component" }
+        { icon: add, onClick: handleAddClick, disabled: false, title: "Add Building Component" },
+        { icon: arrowUpCircle, onClick: handleEditClick, disabled: !selectedRow, title: "Edit Building Component" },
+        { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Building Component" }
     ];
 
     return (
         <IonPage>
             <IonHeader>
                 <IonToolbar>
-                    <IonTitle>Structure Setup</IonTitle>
+                    <IonTitle>Building Component Setup</IonTitle>
                 </IonToolbar>
             </IonHeader>
 
@@ -171,7 +147,7 @@ const Structure: React.FC = () => {
                         <IonCol size="12" className="search-container">
                             <IonSearchbar
                                 ref={searchRef}
-                                placeholder="Search structures..."
+                                placeholder="Search building components..."
                                 onIonInput={(e) => setSearchTerm(e.detail.value || '')}
                                 debounce={0}
                             />
@@ -194,28 +170,30 @@ const Structure: React.FC = () => {
                         <IonCol size="12">
                             <DynamicTable
                                 data={filteredData}
-                                title="Structures"
-                                keyField="structure_code"
+                                title="Building Components"
+                                keyField="component_code"
                                 onRowClick={handleRowClick}
                             />
                         </IonCol>
                     </IonRow>
                 </IonGrid>
 
-                {/* Structure Create Modal */}
-                <StructureCreateModal
-                    isOpen={showCreateModal}
-                    onClose={() => setShowCreateModal(false)}
-                    onStructureCreated={handleStructureCreated}
-                />
+                {/* Create Modal (Placeholder) */}
+                {showCreateModal && (
+                    <div className="modal-placeholder">
+                        <p>Create Modal - Functionality not implemented yet</p>
+                        <button onClick={() => setShowCreateModal(false)}>Close</button>
+                    </div>
+                )}
 
-                {/* Structure Update Modal */}
-                <StructureUpdateModal
-                    isOpen={showUpdateModal}
-                    onClose={() => setShowUpdateModal(false)}
-                    onStructureUpdated={handleStructureUpdated}
-                    structureData={selectedRow}
-                />
+                {/* Update Modal (Placeholder) */}
+                {showUpdateModal && (
+                    <div className="modal-placeholder">
+                        <p>Update Modal - Functionality not implemented yet</p>
+                        <p>Selected: {selectedRow?.component_code}</p>
+                        <button onClick={() => setShowUpdateModal(false)}>Close</button>
+                    </div>
+                )}
 
                 {/* Delete Confirmation */}
                 <IonAlert
@@ -250,4 +228,4 @@ const Structure: React.FC = () => {
     );
 };
 
-export default Structure;
+export default BuildingCom;

@@ -22,14 +22,12 @@ interface StructureCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
   onStructureCreated?: () => void;
-  kind_id: string;
 }
 
 const StructureCreateModal: React.FC<StructureCreateModalProps> = ({
   isOpen,
   onClose,
-  onStructureCreated = () => {},
-  kind_id
+  onStructureCreated = () => {}
 }) => {
   const [structureCode, setStructureCode] = useState('');
   const [description, setDescription] = useState('');
@@ -57,7 +55,6 @@ const StructureCreateModal: React.FC<StructureCreateModalProps> = ({
       const { error } = await supabase
         .from('structure_typetbl')
         .insert([{
-          kind_id: parseInt(kind_id),
           structure_code: structureCode.toUpperCase(),
           description: description.toUpperCase(),
           eff_date: effectiveDate
@@ -101,11 +98,6 @@ const StructureCreateModal: React.FC<StructureCreateModalProps> = ({
           <IonGrid className="form-grid">
             <IonRow>
               <IonCol className="form-column">
-                {/* Kind ID Label */}
-                <IonItem lines="none" className="district-label-item">
-                  <IonLabel className="district-label">KIND ID: {kind_id}</IonLabel>
-                </IonItem>
-
                 {/* Effective Date Label */}
                 <IonItem lines="none" className="district-label-item">
                   <IonLabel className="district-label">EFFECTIVE DATE: {getCurrentDate()}</IonLabel>
