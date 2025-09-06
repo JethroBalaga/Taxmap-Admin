@@ -102,6 +102,15 @@ const BuildingCom: React.FC = () => {
         setShowDeleteAlert(true);
     };
 
+    const handleManageSubcomponents = () => {
+        if (selectedRow) {
+            // Navigate to BuildingSubCom with the selected building component data
+            history.push('/menu/home/buildingsubcom', {
+                buildingComData: selectedRow
+            });
+        }
+    };
+
     const handleBackClick = () => {
         // Navigate back to the structure page
         history.push('/menu/home/structure');
@@ -152,7 +161,7 @@ const BuildingCom: React.FC = () => {
         { icon: add, onClick: handleAddClick, disabled: false, title: "Add Building Component" },
         { icon: arrowUpCircle, onClick: handleEditClick, disabled: !selectedRow, title: "Edit Building Component" },
         { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Building Component" },
-        { icon: appsOutline, onClick: handleDeleteClick, disabled: !selectedRow, title: "Manage Subcomponent" }
+        { icon: appsOutline, onClick: handleManageSubcomponents, disabled: !selectedRow, title: "Manage Subcomponents" }
     ];
 
     return (
