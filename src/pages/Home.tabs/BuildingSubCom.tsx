@@ -13,12 +13,15 @@ import {
     IonSearchbar,
     IonButton,
     IonButtons,
-    IonLabel
+    IonLabel,
+    IonToast,
+    IonAlert
 } from '@ionic/react';
 import { add, arrowUpCircle, trash, arrowBack, appsOutline } from 'ionicons/icons';
 import { useHistory, useLocation } from 'react-router-dom';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
+import BuildingSubComCreateModal from '../../components/BuildingSubcomModals/BuildingSubComCreateModal';
 
 // Define the type for building subcomponent data
 interface BuildingSubComItem {
@@ -40,8 +43,12 @@ interface LocationState {
 
 const BuildingSubCom: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
+    const [showCreateModal, setShowCreateModal] = useState(false); // State for create modal
     const [isLoading, setIsLoading] = useState(false);
     const [selectedRow, setSelectedRow] = useState<BuildingSubComItem | null>(null);
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
+    const [isError, setIsError] = useState(false);
     const searchRef = useRef<HTMLIonSearchbarElement>(null);
     const history = useHistory();
     const location = useLocation();
@@ -81,8 +88,7 @@ const BuildingSubCom: React.FC = () => {
     };
 
     const handleAddClick = () => {
-        console.log('Add clicked');
-        // Add functionality will be implemented later
+        setShowCreateModal(true); // Open the create modal
     };
 
     const handleEditClick = () => {
@@ -102,6 +108,14 @@ const BuildingSubCom: React.FC = () => {
     const handleBackClick = () => {
         // Navigate back to the building component page
         history.push('/menu/home/buildingcom');
+    };
+
+    const handleBuildingSubComCreated = () => {
+        // Refresh the data or show success message
+        setToastMessage('Building Sub-Component created successfully!');
+        setShowToast(true);
+        // You would typically fetch data again here
+        console.log('Building Sub-Component created, refresh data');
     };
 
     const iconButtons = [
@@ -169,7 +183,24 @@ const BuildingSubCom: React.FC = () => {
                     </IonRow>
                 </IonGrid>
 
+                {/* Create Modal */}
+                {buildingComId && (
+                    <BuildingSubComCreateModal
+                        isOpen={showCreateModal}
+                        onClose={() => setShowCreateModal(false)}
+                        onBuildingSubComCreated={handleBuildingSubComCreated}
+                        building_com_id={buildingComId}
+                    />
+                )}
+
                 <IonLoading isOpen={isLoading} message="Loading..." />
+                <IonToast
+                    isOpen={showToast}
+                    onDidDismiss={() => setShowToast(false)}
+                    message={toastMessage}
+                    duration={3000}
+                    color={isError ? 'danger' : 'success'}
+                />
             </IonContent>
         </IonPage>
     );
