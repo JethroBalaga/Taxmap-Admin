@@ -21,6 +21,7 @@ const Forms: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [forms, setForms] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedRow, setSelectedRow] = useState<any>(null);
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
 
   // Fetch forms from the view
@@ -78,8 +79,7 @@ const Forms: React.FC = () => {
 
   const handleRowClick = (rowData: any) => {
     console.log('Form clicked:', rowData);
-    // You can navigate to form details or show a modal
-    // Example: history.push(`/forms/${rowData.form_id}`);
+    setSelectedRow(rowData);
   };
 
   return (
@@ -111,7 +111,11 @@ const Forms: React.FC = () => {
                 <IonIcon
                   icon={informationCircleOutline}
                   className="icon-yellow"
-                  title="View showing joined data from multiple tables"
+                  title={selectedRow ? "View showing joined data from multiple tables" : "Select a row to enable this feature"}
+                  style={{ 
+                    cursor: selectedRow ? 'pointer' : 'not-allowed',
+                    opacity: selectedRow ? 1 : 0.5
+                  }}
                 />
               </div>
             </IonCol>
