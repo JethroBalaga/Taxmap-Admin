@@ -38,8 +38,8 @@ const Forms: React.FC = () => {
               />
 
               <div className="icon-group">
-                <IonIcon 
-                  icon={informationCircleOutline} 
+                <IonIcon
+                  icon={informationCircleOutline}
                   className="icon-yellow"
                   title="Information"
                 />
