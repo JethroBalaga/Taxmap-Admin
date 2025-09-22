@@ -1,61 +1,53 @@
 import React, { useState, useRef } from 'react';
 import {
+  IonPage,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
   IonGrid,
   IonRow,
   IonCol,
   IonSearchbar,
-  IonIcon
 } from '@ionic/react';
-import { informationCircleOutline } from 'ionicons/icons';
 import '../../CSS/Setup.css';
-import { useLocation } from 'react-router-dom'; // Add this import
+import { useLocation } from 'react-router-dom';
 
 interface RouteParams {
   formId: string;
-  classId: string;
-  area: string;
 }
 
 const BuildingTable: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
-  const location = useLocation(); // Add this hook
+  const location = useLocation();
   
   // Get the passed parameters
-  const { formId, classId, area } = location.state as RouteParams || {};
+  const { formId} = location.state as RouteParams || {};
 
   return (
-    <div>
-      <IonGrid>
-        <IonRow>
-          <IonCol size="12" className="search-container">
-            <IonSearchbar
-              ref={searchRef}
-              placeholder="Search buildings..."
-              onIonInput={(e) => setSearchTerm(e.detail.value || '')}
-              debounce={300}
-            />
-
-            <div className="icon-group">
-              <IonIcon
-                icon={informationCircleOutline}
-                className="icon-yellow"
-                title="Building information"
+    <IonPage>
+      <IonHeader>
+        <IonToolbar>
+          <IonTitle>Building Details</IonTitle>
+        </IonToolbar>
+      </IonHeader>
+      
+      <IonContent>
+        <IonGrid>
+          <IonRow>
+            <IonCol size="12" className="search-container">
+              <IonSearchbar
+                ref={searchRef}
+                placeholder="Search buildings..."
+                onIonInput={(e) => setSearchTerm(e.detail.value || '')}
+                debounce={300}
               />
-            </div>
-          </IonCol>
-        </IonRow>
-        
-        {/* Display the passed parameters */}
-        <IonRow>
-          <IonCol>
-            <p>Form ID: {formId || 'N/A'}</p>
-            <p>Class ID: {classId || 'N/A'}</p>
-            <p>Area: {area || 'N/A'}</p>
-          </IonCol>
-        </IonRow>
-      </IonGrid>
-    </div>
+            </IonCol>
+          </IonRow>
+        </IonGrid>
+      </IonContent>
+    </IonPage>
   );
 };
 
