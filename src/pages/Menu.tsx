@@ -18,6 +18,7 @@ import { Redirect, Route } from 'react-router';
 import Home from './Home';
 import People from './People';
 import Forms from './Forms';
+import BuildingTable from './Forms.tabs/BuildingTable';
   const Menu: React.FC = () => {
     const path = [
         {name:'Home', url: '/menu/home', icon: homeOutline},
@@ -62,6 +63,7 @@ import Forms from './Forms';
         <Route exact path="/menu/home" component={Home} />
         <Route exact path="/menu/people" component={People} />
         <Route exact path="/menu/forms" component={Forms} />
+        <Route exact path="/menu/buildingtable" component={BuildingTable} />
                     <Route exact path="/menu">
                         <Redirect to="/menu/home"/>
                     </Route>

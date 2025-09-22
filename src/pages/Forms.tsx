@@ -16,7 +16,7 @@ import { informationCircleOutline } from 'ionicons/icons';
 import DynamicTable from '../components/Globalcomponents/DynamicTable';
 import { supabase } from '../utils/supaBaseClient';
 import '../CSS/Setup.css';
-import { useHistory } from 'react-router-dom'; // Add this import
+import { useHistory } from 'react-router-dom';
 
 const Forms: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,7 +24,7 @@ const Forms: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedRow, setSelectedRow] = useState<any>(null);
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
-  const history = useHistory(); // Add this hook
+  const history = useHistory();
 
   // Fetch forms from the view
   useEffect(() => {
@@ -95,6 +95,8 @@ const Forms: React.FC = () => {
     }
   };
 
+  const isBuildingSelected = selectedRow && selectedRow.classification === 'BUILDING';
+
   return (
     <IonPage>
       <IonHeader>
@@ -123,15 +125,15 @@ const Forms: React.FC = () => {
               <div className="icon-group">
                 <IonIcon
                   icon={informationCircleOutline}
-                  className={selectedRow && selectedRow.classification === 'BUILDING' ? "icon-yellow" : "icon-disabled"}
-                  title={selectedRow && selectedRow.classification === 'BUILDING' 
+                  className="icon-yellow"
+                  title={isBuildingSelected 
                     ? "View building details" 
                     : "Select a BUILDING classification row to enable this feature"}
                   style={{ 
-                    cursor: selectedRow && selectedRow.classification === 'BUILDING' ? 'pointer' : 'not-allowed',
-                    opacity: selectedRow && selectedRow.classification === 'BUILDING' ? 1 : 0.5
+                    cursor: isBuildingSelected ? 'pointer' : 'not-allowed',
+                    opacity: isBuildingSelected ? 1 : 0.5
                   }}
-                  onClick={handleInfoClick}
+                  onClick={isBuildingSelected ? handleInfoClick : undefined}
                 />
               </div>
             </IonCol>
