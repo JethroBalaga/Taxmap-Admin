@@ -10,7 +10,8 @@ import {
   IonCol,
   IonSearchbar,
   IonIcon,
-  IonLoading
+  IonLoading,
+  IonButton
 } from '@ionic/react';
 import { informationCircleOutline } from 'ionicons/icons';
 import DynamicTable from '../components/Globalcomponents/DynamicTable';
@@ -80,23 +81,23 @@ const Forms: React.FC = () => {
   };
 
   const handleRowClick = (rowData: any) => {
-    console.log('Form clicked:', rowData);
+    console.log('Row Clicked:', rowData);
     setSelectedRow(rowData);
   };
 
-  const handleInfoClick = () => {
-    if (selectedRow && selectedRow.classification === 'BUILDING') {
-      // Navigate to BuildingTable with the required parameters
-      history.push(`/building-table`, { 
-        formId: selectedRow.form_id,
-        classId: selectedRow.class_id,
-        area: selectedRow.area
-      });
-    }
-  };
-
-  const isBuildingSelected = selectedRow && selectedRow.classification === 'BUILDING';
-
+ const handleInfoClick = () => {
+  // Only navigate if the selected row is a BUILDING kind description
+  if (selectedRow && selectedRow.kind_description?.toUpperCase() === 'BUILDING') {
+    history.push(`/menu/buildingtable`, { 
+      formId: selectedRow.form_id,
+      classId: selectedRow.class_id,
+      area: selectedRow.area
+    });
+  } else {
+    console.log('Cannot navigate. Selected row is not a BUILDING.');
+    // You could add an alert or a toast here to inform the user.
+  }
+};
   return (
     <IonPage>
       <IonHeader>
@@ -123,18 +124,15 @@ const Forms: React.FC = () => {
               />
 
               <div className="icon-group">
-                <IonIcon
-                  icon={informationCircleOutline}
-                  className="icon-yellow"
-                  title={isBuildingSelected 
-                    ? "View building details" 
-                    : "Select a BUILDING classification row to enable this feature"}
-                  style={{ 
-                    cursor: isBuildingSelected ? 'pointer' : 'not-allowed',
-                    opacity: isBuildingSelected ? 1 : 0.5
-                  }}
-                  onClick={isBuildingSelected ? handleInfoClick : undefined}
-                />
+                <IonButton
+                  fill="clear"
+                  onClick={handleInfoClick}
+                >
+                  <IonIcon
+                    icon={informationCircleOutline}
+                    className="icon-yellow"
+                  />
+                </IonButton>
               </div>
             </IonCol>
           </IonRow>
