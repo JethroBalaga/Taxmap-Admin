@@ -16,6 +16,7 @@ import { informationCircleOutline } from 'ionicons/icons';
 import DynamicTable from '../components/Globalcomponents/DynamicTable';
 import { supabase } from '../utils/supaBaseClient';
 import '../CSS/Setup.css';
+import { useHistory } from 'react-router-dom'; // Add this import
 
 const Forms: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,6 +24,7 @@ const Forms: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedRow, setSelectedRow] = useState<any>(null);
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
+  const history = useHistory(); // Add this hook
 
   // Fetch forms from the view
   useEffect(() => {
@@ -82,6 +84,17 @@ const Forms: React.FC = () => {
     setSelectedRow(rowData);
   };
 
+  const handleInfoClick = () => {
+    if (selectedRow && selectedRow.classification === 'BUILDING') {
+      // Navigate to BuildingTable with the required parameters
+      history.push(`/building-table`, { 
+        formId: selectedRow.form_id,
+        classId: selectedRow.class_id,
+        area: selectedRow.area
+      });
+    }
+  };
+
   return (
     <IonPage>
       <IonHeader>
@@ -110,12 +123,15 @@ const Forms: React.FC = () => {
               <div className="icon-group">
                 <IonIcon
                   icon={informationCircleOutline}
-                  className="icon-yellow"
-                  title={selectedRow ? "View showing joined data from multiple tables" : "Select a row to enable this feature"}
+                  className={selectedRow && selectedRow.classification === 'BUILDING' ? "icon-yellow" : "icon-disabled"}
+                  title={selectedRow && selectedRow.classification === 'BUILDING' 
+                    ? "View building details" 
+                    : "Select a BUILDING classification row to enable this feature"}
                   style={{ 
-                    cursor: selectedRow ? 'pointer' : 'not-allowed',
-                    opacity: selectedRow ? 1 : 0.5
+                    cursor: selectedRow && selectedRow.classification === 'BUILDING' ? 'pointer' : 'not-allowed',
+                    opacity: selectedRow && selectedRow.classification === 'BUILDING' ? 1 : 0.5
                   }}
+                  onClick={handleInfoClick}
                 />
               </div>
             </IonCol>
