@@ -11,7 +11,7 @@ import {
   IonSearchbar,
   IonIcon
 } from '@ionic/react';
-import { add } from 'ionicons/icons';
+import { informationCircleOutline } from 'ionicons/icons';
 import '../CSS/Setup.css';
 
 const Forms: React.FC = () => {
@@ -36,6 +36,14 @@ const Forms: React.FC = () => {
                 onIonInput={(e) => setSearchTerm(e.detail.value || '')}
                 debounce={0}
               />
+
+              <div className="icon-group">
+                <IonIcon 
+                  icon={informationCircleOutline} 
+                  className="icon-yellow"
+                  title="Information"
+                />
+              </div>
             </IonCol>
           </IonRow>
         </IonGrid>
