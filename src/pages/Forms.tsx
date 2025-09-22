@@ -89,9 +89,7 @@ const Forms: React.FC = () => {
   // Only navigate if the selected row is a BUILDING kind description
   if (selectedRow && selectedRow.kind_description?.toUpperCase() === 'BUILDING') {
     history.push(`/menu/buildingtable`, { 
-      formId: selectedRow.form_id,
-      classId: selectedRow.class_id,
-      area: selectedRow.area
+      formId: selectedRow.form_id
     });
   } else {
     console.log('Cannot navigate. Selected row is not a BUILDING.');
