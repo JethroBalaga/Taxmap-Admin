@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   IonContent,
   IonHeader,
@@ -9,14 +9,78 @@ import {
   IonRow,
   IonCol,
   IonSearchbar,
-  IonIcon
+  IonIcon,
+  IonLoading
 } from '@ionic/react';
 import { informationCircleOutline } from 'ionicons/icons';
+import DynamicTable from '../components/Globalcomponents/DynamicTable';
+import { supabase } from '../utils/supaBaseClient';
 import '../CSS/Setup.css';
 
 const Forms: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [forms, setForms] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
+
+  // Fetch forms from the view
+  useEffect(() => {
+    loadForms();
+  }, []);
+
+  const loadForms = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('form_view')
+        .select('*')
+        .order('form_id', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching forms:', error);
+        return;
+      }
+
+      setForms(data || []);
+    } catch (error) {
+      console.error('Failed to load forms:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSearch = async (term: string) => {
+    if (term.trim() === '') {
+      loadForms();
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('form_view')
+        .select('*')
+        .or(`declarant_name.ilike.%${term}%,district_name.ilike.%${term}%,classification.ilike.%${term}%,status.ilike.%${term}%`)
+        .order('form_id', { ascending: false });
+
+      if (error) {
+        console.error('Search error:', error);
+        return;
+      }
+
+      setForms(data || []);
+    } catch (error) {
+      console.error('Search failed:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRowClick = (rowData: any) => {
+    console.log('Form clicked:', rowData);
+    // You can navigate to form details or show a modal
+    // Example: history.push(`/forms/${rowData.form_id}`);
+  };
 
   return (
     <IonPage>
@@ -27,23 +91,40 @@ const Forms: React.FC = () => {
       </IonHeader>
 
       <IonContent fullscreen>
+        <IonLoading isOpen={isLoading} message="Loading forms..." />
+        
         <IonGrid>
           <IonRow>
             <IonCol size="12" className="search-container">
               <IonSearchbar
                 ref={searchRef}
-                placeholder="Search forms..."
-                onIonInput={(e) => setSearchTerm(e.detail.value || '')}
-                debounce={0}
+                placeholder="Search by name, district, class, or status..."
+                onIonInput={(e) => {
+                  const term = e.detail.value || '';
+                  setSearchTerm(term);
+                  handleSearch(term);
+                }}
+                debounce={300}
               />
 
               <div className="icon-group">
                 <IonIcon
                   icon={informationCircleOutline}
                   className="icon-yellow"
-                  title="Information"
+                  title="View showing joined data from multiple tables"
                 />
               </div>
+            </IonCol>
+          </IonRow>
+
+          <IonRow>
+            <IonCol size="12">
+              <DynamicTable
+                data={forms}
+                title="Forms Overview"
+                keyField="form_id"
+                onRowClick={handleRowClick}
+              />
             </IonCol>
           </IonRow>
         </IonGrid>
