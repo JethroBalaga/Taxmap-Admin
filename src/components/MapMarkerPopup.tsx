@@ -12,7 +12,7 @@ import {
   IonSpinner
 } from '@ionic/react';
 import { close } from 'ionicons/icons';
-import { supabase } from '../utils/supaBaseClient'; // Adjust path to your Supabase client
+import { supabase } from '../utils/supaBaseClient';
 import '../CSS/MapMarkerPopup.css';
 
 interface MapMarkerPopupProps {
@@ -31,7 +31,7 @@ const MapMarkerPopup: React.FC<MapMarkerPopupProps> = ({ photoTagId, onClose }) 
       try {
         setLoading(true);
         
-        // Fetch photo tag data from database
+        // Fetch photo tag data from database including the photo field
         const { data: tagData, error: tagError } = await supabase
           .from('tagtbl')
           .select('*')
@@ -68,29 +68,64 @@ const MapMarkerPopup: React.FC<MapMarkerPopupProps> = ({ photoTagId, onClose }) 
         }
 
         // Fetch photo from S3 bucket
-        try {
-          // Get signed URL for the photo from S3 bucket
-          // Assuming photos are stored in tag-photos/{tag_id}/ folder
-          const photoPath = `tag-photos/${photoTagId}/photo.jpg`; // Adjust path/extension as needed
-          
-          const { data: signedUrlData, error: signedUrlError } = await supabase
-            .storage
-            .from('tag-photos') // Your bucket name
-            .createSignedUrl(photoPath, 60); // URL valid for 60 seconds
+        if (tagData.photo) {
+          try {
+            // Construct the correct path: {tag_id}/{filename}
+            const photoPath = `${photoTagId}/${tagData.photo}`;
+            
+            const { data: signedUrlData, error: signedUrlError } = await supabase
+              .storage
+              .from('tag-photos')
+              .createSignedUrl(photoPath, 60);
 
-          if (signedUrlError) {
-            console.error('Error generating signed URL:', signedUrlError);
-          } else if (signedUrlData) {
-            setPhotoData(signedUrlData.signedUrl);
+            if (signedUrlError) {
+              console.error('Error generating signed URL:', signedUrlError);
+              // Try alternative path structures
+              await tryAlternativePhotoPaths(tagData, photoTagId);
+            } else if (signedUrlData) {
+              setPhotoData(signedUrlData.signedUrl);
+            }
+          } catch (photoError) {
+            console.warn('Error loading photo:', photoError);
+            await tryAlternativePhotoPaths(tagData, photoTagId);
           }
-        } catch (photoError) {
-          console.warn('Could not load photo from S3:', photoError);
+        } else {
+          console.warn('No photo filename found in tagtbl for tag_id:', photoTagId);
         }
 
       } catch (error) {
         console.error('Error loading marker data:', error);
       } finally {
         setLoading(false);
+      }
+    };
+
+    // Helper function to try different photo path structures
+    const tryAlternativePhotoPaths = async (tagData: any, tagId: string) => {
+      const alternativePaths = [
+        `${tagId}/${tagData.photo}`, // Primary expected path
+        `${tagId}/photo.jpg`,
+        `${tagId}/image.jpg`,
+        `${tagId}/${tagData.photo}.jpg`,
+        `${tagId}/photo.png`,
+        `${tagId}/image.png`,
+        tagData.photo // Try without folder (root level)
+      ];
+
+      for (const path of alternativePaths) {
+        try {
+          const { data: signedUrlData, error } = await supabase
+            .storage
+            .from('tag-photos')
+            .createSignedUrl(path, 60);
+
+          if (!error && signedUrlData) {
+            setPhotoData(signedUrlData.signedUrl);
+            break;
+          }
+        } catch (error) {
+          continue;
+        }
       }
     };
 
@@ -176,17 +211,23 @@ const MapMarkerPopup: React.FC<MapMarkerPopupProps> = ({ photoTagId, onClose }) 
             <div className="popup-form-data">
               <IonText>
                 <p className="popup-data-item">
-                  <strong>Form ID:</strong> {formData.form_id.substring(0, 8)}...
+                  <strong>Form ID:</strong> {formData.form_id?.substring(0, 8)}...
                 </p>
-                <p className="popup-data-item">
-                  <strong>Kind ID:</strong> {formData.kind_id}
-                </p>
-                <p className="popup-data-item">
-                  <strong>Class ID:</strong> {formData.class_id}
-                </p>
-                <p className="popup-data-item">
-                  <strong>Area:</strong> {formData.area} m²
-                </p>
+                {formData.kind_id && (
+                  <p className="popup-data-item">
+                    <strong>Kind ID:</strong> {formData.kind_id}
+                  </p>
+                )}
+                {formData.class_id && (
+                  <p className="popup-data-item">
+                    <strong>Class ID:</strong> {formData.class_id}
+                  </p>
+                )}
+                {formData.area && (
+                  <p className="popup-data-item">
+                    <strong>Area:</strong> {formData.area} m²
+                  </p>
+                )}
                 {formData.status && (
                   <p className="popup-data-item">
                     <strong>Status:</strong> {formData.status}

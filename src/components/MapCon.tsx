@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, useMap, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { createBlueMarkerIcon } from '../utils/marketicons';
+import { createBlueMarkerIcon } from '../utils/markericons';
 import MapMarkerPopup from './MapMarkerPopup';
 import { supabase } from '../utils/supaBaseClient';
 
