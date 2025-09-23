@@ -9,10 +9,14 @@ import {
   IonRow,
   IonCol,
   IonSearchbar,
-  IonLoading
+  IonLoading,
+  IonButtons, // Add this import
+  IonButton, // Add this import
+  IonIcon // Add this import
 } from '@ionic/react';
+import { arrowBackOutline } from 'ionicons/icons'; // Add this import
 import '../../CSS/Setup.css';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useHistory } from 'react-router-dom'; // Add useHistory
 import { supabase } from '../../utils/supaBaseClient';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 
@@ -67,8 +71,14 @@ const BuildingTable: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const location = useLocation();
+  const history = useHistory(); // Add history hook
 
   const { formId } = location.state as RouteParams || {};
+
+  // Add back button handler
+  const handleBack = () => {
+    history.goBack(); // Go back to Forms page
+  };
 
   useEffect(() => {
     if (formId) {
@@ -222,6 +232,12 @@ const BuildingTable: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
+          <IonButtons slot="start">
+            <IonButton onClick={handleBack}>
+              <IonIcon icon={arrowBackOutline} />
+              Back to Forms
+            </IonButton>
+          </IonButtons>
           <IonTitle>Building Details</IonTitle>
         </IonToolbar>
       </IonHeader>
@@ -256,6 +272,7 @@ const BuildingTable: React.FC = () => {
               />
             </IonCol>
           </IonRow>
+
           {/* Assessment Summary Table - Placed BELOW the building adjustments */}
           {assessmentSummary.length > 0 && (
             <IonRow>
@@ -270,7 +287,7 @@ const BuildingTable: React.FC = () => {
             </IonRow>
           )}
 
-          {/* Building Adjustments Table - Uses the search functionality */}
+             {/* Building Adjustments Table - Uses the search functionality */}
           {filteredAdjustments.length > 0 ? (
             <IonRow>
               <IonCol size="12">
