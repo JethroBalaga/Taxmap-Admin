@@ -48,14 +48,26 @@ interface AssessmentSummary {
   value_info_id: string;
 }
 
+interface BuildingAdjustment {
+  bldg_adjust_id: string;
+  area: number;
+  rate: number;
+  completion_percent: string;
+  base_value: number;
+  adjusted_value: number;
+  value_info_id: string;
+}
+
 const BuildingTable: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [generalData, setGeneralData] = useState<GeneralDescription[]>([]);
   const [assessmentSummary, setAssessmentSummary] = useState<AssessmentSummary[]>([]);
+  const [buildingAdjustments, setBuildingAdjustments] = useState<BuildingAdjustment[]>([]);
+  const [filteredAdjustments, setFilteredAdjustments] = useState<BuildingAdjustment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const location = useLocation();
-  
+
   const { formId } = location.state as RouteParams || {};
 
   useEffect(() => {
@@ -64,6 +76,27 @@ const BuildingTable: React.FC = () => {
       fetchAssessmentSummary();
     }
   }, [formId]);
+
+  useEffect(() => {
+    if (generalData.length > 0) {
+      fetchBuildingAdjustments();
+    }
+  }, [generalData]);
+
+  useEffect(() => {
+    if (!searchTerm) {
+      setFilteredAdjustments(buildingAdjustments);
+    } else {
+      const filtered = buildingAdjustments.filter(adjustment =>
+        adjustment.area.toString().includes(searchTerm) ||
+        adjustment.rate.toString().includes(searchTerm) ||
+        adjustment.completion_percent.includes(searchTerm) ||
+        adjustment.base_value.toString().includes(searchTerm) ||
+        adjustment.adjusted_value.toString().includes(searchTerm)
+      );
+      setFilteredAdjustments(filtered);
+    }
+  }, [searchTerm, buildingAdjustments]);
 
   const fetchGeneralDescriptionData = async () => {
     setIsLoading(true);
@@ -124,6 +157,30 @@ const BuildingTable: React.FC = () => {
     }
   };
 
+  const fetchBuildingAdjustments = async () => {
+    try {
+      // Get value_info_ids from generalData
+      const valueInfoIds = generalData.map(item => item.value_info_id);
+
+      if (valueInfoIds.length === 0) return;
+
+      const { data, error } = await supabase
+        .from('building_adjustments_view')
+        .select('*')
+        .in('value_info_id', valueInfoIds);
+
+      if (error) {
+        console.error('Error fetching building adjustments:', error);
+        return;
+      }
+
+      setBuildingAdjustments(data || []);
+      setFilteredAdjustments(data || []);
+    } catch (error) {
+      console.error('Failed to load building adjustments:', error);
+    }
+  };
+
   // Create display data for general description that excludes ID fields
   const getGeneralDisplayData = () => {
     return generalData.map(item => {
@@ -140,15 +197,25 @@ const BuildingTable: React.FC = () => {
     });
   };
 
-  // Handle row clicks if needed in the future
+  // Create display data for building adjustments that excludes value_info_id
+  const getAdjustmentDisplayData = () => {
+    return filteredAdjustments.map(item => {
+      const { value_info_id, ...displayItem } = item;
+      return displayItem;
+    });
+  };
+
+  // Handle row clicks
   const handleGeneralRowClick = (rowData: any) => {
     console.log('General description row clicked:', rowData);
-    // You can add functionality here later if needed
   };
 
   const handleAssessmentRowClick = (rowData: any) => {
     console.log('Assessment summary row clicked:', rowData);
-    // You can add functionality here later if needed
+  };
+
+  const handleAdjustmentRowClick = (rowData: any) => {
+    console.log('Building adjustment row clicked:', rowData);
   };
 
   return (
@@ -158,10 +225,10 @@ const BuildingTable: React.FC = () => {
           <IonTitle>Building Details</IonTitle>
         </IonToolbar>
       </IonHeader>
-      
+
       <IonContent>
         <IonLoading isOpen={isLoading} message="Loading building details..." />
-        
+
         <IonGrid>
           {/* General Description Table - Placed ABOVE the search */}
           {generalData.length > 0 && (
@@ -177,19 +244,19 @@ const BuildingTable: React.FC = () => {
             </IonRow>
           )}
 
-          {/* Search Bar */}
+          {/* Search Bar - For Building Adjustments Table */}
           <IonRow>
             <IonCol size="12" className="search-container">
               <IonSearchbar
                 ref={searchRef}
-                placeholder="Search buildings..."
+                placeholder="Search adjustments by area, rate, completion %, or value..."
                 onIonInput={(e) => setSearchTerm(e.detail.value || '')}
                 debounce={300}
+                value={searchTerm}
               />
             </IonCol>
           </IonRow>
-
-          {/* Assessment Summary Table - Placed BELOW the search bar */}
+          {/* Assessment Summary Table - Placed BELOW the building adjustments */}
           {assessmentSummary.length > 0 && (
             <IonRow>
               <IonCol size="12">
@@ -201,6 +268,30 @@ const BuildingTable: React.FC = () => {
                 />
               </IonCol>
             </IonRow>
+          )}
+
+          {/* Building Adjustments Table - Uses the search functionality */}
+          {filteredAdjustments.length > 0 ? (
+            <IonRow>
+              <IonCol size="12">
+                <DynamicTable
+                  data={getAdjustmentDisplayData()}
+                  title="Building Adjustments"
+                  keyField="bldg_adjust_id"
+                  onRowClick={handleAdjustmentRowClick}
+                />
+              </IonCol>
+            </IonRow>
+          ) : (
+            !isLoading && buildingAdjustments.length === 0 && (
+              <IonRow>
+                <IonCol size="12">
+                  <div style={{ textAlign: 'center', padding: '20px' }}>
+                    No building adjustments data found.
+                  </div>
+                </IonCol>
+              </IonRow>
+            )
           )}
 
           {/* Show message if no assessment data found */}
