@@ -1,8 +1,11 @@
 // src/components/MapCon.tsx
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { createBlueMarkerIcon } from '../utils/marketicons';
+import MapMarkerPopup from './MapMarkerPopup';
+import { supabase } from '../utils/supaBaseClient';
 
 const TILE_LAYER_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
 const manoloFortichBounds = L.latLngBounds(
@@ -15,10 +18,50 @@ const MIN_ZOOM_LOCKED = 14;
 const MIN_ZOOM_UNLOCKED = 12;
 const MAX_ZOOM = 18;
 
-// Component to set up the map logic
-const MapLogic = () => {
+interface PhotoTag {
+  tag_id: string;
+  latitude: number;
+  longitude: number;
+  date_taken: string;
+  created_at: string;
+  accuracy?: number;
+  altitude?: number;
+}
+
+// Component to set up the map logic and markers
+const MapLogic = ({ onMarkerClick }: { onMarkerClick: (tagId: string) => void }) => {
   const map = useMap();
   const [allowZoomOut, setAllowZoomOut] = useState(false);
+  const [photoTags, setPhotoTags] = useState<PhotoTag[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Fetch photo tags from database
+    const fetchPhotoTags = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('tagtbl')
+          .select('tag_id, latitude, longitude, date_taken, created_at, accuracy, altitude')
+          .gte('latitude', manoloFortichBounds.getSouthWest().lat)
+          .lte('latitude', manoloFortichBounds.getNorthEast().lat)
+          .gte('longitude', manoloFortichBounds.getSouthWest().lng)
+          .lte('longitude', manoloFortichBounds.getNorthEast().lng);
+
+        if (error) {
+          console.error('Error fetching photo tags:', error);
+        } else if (data) {
+          setPhotoTags(data);
+        }
+      } catch (error) {
+        console.error('Error loading photo tags:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPhotoTags();
+  }, []);
 
   useEffect(() => {
     // Initial map view and restriction
@@ -54,17 +97,58 @@ const MapLogic = () => {
     };
   }, [map, allowZoomOut]);
 
-  return null;
+  const blueMarkerIcon = createBlueMarkerIcon();
+
+  return (
+    <>
+      {photoTags.map((tag) => (
+        <Marker
+          key={tag.tag_id}
+          position={[tag.latitude, tag.longitude]}
+          icon={blueMarkerIcon}
+          eventHandlers={{
+            click: () => {
+              onMarkerClick(tag.tag_id);
+            }
+          }}
+        >
+          <Popup>
+            <div style={{ textAlign: 'center', padding: '5px' }}>
+              <strong>Property Location</strong>
+              <br />
+              <small>Click for details</small>
+              <br />
+              <small>Lat: {tag.latitude.toFixed(6)}</small>
+              <br />
+              <small>Lng: {tag.longitude.toFixed(6)}</small>
+            </div>
+          </Popup>
+        </Marker>
+      ))}
+    </>
+  );
 };
 
 // Main Map Component
 const MapCon: React.FC = () => {
   const [isMounted, setIsMounted] = useState(false);
+  const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
+  const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
     return () => setIsMounted(false);
   }, []);
+
+  const handleMarkerClick = (tagId: string) => {
+    setSelectedTagId(tagId);
+    setShowPopup(true);
+  };
+
+  const handleClosePopup = () => {
+    setShowPopup(false);
+    setSelectedTagId(null);
+  };
 
   return (
     <div style={{ height: '100vh', width: '100%', overflow: 'hidden', position: 'relative' }}>
@@ -73,6 +157,15 @@ const MapCon: React.FC = () => {
         .leaflet-marker-icon {
           border: none !important;
           background: transparent !important;
+        }
+        
+        /* Custom popup styles */
+        .leaflet-popup-content-wrapper {
+          border-radius: 8px;
+        }
+        
+        .leaflet-popup-content {
+          margin: 8px 12px;
         }
       `}</style>
 
@@ -91,8 +184,28 @@ const MapCon: React.FC = () => {
             attribution='Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics'
           />
           
-          <MapLogic />
+          <MapLogic onMarkerClick={handleMarkerClick} />
         </MapContainer>
+      )}
+
+      {/* Custom Popup Overlay */}
+      {showPopup && selectedTagId && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          zIndex: 1000,
+          width: '90%',
+          maxWidth: '400px',
+          maxHeight: '80vh',
+          overflow: 'auto'
+        }}>
+          <MapMarkerPopup 
+            photoTagId={selectedTagId} 
+            onClose={handleClosePopup} 
+          />
+        </div>
       )}
     </div>
   );
