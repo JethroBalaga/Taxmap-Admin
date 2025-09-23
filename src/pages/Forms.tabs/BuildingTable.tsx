@@ -36,9 +36,22 @@ interface GeneralDescription {
   created_at?: string;
 }
 
+interface AssessmentSummary {
+  form_id: string;
+  class_id: string;
+  actual_used_id: string;
+  area: number;
+  base_market_value: number;
+  final_adjusted_market_value: number;
+  assessment_percent: string;
+  assessed_value: number;
+  value_info_id: string;
+}
+
 const BuildingTable: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [generalData, setGeneralData] = useState<GeneralDescription[]>([]);
+  const [assessmentSummary, setAssessmentSummary] = useState<AssessmentSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const location = useLocation();
@@ -48,6 +61,7 @@ const BuildingTable: React.FC = () => {
   useEffect(() => {
     if (formId) {
       fetchGeneralDescriptionData();
+      fetchAssessmentSummary();
     }
   }, [formId]);
 
@@ -92,28 +106,49 @@ const BuildingTable: React.FC = () => {
     }
   };
 
-  // Create display data that excludes ID fields but keeps them in the original state
-  const getDisplayData = () => {
+  const fetchAssessmentSummary = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('vw_form_assessment_summary')
+        .select('*')
+        .eq('form_id', formId);
+
+      if (error) {
+        console.error('Error fetching assessment summary:', error);
+        return;
+      }
+
+      setAssessmentSummary(data || []);
+    } catch (error) {
+      console.error('Failed to load assessment summary:', error);
+    }
+  };
+
+  // Create display data for general description that excludes ID fields
+  const getGeneralDisplayData = () => {
     return generalData.map(item => {
-      // Create a copy of the item without the ID fields
       const { value_info_id, general_id, created_at, ...displayItem } = item;
       return displayItem;
     });
   };
 
-  // Create a custom columns list that excludes the ID fields from display
-  const getDisplayColumns = () => {
-    if (generalData.length === 0) return [];
-    
-    const firstItem = generalData[0];
-    const allColumns = Object.keys(firstItem);
-    
-    // Filter out the columns we don't want to display
-    return allColumns.filter(column => 
-      column !== 'created_at' && 
-      column !== 'value_info_id' && 
-      column !== 'general_id'
-    );
+  // Create display data for assessment summary that excludes form_id and value_info_id
+  const getAssessmentDisplayData = () => {
+    return assessmentSummary.map(item => {
+      const { form_id, value_info_id, ...displayItem } = item;
+      return displayItem;
+    });
+  };
+
+  // Handle row clicks if needed in the future
+  const handleGeneralRowClick = (rowData: any) => {
+    console.log('General description row clicked:', rowData);
+    // You can add functionality here later if needed
+  };
+
+  const handleAssessmentRowClick = (rowData: any) => {
+    console.log('Assessment summary row clicked:', rowData);
+    // You can add functionality here later if needed
   };
 
   return (
@@ -133,16 +168,16 @@ const BuildingTable: React.FC = () => {
             <IonRow>
               <IonCol size="12">
                 <DynamicTable
-                  data={getDisplayData()}
+                  data={getGeneralDisplayData()}
                   title="General Description"
-                  keyField="general_id" // This can stay as it's used internally by DynamicTable
-                  onRowClick={undefined} // Make table non-clickable
+                  keyField="general_id"
+                  onRowClick={handleGeneralRowClick}
                 />
               </IonCol>
             </IonRow>
           )}
 
-          {/* Search Bar - Placed BELOW the table */}
+          {/* Search Bar */}
           <IonRow>
             <IonCol size="12" className="search-container">
               <IonSearchbar
@@ -153,6 +188,31 @@ const BuildingTable: React.FC = () => {
               />
             </IonCol>
           </IonRow>
+
+          {/* Assessment Summary Table - Placed BELOW the search bar */}
+          {assessmentSummary.length > 0 && (
+            <IonRow>
+              <IonCol size="12">
+                <DynamicTable
+                  data={getAssessmentDisplayData()}
+                  title="Assessment Summary"
+                  keyField="form_id"
+                  onRowClick={handleAssessmentRowClick}
+                />
+              </IonCol>
+            </IonRow>
+          )}
+
+          {/* Show message if no assessment data found */}
+          {!isLoading && assessmentSummary.length === 0 && (
+            <IonRow>
+              <IonCol size="12">
+                <div style={{ textAlign: 'center', padding: '20px' }}>
+                  No assessment summary data found for this form.
+                </div>
+              </IonCol>
+            </IonRow>
+          )}
         </IonGrid>
       </IonContent>
     </IonPage>
