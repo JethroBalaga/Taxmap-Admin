@@ -40,13 +40,34 @@ const Login: React.FC = () => {
   const [showAlert, setShowAlert] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
-  const doLogin = async () => {
+ const doLogin = async () => {
   try {
-    // 1. First check if email exists in admin table
+    let resolvedEmail = email.trim();
+
+    // 1. Check if the input is a username instead of email
+    if (!resolvedEmail.includes('@')) {
+      // Input looks like a username, so find its corresponding email
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('user_email')
+        .eq('username', resolvedEmail)
+        .single();
+
+      if (userError || !userData) {
+        setAlertMessage('Username not found. Please check and try again.');
+        setShowAlert(true);
+        return;
+      }
+
+      // Replace resolvedEmail with the email found for that username
+      resolvedEmail = userData.user_email;
+    }
+
+    // 2. First check if email exists in admin table
     const { data: adminData, error: adminError } = await supabase
       .from('admins')
       .select('user_email')
-      .eq('user_email', email)
+      .eq('user_email', resolvedEmail)
       .single();
 
     if (adminError || !adminData) {
@@ -55,16 +76,16 @@ const Login: React.FC = () => {
       return;
     }
 
-    // 2. Verify credentials through Supabase Auth
+    // 3. Verify credentials through Supabase Auth
     const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
+      email: resolvedEmail,
       password
     });
 
     if (authError) {
       // Handle specific password errors
       if (authError.message.includes('Invalid login credentials')) {
-        setAlertMessage('Incorrect password. Please try again.');
+        setAlertMessage('Incorrect email/username or password.');
       } else {
         setAlertMessage(authError.message);
       }
@@ -72,7 +93,7 @@ const Login: React.FC = () => {
       return;
     }
 
-    // 3. Login successful
+    // 4. Login successful
     setShowToast(true);
     setTimeout(() => {
       navigation.push('/menu', 'forward', 'replace');
@@ -84,6 +105,7 @@ const Login: React.FC = () => {
     console.error('Login error:', error);
   }
 };
+
 
   return (
     <IonPage>

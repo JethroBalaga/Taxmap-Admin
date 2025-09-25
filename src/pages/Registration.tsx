@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  IonContent, 
-  IonPage, 
-  IonCard, 
+import {
+  IonContent,
+  IonPage,
+  IonCard,
   IonCardContent,
   IonSelect,
   IonSelectOption,
@@ -59,14 +59,14 @@ const Register: React.FC = () => {
 
   const calculatePasswordStrength = (password: string) => {
     let strength = 0;
-    
+
     if (password.length >= 8) strength += 1;
     if (password.length >= 12) strength += 1;
     if (/[A-Z]/.test(password)) strength += 1;
     if (/[a-z]/.test(password)) strength += 1;
     if (/[0-9]/.test(password)) strength += 1;
     if (/[^A-Za-z0-9]/.test(password)) strength += 1;
-    
+
     if (strength <= 2) return { value: 0.25, label: 'Very Weak', color: 'danger' };
     if (strength <= 4) return { value: 0.5, label: 'Weak', color: 'warning' };
     if (strength <= 6) return { value: 0.75, label: 'Strong', color: 'success' };
@@ -94,9 +94,9 @@ const Register: React.FC = () => {
 
     try {
       // 1. Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({ 
-        email: formData.email, 
-        password: formData.password 
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password
       });
 
       if (authError) throw new Error('Account creation failed: ' + authError.message);
@@ -119,6 +119,7 @@ const Register: React.FC = () => {
         const { error: adminError } = await supabase
           .from('admins')
           .insert({
+            username: formData.username,   // <-- Added username here
             user_email: formData.email
           });
 
@@ -143,7 +144,7 @@ const Register: React.FC = () => {
           className="registration-background"
           style={{ backgroundImage: `url(${backgroundImg})` }}
         />
-        
+
         <div className="registration-center-wrapper">
           <IonCard className="registration-card">
             <IonCardContent className="registration-content">
@@ -196,8 +197,8 @@ const Register: React.FC = () => {
               />
 
               <StrengthMeter
-                password={formData.password} 
-                strength={passwordStrength} 
+                password={formData.password}
+                strength={passwordStrength}
               />
 
               <RegisterInput
@@ -212,7 +213,7 @@ const Register: React.FC = () => {
 
               <div className="registration-input">
                 <IonLabel>Account Type</IonLabel>
-                <IonSelect 
+                <IonSelect
                   value={formData.role}
                   onIonChange={e => handleInputChange('role', e.detail.value)}
                   interface="popover"
@@ -250,9 +251,9 @@ const Register: React.FC = () => {
               />
 
               <AlertBox
-                message={alertMessage} 
-                isOpen={showAlert} 
-                onClose={() => setShowAlert(false)} 
+                message={alertMessage}
+                isOpen={showAlert}
+                onClose={() => setShowAlert(false)}
               />
             </IonCardContent>
           </IonCard>
