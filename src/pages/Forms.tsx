@@ -17,7 +17,12 @@ import { informationCircleOutline } from 'ionicons/icons';
 import DynamicTable from '../components/Globalcomponents/DynamicTable';
 import { supabase } from '../utils/supaBaseClient';
 import '../CSS/Setup.css';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
+
+// Add interface for location state
+interface LocationState {
+  selectedFormId?: string;
+}
 
 const Forms: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -26,11 +31,30 @@ const Forms: React.FC = () => {
   const [selectedRow, setSelectedRow] = useState<any>(null);
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const history = useHistory();
+  const location = useLocation<LocationState>(); // Add type parameter
 
   // Fetch forms from the view
   useEffect(() => {
     loadForms();
   }, []);
+
+  // Handle navigation state to auto-select row
+  useEffect(() => {
+    if (location.state?.selectedFormId && forms.length > 0) {
+      // Find the form with the matching ID
+      const formToSelect = forms.find(form => form.form_id === location.state.selectedFormId);
+      if (formToSelect) {
+        setSelectedRow(formToSelect);
+        // Optional: Scroll to the selected row
+        setTimeout(() => {
+          const selectedElement = document.querySelector('.data-row.selected');
+          if (selectedElement) {
+            selectedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
+    }
+  }, [forms, location.state]);
 
   const loadForms = async () => {
     setIsLoading(true);
@@ -85,17 +109,17 @@ const Forms: React.FC = () => {
     setSelectedRow(rowData);
   };
 
- const handleInfoClick = () => {
-  // Only navigate if the selected row is a BUILDING kind description
-  if (selectedRow && selectedRow.kind_description?.toUpperCase() === 'BUILDING') {
-    history.push(`/menu/buildingtable`, { 
-      formId: selectedRow.form_id
-    });
-  } else {
-    console.log('Cannot navigate. Selected row is not a BUILDING.');
-    // You could add an alert or a toast here to inform the user.
-  }
-};
+  const handleInfoClick = () => {
+    if (selectedRow && selectedRow.kind_description?.toUpperCase() === 'BUILDING') {
+      history.push(`/menu/buildingtable`, { 
+        formId: selectedRow.form_id
+      });
+    } else {
+      console.log('Cannot navigate. Selected row is not a BUILDING.');
+      // You could add an alert or a toast here to inform the user.
+    }
+  };
+
   return (
     <IonPage>
       <IonHeader>
@@ -142,6 +166,7 @@ const Forms: React.FC = () => {
                 title="Forms Overview"
                 keyField="form_id"
                 onRowClick={handleRowClick}
+                selectedRow={selectedRow}
               />
             </IonCol>
           </IonRow>

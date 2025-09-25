@@ -149,7 +149,7 @@ const MapMarkerPopup: React.FC<MapMarkerPopupProps> = ({ photoTagId, onClose }) 
   const handleViewForm = () => {
     if (formData && formData.form_id) {
       // Navigate to Forms page and pass the form_id as state
-      history.push('/forms', { 
+      history.push('/menu/forms', { 
         selectedFormId: formData.form_id 
       });
       onClose(); // Close the popup after navigation
