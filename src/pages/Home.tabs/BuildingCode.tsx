@@ -242,6 +242,7 @@ const BuildingCode: React.FC = () => {
                                 title="Building Codes"
                                 keyField="building_code" // Changed to use building_code as key
                                 onRowClick={handleRowClick}
+                                selectedRow={selectedRow} 
                             />
                         </IonCol>
                     </IonRow>

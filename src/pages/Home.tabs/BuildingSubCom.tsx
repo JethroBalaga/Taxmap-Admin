@@ -237,6 +237,7 @@ const BuildingSubCom: React.FC = () => {
                                 title="Building Sub-Components"
                                 keyField="building_subcom_id"
                                 onRowClick={handleRowClick}
+                                selectedRow={selectedRow} 
                             />
                         </IonCol>
                     </IonRow>

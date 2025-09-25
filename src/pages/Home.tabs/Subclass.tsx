@@ -205,6 +205,7 @@ const Subclass: React.FC = () => {
                 title="Subclasses"
                 keyField="subclass_id"
                 onRowClick={handleRowClick}
+                selectedRow={selectedRow} 
               />
             </IonCol>
           </IonRow>

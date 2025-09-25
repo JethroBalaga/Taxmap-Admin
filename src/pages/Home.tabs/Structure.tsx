@@ -208,6 +208,7 @@ const Structure: React.FC = () => {
                                 title="Structures"
                                 keyField="structure_code"
                                 onRowClick={handleRowClick}
+                                selectedRow={selectedRow} 
                             />
                         </IonCol>
                     </IonRow>

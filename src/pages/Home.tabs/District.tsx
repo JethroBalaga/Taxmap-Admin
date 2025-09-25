@@ -238,6 +238,7 @@ const handleBarangayClick = () => {
                 title="Districts"
                 keyField="district_id"
                 onRowClick={handleRowClick}
+                selectedRow={selectedRow} 
               />
             </IonCol>
           </IonRow>

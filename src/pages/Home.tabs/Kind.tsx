@@ -199,6 +199,7 @@ const Kind: React.FC = () => {
                 title="Kinds"
                 keyField="kind_id"
                 onRowClick={handleRowClick}
+                selectedRow={selectedRow} 
               />
             </IonCol>
           </IonRow>

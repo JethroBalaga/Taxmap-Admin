@@ -227,6 +227,7 @@ const SubclassRate: React.FC = () => {
                 title="Subclass Rates"
                 keyField="subclassrate_id"
                 onRowClick={handleRowClick}
+                selectedRow={selectedRow} 
               />
             </IonCol>
           </IonRow>

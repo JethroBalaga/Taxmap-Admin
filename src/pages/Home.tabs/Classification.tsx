@@ -243,6 +243,7 @@ const Classification: React.FC = () => {
                 title="Classifications"
                 keyField="class_id"
                 onRowClick={handleRowClick}
+                selectedRow={selectedRow} 
               />
             </IonCol>
           </IonRow>

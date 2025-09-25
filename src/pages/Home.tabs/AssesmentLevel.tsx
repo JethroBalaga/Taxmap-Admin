@@ -201,6 +201,7 @@ const AssessmentLevel: React.FC = () => {
                                 title="Assessment Levels"
                                 keyField="assessment_level_id"
                                 onRowClick={handleRowClick}
+                                selectedRow={selectedRow} 
                             />
                         </IonCol>
                     </IonRow>

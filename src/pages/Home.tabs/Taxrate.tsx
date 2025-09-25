@@ -198,6 +198,7 @@ const Taxrate: React.FC = () => {
                   title="Tax Rates"
                   keyField="tax_rate_id"
                   onRowClick={handleRowClick}
+                  selectedRow={selectedRow} 
                 />
               ) : (
                 <div style={{ padding: '20px', textAlign: 'center' }}>

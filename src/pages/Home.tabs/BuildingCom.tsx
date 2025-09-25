@@ -213,6 +213,7 @@ const BuildingCom: React.FC = () => {
                                 title="Building Components"
                                 keyField="building_com_id"
                                 onRowClick={handleRowClick}
+                                selectedRow={selectedRow} 
                             />
                         </IonCol>
                     </IonRow>

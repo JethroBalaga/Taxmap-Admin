@@ -227,6 +227,7 @@ const ActualUsed: React.FC = () => {
                 title="Actual Used Items"
                 keyField="actual_used_id"
                 onRowClick={handleRowClick}
+                selectedRow={selectedRow} 
               />
             </IonCol>
           </IonRow>

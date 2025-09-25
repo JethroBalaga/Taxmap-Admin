@@ -196,6 +196,7 @@ const Declarant: React.FC = () => {
                                 title="Declarants"
                                 keyField="declarant_id"
                                 onRowClick={handleRowClick}
+                                selectedRow={selectedRow} 
                             />
                         </IonCol>
                     </IonRow>

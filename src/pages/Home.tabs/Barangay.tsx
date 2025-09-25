@@ -195,6 +195,7 @@ const Barangay: React.FC = () => {
                 title="Barangays"
                 keyField="barangay_id"
                 onRowClick={handleRowClick}
+                selectedRow={selectedRow} 
               />
             </IonCol>
           </IonRow>
