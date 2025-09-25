@@ -11,8 +11,9 @@ import {
   IonIcon,
   IonSpinner
 } from '@ionic/react';
-import { close } from 'ionicons/icons';
+import { close, document } from 'ionicons/icons';
 import { supabase } from '../utils/supaBaseClient';
+import { useHistory } from 'react-router-dom';
 import '../CSS/MapMarkerPopup.css';
 
 interface MapMarkerPopupProps {
@@ -25,6 +26,7 @@ const MapMarkerPopup: React.FC<MapMarkerPopupProps> = ({ photoTagId, onClose }) 
   const [formData, setFormData] = React.useState<any>(null);
   const [photoTag, setPhotoTag] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
+  const history = useHistory();
 
   React.useEffect(() => {
     const loadData = async () => {
@@ -144,6 +146,16 @@ const MapMarkerPopup: React.FC<MapMarkerPopupProps> = ({ photoTagId, onClose }) 
     });
   };
 
+  const handleViewForm = () => {
+    if (formData && formData.form_id) {
+      // Navigate to Forms page and pass the form_id as state
+      history.push('/forms', { 
+        selectedFormId: formData.form_id 
+      });
+      onClose(); // Close the popup after navigation
+    }
+  };
+
   if (loading) {
     return (
       <div className="map-marker-popup-container">
@@ -234,6 +246,18 @@ const MapMarkerPopup: React.FC<MapMarkerPopupProps> = ({ photoTagId, onClose }) 
                   </p>
                 )}
               </IonText>
+
+              {/* View Form Button - Only show if form data exists */}
+              <IonButton
+                expand="block"
+                fill="solid"
+                color="primary"
+                onClick={handleViewForm}
+                className="view-form-button"
+              >
+                <IonIcon icon={document} slot="start" />
+                View Form
+              </IonButton>
             </div>
           ) : (
             <div className="popup-no-data">
