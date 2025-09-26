@@ -1,14 +1,14 @@
 // src/components/GlobalComponent/DynamicTable.tsx
 import React from 'react';
 import { IonGrid, IonRow, IonCol, IonItem } from '@ionic/react';
-import './../../CSS/DynamicTable.css'; // Create this file for styling
+import './../../CSS/DynamicTable.css';
 
 interface DynamicTableProps {
   data: any[];
   title?: string;
   keyField?: string;
   onRowClick?: (rowData: any) => void;
-  selectedRow?: any; // <-- Now being used correctly
+  selectedRow?: any;
 }
 
 const DynamicTable: React.FC<DynamicTableProps> = ({
@@ -16,13 +16,28 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
   title,
   keyField = 'id',
   onRowClick,
-  selectedRow // <-- The prop is now destructured
+  selectedRow
 }) => {
   if (!data || data.length === 0) {
     return <IonItem>No data available</IonItem>;
   }
 
   const columns = Object.keys(data[0]);
+
+  // Function to format cell content
+  const formatCellContent = (value: any): string => {
+    if (value === null || value === undefined) return '';
+    
+    if (typeof value === 'object') {
+      try {
+        return JSON.stringify(value, null, 2);
+      } catch {
+        return '[Complex Object]';
+      }
+    }
+    
+    return String(value);
+  };
 
   return (
     <div className="dynamic-table">
@@ -41,11 +56,11 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
           <IonRow
             key={item[keyField]}
             className={`data-row ${selectedRow && selectedRow[keyField] === item[keyField] ? 'selected' : ''}`}
-            onClick={() => onRowClick && onRowClick(item)} // <-- Calls the parent's function
+            onClick={() => onRowClick && onRowClick(item)}
           >
             {columns.map((col) => (
               <IonCol key={`${item[keyField]}-${col}`}>
-                {String(item[col])}
+                {formatCellContent(item[col])}
               </IonCol>
             ))}
           </IonRow>
