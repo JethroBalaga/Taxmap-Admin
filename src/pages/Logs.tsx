@@ -65,6 +65,9 @@ const Logs: React.FC = () => {
         case 'Subclass Rates':
           tableName = 'subclassratetbl_logs';
           break;
+        case 'Actual Used':
+          tableName = 'actual_usedtbl_logs';
+          break;
         // Add other cases as needed for other tables
         default:
           tableName = 'classtbl_logs';
@@ -88,9 +91,24 @@ const Logs: React.FC = () => {
     }
   };
 
-  // Auto refresh when page loads
+  // Refresh when component mounts and when selectedTable changes
   useEffect(() => {
     fetchLogs();
+  }, [selectedTable]);
+
+  // Force refresh when window loads (handles browser back button)
+  useEffect(() => {
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        fetchLogs();
+      }
+    };
+
+    window.addEventListener('pageshow', handlePageShow);
+    
+    return () => {
+      window.removeEventListener('pageshow', handlePageShow);
+    };
   }, [selectedTable]);
 
   // Pull to refresh function
