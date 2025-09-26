@@ -11,9 +11,10 @@ import {
   IonSearchbar,
   IonSelect,
   IonSelectOption,
-  IonLoading
+  IonLoading,
+  IonToast
 } from '@ionic/react';
-import { supabase } from '../utils/supaBaseClient'; // Adjust path as needed
+import { supabase } from '../utils/supaBaseClient';
 import DynamicTable from '../components/Globalcomponents/DynamicTable';
 import '../CSS/Setup.css';
 
@@ -22,6 +23,9 @@ const Logs: React.FC = () => {
   const [selectedTable, setSelectedTable] = useState<string>('Classification');
   const [logsData, setLogsData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [isError, setIsError] = useState(false);
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
 
   const tableOptions = [
@@ -53,9 +57,12 @@ const Logs: React.FC = () => {
         case 'Classification':
           tableName = 'classtbl_logs';
           break;
+        case 'Subclasses':
+          tableName = 'subclasstbl_logs';
+          break;
         // Add other cases as needed for other tables
         default:
-          tableName = 'classtbl_logs'; // Default to classification logs
+          tableName = 'classtbl_logs';
       }
 
       const { data, error } = await supabase
@@ -68,6 +75,9 @@ const Logs: React.FC = () => {
       setLogsData(data || []);
     } catch (error) {
       console.error('Error fetching logs:', error);
+      setToastMessage('Failed to load logs');
+      setIsError(true);
+      setShowToast(true);
     } finally {
       setIsLoading(false);
     }
@@ -142,6 +152,14 @@ const Logs: React.FC = () => {
         </IonGrid>
 
         <IonLoading isOpen={isLoading} message="Loading logs..." />
+        
+        <IonToast
+          isOpen={showToast}
+          onDidDismiss={() => setShowToast(false)}
+          message={toastMessage}
+          duration={3000}
+          color={isError ? 'danger' : 'success'}
+        />
       </IonContent>
     </IonPage>
   );
