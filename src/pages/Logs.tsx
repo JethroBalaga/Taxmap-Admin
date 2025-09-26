@@ -12,7 +12,9 @@ import {
   IonSelect,
   IonSelectOption,
   IonLoading,
-  IonToast
+  IonToast,
+  IonRefresher,
+  IonRefresherContent
 } from '@ionic/react';
 import { supabase } from '../utils/supaBaseClient';
 import DynamicTable from '../components/Globalcomponents/DynamicTable';
@@ -83,9 +85,19 @@ const Logs: React.FC = () => {
     }
   };
 
+  // Auto refresh when page loads
   useEffect(() => {
     fetchLogs();
   }, [selectedTable]);
+
+  // Pull to refresh function
+  const handleRefresh = (event: any) => {
+    fetchLogs().then(() => {
+      event.detail.complete();
+      setToastMessage('Logs refreshed successfully!');
+      setShowToast(true);
+    });
+  };
 
   // Filter data based on search term
   const filteredData = logsData.filter(item =>
@@ -102,6 +114,10 @@ const Logs: React.FC = () => {
       </IonHeader>
 
       <IonContent fullscreen>
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+          <IonRefresherContent></IonRefresherContent>
+        </IonRefresher>
+
         <IonGrid>
           <IonRow>
             <IonCol size="12" className="search-container">
