@@ -13,7 +13,7 @@ import {
       IonTitle, 
       IonToolbar 
   } from '@ionic/react'
-  import {documentTextOutline, homeOutline, informationOutline, logOutOutline, mapOutline, peopleOutline, rocketOutline} from 'ionicons/icons';
+  import {documentTextOutline, homeOutline, informationOutline, logOutOutline, mapOutline, peopleOutline, rocketOutline, terminalOutline} from 'ionicons/icons';
 import { Redirect, Route } from 'react-router';
 import Home from './Home';
 import People from './People';
@@ -21,12 +21,14 @@ import Forms from './Forms';
 import BuildingTable from './Forms.tabs/BuildingTable';
 import { map } from 'leaflet';
 import Map from './Map';
+import Logs from './Logs';
   const Menu: React.FC = () => {
     const path = [
         {name:'Home', url: '/menu/home', icon: homeOutline},
         {name:'Map', url: '/menu/map', icon: mapOutline},
         {name:'People', url: '/menu/people', icon: peopleOutline},
         {name:'Forms', url: '/menu/forms', icon: documentTextOutline},
+        {name:'Logs', url: '/menu/logs', icon: terminalOutline},
     ]
 
     return (
@@ -68,6 +70,7 @@ import Map from './Map';
         <Route exact path="/menu/people" component={People} />
         <Route exact path="/menu/forms" component={Forms} />
         <Route exact path="/menu/buildingtable" component={BuildingTable} />
+        <Route exact path="/menu/logs" component={Logs} />
                     <Route exact path="/menu">
                         <Redirect to="/menu/home"/>
                     </Route>

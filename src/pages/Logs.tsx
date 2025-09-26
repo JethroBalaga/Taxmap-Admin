@@ -10,7 +10,7 @@ import {
   IonCol,
   IonSearchbar
 } from '@ionic/react';
-import './../../CSS/Setup.css';
+import '../CSS/Setup.css';
 
 const Logs: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
