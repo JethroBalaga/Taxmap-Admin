@@ -71,6 +71,9 @@ const Logs: React.FC = () => {
         case 'District':
           tableName = 'districttbl_logs';
           break;
+        case 'District Rates':
+          tableName = 'taxratetbl_logs';
+          break;
         // Add other cases as needed for other tables
         default:
           tableName = 'classtbl_logs';
