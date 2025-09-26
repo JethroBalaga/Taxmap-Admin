@@ -89,6 +89,9 @@ const Logs: React.FC = () => {
                 case 'Building Code':
                     tableName = 'building_codetbl_logs';
                     break;
+                case 'Building Component':
+                    tableName = 'building_componenttbl_logs';
+                    break;
                 default:
                     tableName = 'classtbl_logs';
             }
