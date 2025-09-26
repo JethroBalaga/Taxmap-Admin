@@ -80,6 +80,9 @@ const Logs: React.FC = () => {
                 case 'Kind':
                     tableName = 'kindtbl_logs';
                     break;
+                case 'Assesment Levels':
+                    tableName = 'assessmentleveltbl_logs';
+                    break;
                 default:
                     tableName = 'classtbl_logs';
             }
