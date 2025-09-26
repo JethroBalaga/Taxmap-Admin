@@ -62,6 +62,9 @@ const Logs: React.FC = () => {
         case 'Subclasses':
           tableName = 'subclasstbl_logs';
           break;
+        case 'Subclass Rates':
+          tableName = 'subclassratetbl_logs';
+          break;
         // Add other cases as needed for other tables
         default:
           tableName = 'classtbl_logs';
