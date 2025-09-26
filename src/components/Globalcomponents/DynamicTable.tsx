@@ -14,9 +14,9 @@ interface DynamicTableProps {
 const DynamicTable: React.FC<DynamicTableProps> = ({
   data,
   title,
-  keyField = 'id',
+  keyField = 'id', // Default field to use as the unique key
   onRowClick,
-  selectedRow
+  selectedRow,
 }) => {
   if (!data || data.length === 0) {
     return <IonItem>No data available</IonItem>;
@@ -27,7 +27,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
   // Function to format cell content
   const formatCellContent = (value: any): string => {
     if (value === null || value === undefined) return '';
-    
+
     if (typeof value === 'object') {
       try {
         return JSON.stringify(value, null, 2);
@@ -35,7 +35,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
         return '[Complex Object]';
       }
     }
-    
+
     return String(value);
   };
 
@@ -44,6 +44,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
       {title && <h2>{title}</h2>}
 
       <IonGrid>
+        {/* Header Row */}
         <IonRow className="header-row">
           {columns.map((col) => (
             <IonCol key={`header-${col}`}>
@@ -52,19 +53,25 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
           ))}
         </IonRow>
 
-        {data.map((item) => (
-          <IonRow
-            key={item[keyField]}
-            className={`data-row ${selectedRow && selectedRow[keyField] === item[keyField] ? 'selected' : ''}`}
-            onClick={() => onRowClick && onRowClick(item)}
-          >
-            {columns.map((col) => (
-              <IonCol key={`${item[keyField]}-${col}`}>
-                {formatCellContent(item[col])}
-              </IonCol>
-            ))}
-          </IonRow>
-        ))}
+        {/* Data Rows */}
+        {data.map((item, rowIndex) => {
+          const rowKey = item[keyField] || `row-${rowIndex}`; // Fallback if keyField missing
+          return (
+            <IonRow
+              key={rowKey}
+              className={`data-row ${
+                selectedRow && selectedRow[keyField] === item[keyField] ? 'selected' : ''
+              }`}
+              onClick={() => onRowClick && onRowClick(item)}
+            >
+              {columns.map((col) => (
+                <IonCol key={`${rowKey}-${col}`}>
+                  {formatCellContent(item[col])}
+                </IonCol>
+              ))}
+            </IonRow>
+          );
+        })}
       </IonGrid>
     </div>
   );
