@@ -27,7 +27,7 @@ const Register: React.FC = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'user' // Default to user
+    role: 'user'
   });
 
   const [showVerificationModal, setShowVerificationModal] = useState(false);
@@ -49,17 +49,12 @@ const Register: React.FC = () => {
       const strength = calculatePasswordStrength(formData.password);
       setPasswordStrength(strength);
     } else {
-      setPasswordStrength({
-        value: 0,
-        label: '',
-        color: 'primary'
-      });
+      setPasswordStrength({ value: 0, label: '', color: 'primary' });
     }
   }, [formData.password]);
 
   const calculatePasswordStrength = (password: string) => {
     let strength = 0;
-
     if (password.length >= 8) strength += 1;
     if (password.length >= 12) strength += 1;
     if (/[A-Z]/.test(password)) strength += 1;
@@ -74,12 +69,21 @@ const Register: React.FC = () => {
   };
 
   const handleOpenVerificationModal = () => {
+    // 1️⃣ Validate email format
+    const email = formData.email.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setAlertMessage('Please enter a valid email address.');
+      setShowAlert(true);
+      return;
+    }
+
+    // 2️⃣ Validate passwords
     if (formData.password !== formData.confirmPassword) {
       setAlertMessage('Passwords do not match.');
       setShowAlert(true);
       return;
     }
-
     if (formData.password.length < 8) {
       setAlertMessage('Password must be at least 8 characters.');
       setShowAlert(true);
@@ -91,22 +95,27 @@ const Register: React.FC = () => {
 
   const doRegister = async () => {
     setShowVerificationModal(false);
-
     try {
-      // 1. Create auth user
+      const email = formData.email.trim().toLowerCase();
+
+      // 1️⃣ Create Supabase Auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
+        email,
         password: formData.password
       });
 
       if (authError) throw new Error('Account creation failed: ' + authError.message);
+      if (!authData.user?.id) throw new Error('Failed to retrieve user ID from Auth');
 
-      // 2. Add to users table (your structure)
+      const userId = authData.user.id;
+
+      // 2️⃣ Insert into users table
       const { error: userError } = await supabase
         .from('users')
         .insert({
+          user_id: userId,
           username: formData.username,
-          user_email: formData.email,
+          user_email: email,
           user_firstname: formData.firstName,
           user_lastname: formData.lastName,
           user_password: await bcrypt.hash(formData.password, 10)
@@ -114,25 +123,22 @@ const Register: React.FC = () => {
 
       if (userError) throw new Error('Failed to save user data: ' + userError.message);
 
-      // 3. If admin, add to admins table
+      // 3️⃣ Insert into admins table if role is admin
       if (formData.role === 'admin') {
         const { error: adminError } = await supabase
           .from('admins')
           .insert({
-            username: formData.username,   // <-- Added username here
-            user_email: formData.email
+            user_id: userId,
+            username: formData.username,
+            user_email: email
           });
-
-        if (adminError) console.error('Admin creation failed:', adminError);
+        if (adminError) throw new Error('Failed to create admin: ' + adminError.message);
       }
 
       setShowSuccessModal(true);
     } catch (err) {
-      if (err instanceof Error) {
-        setAlertMessage(err.message);
-      } else {
-        setAlertMessage('An unknown error occurred.');
-      }
+      if (err instanceof Error) setAlertMessage(err.message);
+      else setAlertMessage('An unknown error occurred.');
       setShowAlert(true);
     }
   };
@@ -193,7 +199,7 @@ const Register: React.FC = () => {
                 value={formData.password}
                 onChange={(value) => handleInputChange('password', value)}
                 className="registration-input"
-                showToggle={true}
+                showToggle
               />
 
               <StrengthMeter
@@ -208,7 +214,7 @@ const Register: React.FC = () => {
                 value={formData.confirmPassword}
                 onChange={(value) => handleInputChange('confirmPassword', value)}
                 className="registration-input"
-                showToggle={true}
+                showToggle
               />
 
               <div className="registration-input">
