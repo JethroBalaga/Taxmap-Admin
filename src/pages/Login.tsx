@@ -40,72 +40,77 @@ const Login: React.FC = () => {
   const [showAlert, setShowAlert] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
- const doLogin = async () => {
-  try {
-    let resolvedEmail = email.trim();
+  const doLogin = async () => {
+    try {
+      let resolvedEmail = email.trim();
 
-    // 1. Check if the input is a username instead of email
-    if (!resolvedEmail.includes('@')) {
-      // Input looks like a username, so find its corresponding email
-      const { data: userData, error: userError } = await supabase
-        .from('users')
+      // 1. Check if the input is a username instead of email
+      if (!resolvedEmail.includes('@')) {
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('user_email')
+          .eq('username', resolvedEmail)
+          .single();
+
+        if (userError || !userData) {
+          setAlertMessage('Username not found. Please check and try again.');
+          setShowAlert(true);
+          return;
+        }
+
+        resolvedEmail = userData.user_email;
+      }
+
+      // 2. First check if email exists in admin table
+      const { data: adminData, error: adminError } = await supabase
+        .from('admins')
         .select('user_email')
-        .eq('username', resolvedEmail)
+        .eq('user_email', resolvedEmail)
         .single();
 
-      if (userError || !userData) {
-        setAlertMessage('Username not found. Please check and try again.');
+      if (adminError || !adminData) {
+        setAlertMessage('Access restricted to admin users only.');
         setShowAlert(true);
         return;
       }
 
-      // Replace resolvedEmail with the email found for that username
-      resolvedEmail = userData.user_email;
-    }
+      // 3. Verify credentials through Supabase Auth
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: resolvedEmail,
+        password
+      });
 
-    // 2. First check if email exists in admin table
-    const { data: adminData, error: adminError } = await supabase
-      .from('admins')
-      .select('user_email')
-      .eq('user_email', resolvedEmail)
-      .single();
-
-    if (adminError || !adminData) {
-      setAlertMessage('Access restricted to admin users only.');
-      setShowAlert(true);
-      return;
-    }
-
-    // 3. Verify credentials through Supabase Auth
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email: resolvedEmail,
-      password
-    });
-
-    if (authError) {
-      // Handle specific password errors
-      if (authError.message.includes('Invalid login credentials')) {
-        setAlertMessage('Incorrect email/username or password.');
-      } else {
-        setAlertMessage(authError.message);
+      if (authError) {
+        if (authError.message.includes('Invalid login credentials')) {
+          setAlertMessage('Incorrect email/username or password.');
+        } else {
+          setAlertMessage(authError.message);
+        }
+        setShowAlert(true);
+        return;
       }
+
+      // 4. Insert login activity into admin_activity_logs
+      await supabase.from('admin_activity_logs').insert([
+        {
+          admin_email: resolvedEmail,
+          activity_type: 'LOGIN',
+          timestamp: new Date(),
+        },
+      ]);
+
+      // 5. Login successful
+      setShowToast(true);
+      setTimeout(() => {
+        navigation.push('/menu', 'forward', 'replace');
+      }, 300);
+
+    } catch (error) {
+      setAlertMessage('An unexpected error occurred. Please try again.');
       setShowAlert(true);
-      return;
+      console.error('Login error:', error);
     }
-
-    // 4. Login successful
-    setShowToast(true);
-    setTimeout(() => {
-      navigation.push('/menu', 'forward', 'replace');
-    }, 300);
-
-  } catch (error) {
-    setAlertMessage('An unexpected error occurred. Please try again.');
-    setShowAlert(true);
-    console.error('Login error:', error);
-  }
-};
-
+  };
 
   return (
     <IonPage>
