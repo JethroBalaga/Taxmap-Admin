@@ -61,10 +61,10 @@ const Login: React.FC = () => {
         resolvedEmail = userData.user_email;
       }
 
-      // 2. First check if email exists in admin table
+      // 2. Check if the email exists in the admins table
       const { data: adminData, error: adminError } = await supabase
         .from('admins')
-        .select('user_email')
+        .select('user_id, user_email')
         .eq('user_email', resolvedEmail)
         .single();
 
@@ -91,13 +91,17 @@ const Login: React.FC = () => {
       }
 
       // 4. Insert login activity into admin_activity_logs
-      await supabase.from('admin_activity_logs').insert([
+      const { error: logError } = await supabase.from('admin_activity_logs').insert([
         {
+          admin_id: adminData.user_id,
           admin_email: resolvedEmail,
           activity_type: 'LOGIN',
-          timestamp: new Date(),
         },
       ]);
+
+      if (logError) {
+        console.error('Failed to log admin login activity:', logError.message);
+      }
 
       // 5. Login successful
       setShowToast(true);
