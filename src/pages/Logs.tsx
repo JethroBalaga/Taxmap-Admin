@@ -44,7 +44,7 @@ const Logs: React.FC = () => {
         'Building Code',
         'Building Component',
         'Building Subcomponent',
-        'Admin Activity' // ✅ Added here
+        'Admin Activity' // ✅ Added new option
     ];
 
     // Fetch logs based on selected table
@@ -55,7 +55,7 @@ const Logs: React.FC = () => {
         try {
             let tableName = '';
 
-            // Map table selection to actual database table names
+            // ✅ Map table selection to actual database table names
             switch (selectedTable) {
                 case 'Classification':
                     tableName = 'classtbl_logs';
@@ -96,17 +96,24 @@ const Logs: React.FC = () => {
                 case 'Building Subcomponent':
                     tableName = 'building_subcomponenttbl_logs';
                     break;
-                case 'Admin Activity': // ✅ For admin sign in/sign out logs
+                case 'Admin Activity': // ✅ New case
                     tableName = 'user_activity_logs';
                     break;
                 default:
-                    tableName = 'classtbl_logs';
+                    tableName = '';
             }
 
+            // ✅ Prevent running query if tableName is empty
+            if (!tableName) {
+                setLogsData([]);
+                return;
+            }
+
+            // ✅ Fetch logs from Supabase
             const { data, error } = await supabase
                 .from(tableName)
                 .select('*')
-                .order('created_at', { ascending: false });
+                .order('timestamp', { ascending: false });
 
             if (error) throw error;
 
@@ -165,6 +172,7 @@ const Logs: React.FC = () => {
             </IonHeader>
 
             <IonContent fullscreen>
+                {/* ✅ Pull to refresh */}
                 <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
                     <IonRefresherContent></IonRefresherContent>
                 </IonRefresher>
@@ -191,7 +199,7 @@ const Logs: React.FC = () => {
                                 onIonChange={(e) => setSelectedTable(e.detail.value)}
                                 style={{
                                     display: 'inline-block',
-                                    width: '15%',
+                                    width: '20%',
                                     '--background': '#000000',
                                     '--color': '#ffffff',
                                     '--placeholder-color': '#cccccc',
