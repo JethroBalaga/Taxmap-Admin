@@ -43,7 +43,8 @@ const Logs: React.FC = () => {
         'Structural Type',
         'Building Code',
         'Building Component',
-        'Building Subcomponent'
+        'Building Subcomponent',
+        'Admin Activity' // ✅ Added here
     ];
 
     // Fetch logs based on selected table
@@ -95,6 +96,9 @@ const Logs: React.FC = () => {
                 case 'Building Subcomponent':
                     tableName = 'building_subcomponenttbl_logs';
                     break;
+                case 'Admin Activity': // ✅ For admin sign in/sign out logs
+                    tableName = 'user_activity_logs';
+                    break;
                 default:
                     tableName = 'classtbl_logs';
             }
@@ -102,7 +106,7 @@ const Logs: React.FC = () => {
             const { data, error } = await supabase
                 .from(tableName)
                 .select('*')
-                .order('timestamp', { ascending: false });
+                .order('created_at', { ascending: false });
 
             if (error) throw error;
 
@@ -187,7 +191,7 @@ const Logs: React.FC = () => {
                                 onIonChange={(e) => setSelectedTable(e.detail.value)}
                                 style={{
                                     display: 'inline-block',
-                                    width: '10%',
+                                    width: '15%',
                                     '--background': '#000000',
                                     '--color': '#ffffff',
                                     '--placeholder-color': '#cccccc',
