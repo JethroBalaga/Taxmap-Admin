@@ -16,7 +16,7 @@ import {
 } from '@ionic/react';
 import { add, arrowUpCircle, cogOutline, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useHistory } from 'react-router-dom';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 import EquipmentCreateModal from '../../components/EquipmentModals/EquipmentCreateModal';
@@ -44,6 +44,7 @@ const Equipment: React.FC = () => {
   
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const location = useLocation();
+  const history = useHistory();
 
   // Fetch equipment data from Supabase
   const fetchEquipmentData = async () => {
@@ -107,6 +108,22 @@ const Equipment: React.FC = () => {
     }
   };
 
+  const handleManageMachine = () => {
+    if (!selectedRow) return;
+    
+    // Navigate to Machine page with equipment data
+    history.push({
+      pathname: '/menu/home/machine',
+      search: `?equipment_id=${selectedRow.equipment_id}`,
+      state: {
+        equipmentData: {
+          equipment_id: selectedRow.equipment_id,
+          machine_type: selectedRow.machine_type
+        }
+      }
+    });
+  };
+
   const handleDeleteConfirm = async () => {
     if (!selectedRow) return;
 
@@ -168,9 +185,9 @@ const Equipment: React.FC = () => {
       disabled: !selectedRow,
       title: "Delete Equipment" 
     },
-     { 
+    { 
       icon: cogOutline, 
-      onClick: handleDeleteClick, 
+      onClick: handleManageMachine, 
       disabled: !selectedRow,
       title: "Manage Machine" 
     }
