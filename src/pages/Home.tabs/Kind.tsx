@@ -14,7 +14,7 @@ import {
   IonAlert,
   IonToast
 } from '@ionic/react';
-import { add, arrowUpCircle, buildOutline, businessOutline, cogOutline, readerOutline, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, buildOutline, businessOutline, readerOutline, trash } from 'ionicons/icons';
 import './../../CSS/Setup2.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';

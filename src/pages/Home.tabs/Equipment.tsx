@@ -46,7 +46,7 @@ const Equipment: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonTitle>
-            {kindData ? `Equipment (${kindData.description})` : 'Equipment Setup'}
+            Equipment Setup
           </IonTitle>
         </IonToolbar>
       </IonHeader>
