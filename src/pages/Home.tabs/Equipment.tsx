@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   IonContent,
   IonHeader,
@@ -13,10 +13,27 @@ import {
 } from '@ionic/react';
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
+import { useLocation } from 'react-router-dom';
 
 const Equipment: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
+  const location = useLocation();
+  const [kindData, setKindData] = useState<any>(null);
+
+  // Get kind data from location state when component mounts
+  useEffect(() => {
+    try {
+      if (location.state) {
+        const stateData = location.state as any;
+        if (stateData.kindData) {
+          setKindData(stateData.kindData);
+        }
+      }
+    } catch (error) {
+      console.error('Error parsing kind data:', error);
+    }
+  }, [location]);
 
   const iconButtons = [
     { icon: add, title: "Add Equipment" },
@@ -28,7 +45,9 @@ const Equipment: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Equipment Setup</IonTitle>
+          <IonTitle>
+            {kindData ? `Equipment (${kindData.description})` : 'Equipment Setup'}
+          </IonTitle>
         </IonToolbar>
       </IonHeader>
 

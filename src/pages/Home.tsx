@@ -22,6 +22,7 @@ import BuildingCode from './Home.tabs/BuildingCode';
 import ActualUsed from './Home.tabs/ActualUsed';
 import BuildingCom from './Home.tabs/BuildingCom';
 import BuildingSubCom from './Home.tabs/BuildingSubCom';
+import Equipment from './Home.tabs/Equipment';
 
 const Home: React.FC = () => {
 
@@ -58,6 +59,7 @@ const Home: React.FC = () => {
           <Route exact path="/menu/home/actualused" component={ActualUsed} />
           <Route exact path="/menu/home/buildingcom" component={BuildingCom} />
           <Route exact path="/menu/home/buildingsubcom" component={BuildingSubCom} />
+          <Route exact path="/menu/home/equipment" component={Equipment} />
 
           <Route exact path="/menu/home">
             <Redirect to="/menu/home/classification" />
