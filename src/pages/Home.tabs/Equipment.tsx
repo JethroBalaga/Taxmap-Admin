@@ -12,6 +12,7 @@ import {
   IonSearchbar,
   IonToast,
   IonLoading,
+  IonAlert,
 } from '@ionic/react';
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
@@ -36,8 +37,10 @@ const Equipment: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [isError, setIsError] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const location = useLocation();
@@ -58,6 +61,7 @@ const Equipment: React.FC = () => {
     } catch (error) {
       console.error('Error fetching equipment data:', error);
       setToastMessage('Failed to load equipment data');
+      setIsError(true);
       setShowToast(true);
     } finally {
       setIsLoading(false);
@@ -97,9 +101,44 @@ const Equipment: React.FC = () => {
     }
   };
 
+  const handleDeleteClick = () => {
+    if (selectedRow) {
+      setShowDeleteAlert(true);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedRow) return;
+
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('equipment')
+        .delete()
+        .eq('equipment_id', selectedRow.equipment_id);
+
+      if (error) throw error;
+
+      await fetchEquipmentData();
+      setSelectedRow(null);
+      setToastMessage('Equipment deleted successfully!');
+      setIsError(false);
+      setShowToast(true);
+    } catch (error) {
+      console.error('Error deleting equipment:', error);
+      setToastMessage('Failed to delete equipment');
+      setIsError(true);
+      setShowToast(true);
+    } finally {
+      setIsLoading(false);
+      setShowDeleteAlert(false);
+    }
+  };
+
   const handleEquipmentCreated = () => {
     fetchEquipmentData(); // Refresh the data
     setToastMessage('Equipment created successfully!');
+    setIsError(false);
     setShowToast(true);
   };
 
@@ -107,6 +146,7 @@ const Equipment: React.FC = () => {
     fetchEquipmentData(); // Refresh the data
     setSelectedRow(null); // Clear selection
     setToastMessage('Equipment updated successfully!');
+    setIsError(false);
     setShowToast(true);
   };
 
@@ -124,12 +164,7 @@ const Equipment: React.FC = () => {
     },
     { 
       icon: trash, 
-      onClick: () => { 
-        if (selectedRow) {
-          setToastMessage('Delete functionality to be implemented'); 
-          setShowToast(true);
-        }
-      }, 
+      onClick: handleDeleteClick, 
       disabled: !selectedRow,
       title: "Delete Equipment" 
     },
@@ -181,7 +216,7 @@ const Equipment: React.FC = () => {
           </IonRow>
         </IonGrid>
 
-        <IonLoading isOpen={isLoading} message="Loading equipment..." />
+        <IonLoading isOpen={isLoading} message="Loading..." />
 
         {/* Equipment Create Modal */}
         <EquipmentCreateModal
@@ -200,12 +235,31 @@ const Equipment: React.FC = () => {
           />
         )}
 
+        {/* Delete Confirmation Alert */}
+        <IonAlert
+          isOpen={showDeleteAlert}
+          onDidDismiss={() => setShowDeleteAlert(false)}
+          header={'Confirm Delete'}
+          message={`Are you sure you want to delete equipment <strong>${selectedRow?.equipment_id}</strong>?`}
+          buttons={[
+            {
+              text: 'Cancel',
+              role: 'cancel',
+              cssClass: 'secondary',
+            },
+            {
+              text: 'Delete',
+              handler: handleDeleteConfirm
+            }
+          ]}
+        />
+
         <IonToast
           isOpen={showToast}
           onDidDismiss={() => setShowToast(false)}
           message={toastMessage}
           duration={3000}
-          color="success"
+          color={isError ? 'danger' : 'success'}
         />
       </IonContent>
     </IonPage>
