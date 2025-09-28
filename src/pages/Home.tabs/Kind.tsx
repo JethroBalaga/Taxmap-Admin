@@ -40,8 +40,11 @@ const Kind: React.FC = () => {
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const history = useHistory();
 
-  // Check if selected row has kind_id: 2
-  const isKindIdTwo = selectedRow && selectedRow.kind_id === 2;
+  // Check if selected row has description "BUILDING"
+  const isBuilding = selectedRow && selectedRow.description.toUpperCase() === 'BUILDING';
+  
+  // Check if selected row has description "MACHINERY"
+  const isMachinery = selectedRow && selectedRow.description.toUpperCase() === 'MACHINERY';
 
   // Fetch data
   const fetchKinds = async () => {
@@ -100,11 +103,27 @@ const Kind: React.FC = () => {
   };
 
   const handleBuildingStructuralType = () => {
-    if (!selectedRow || !isKindIdTwo) return;
+    if (!selectedRow || !isBuilding) return;
     
     // Navigate to Structure tab with kind_id as a parameter
     history.push({
       pathname: '/menu/home/structure',
+      search: `?kind_id=${selectedRow.kind_id}`,
+      state: {
+        kindData: {
+          kind_id: selectedRow.kind_id,
+          description: selectedRow.description
+        }
+      }
+    });
+  };
+
+  const handleManageEquipment = () => {
+    if (!selectedRow || !isMachinery) return;
+    
+    // Navigate to Equipment page
+    history.push({
+      pathname: '/menu/home/equipment',
       search: `?kind_id=${selectedRow.kind_id}`,
       state: {
         kindData: {
@@ -156,8 +175,8 @@ const Kind: React.FC = () => {
     { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Kind" },
     { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Kind" },
     { icon: readerOutline, onClick: handleManageAssessmentLevels, disabled: !selectedRow, title: "Manage Assessment Levels" },
-    { icon: businessOutline, onClick: handleBuildingStructuralType, disabled: !isKindIdTwo, title: "Building Structural Type" },
-    { icon: buildOutline, onClick: handleBuildingStructuralType, disabled: !isKindIdTwo, title: "Manage Equipment" }
+    { icon: businessOutline, onClick: handleBuildingStructuralType, disabled: !isBuilding, title: "Building Structural Type" },
+    { icon: buildOutline, onClick: handleManageEquipment, disabled: !isMachinery, title: "Manage Equipment" }
   ];
 
   return (
