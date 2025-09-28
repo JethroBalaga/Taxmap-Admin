@@ -132,7 +132,6 @@ const Menu: React.FC = () => {
             <Route exact path="/menu/forms" component={Forms} />
             <Route exact path="/menu/buildingtable" component={BuildingTable} />
             <Route exact path="/menu/logs" component={Logs} />
-            <Route exact path="/menu/equipment" component={Equipment} />
             <Route exact path="/menu">
               <Redirect to="/menu/home" />
             </Route>
