@@ -14,7 +14,7 @@ import {
   IonLoading,
   IonAlert,
 } from '@ionic/react';
-import { add, arrowUpCircle, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, cogOutline, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import { useLocation } from 'react-router-dom';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
@@ -168,6 +168,12 @@ const Equipment: React.FC = () => {
       disabled: !selectedRow,
       title: "Delete Equipment" 
     },
+     { 
+      icon: cogOutline, 
+      onClick: handleDeleteClick, 
+      disabled: !selectedRow,
+      title: "Manage Machine" 
+    }
   ];
 
   return (
