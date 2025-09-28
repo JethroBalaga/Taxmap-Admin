@@ -14,7 +14,7 @@ import {
   IonAlert,
   IonToast
 } from '@ionic/react';
-import { add, arrowUpCircle, businessOutline, readerOutline, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, buildOutline, businessOutline, cogOutline, readerOutline, trash } from 'ionicons/icons';
 import './../../CSS/Setup2.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
@@ -156,7 +156,8 @@ const Kind: React.FC = () => {
     { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Kind" },
     { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Kind" },
     { icon: readerOutline, onClick: handleManageAssessmentLevels, disabled: !selectedRow, title: "Manage Assessment Levels" },
-    { icon: businessOutline, onClick: handleBuildingStructuralType, disabled: !isKindIdTwo, title: "Building Structural Type" }
+    { icon: businessOutline, onClick: handleBuildingStructuralType, disabled: !isKindIdTwo, title: "Building Structural Type" },
+    { icon: buildOutline, onClick: handleBuildingStructuralType, disabled: !isKindIdTwo, title: "Manage Equipment" }
   ];
 
   return (
