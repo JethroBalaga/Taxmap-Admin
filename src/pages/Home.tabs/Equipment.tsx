@@ -19,6 +19,7 @@ import { useLocation } from 'react-router-dom';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 import EquipmentCreateModal from '../../components/EquipmentModals/EquipmentCreateModal';
+import EquipmentUpdateModal from '../../components/EquipmentModals/EquipmentUpdateModal';
 
 // Define the Equipment interface
 interface Equipment {
@@ -36,6 +37,7 @@ const Equipment: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const location = useLocation();
@@ -89,9 +91,22 @@ const Equipment: React.FC = () => {
     setIsCreateModalOpen(true);
   };
 
+  const handleUpdateClick = () => {
+    if (selectedRow) {
+      setIsUpdateModalOpen(true);
+    }
+  };
+
   const handleEquipmentCreated = () => {
     fetchEquipmentData(); // Refresh the data
     setToastMessage('Equipment created successfully!');
+    setShowToast(true);
+  };
+
+  const handleEquipmentUpdated = () => {
+    fetchEquipmentData(); // Refresh the data
+    setSelectedRow(null); // Clear selection
+    setToastMessage('Equipment updated successfully!');
     setShowToast(true);
   };
 
@@ -103,12 +118,7 @@ const Equipment: React.FC = () => {
     },
     { 
       icon: arrowUpCircle, 
-      onClick: () => { 
-        if (selectedRow) {
-          setToastMessage('Edit functionality to be implemented'); 
-          setShowToast(true);
-        }
-      }, 
+      onClick: handleUpdateClick, 
       disabled: !selectedRow,
       title: "Edit Equipment" 
     },
@@ -173,11 +183,22 @@ const Equipment: React.FC = () => {
 
         <IonLoading isOpen={isLoading} message="Loading equipment..." />
 
+        {/* Equipment Create Modal */}
         <EquipmentCreateModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
           onEquipmentCreated={handleEquipmentCreated}
         />
+
+        {/* Equipment Update Modal */}
+        {selectedRow && (
+          <EquipmentUpdateModal
+            isOpen={isUpdateModalOpen}
+            onClose={() => setIsUpdateModalOpen(false)}
+            onEquipmentUpdated={handleEquipmentUpdated}
+            equipmentData={selectedRow}
+          />
+        )}
 
         <IonToast
           isOpen={showToast}
