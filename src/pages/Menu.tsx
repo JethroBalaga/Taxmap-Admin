@@ -32,6 +32,7 @@ import Forms from './Forms';
 import BuildingTable from './Forms.tabs/BuildingTable';
 import Map from './Map';
 import Logs from './Logs';
+import Equipment from './Home.tabs/Equipment';
 
 const Menu: React.FC = () => {
   const navigation = useIonRouter();
@@ -131,6 +132,7 @@ const Menu: React.FC = () => {
             <Route exact path="/menu/forms" component={Forms} />
             <Route exact path="/menu/buildingtable" component={BuildingTable} />
             <Route exact path="/menu/logs" component={Logs} />
+            <Route exact path="/menu/equipment" component={Equipment} />
             <Route exact path="/menu">
               <Redirect to="/menu/home" />
             </Route>
