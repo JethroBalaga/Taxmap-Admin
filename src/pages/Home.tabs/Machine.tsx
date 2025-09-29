@@ -15,6 +15,7 @@ import {
   IonLabel,
   IonToast,
   IonLoading,
+  IonAlert,
 } from '@ionic/react';
 import { add, arrowUpCircle, trash, arrowBack } from 'ionicons/icons';
 import { useHistory, useLocation } from 'react-router-dom';
@@ -48,8 +49,10 @@ const Machine: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [isError, setIsError] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const history = useHistory();
@@ -82,6 +85,7 @@ const Machine: React.FC = () => {
     } catch (error) {
       console.error('Error fetching machine data:', error);
       setToastMessage('Failed to load machine data');
+      setIsError(true);
       setShowToast(true);
     } finally {
       setIsLoading(false);
@@ -128,9 +132,44 @@ const Machine: React.FC = () => {
     }
   };
 
+  const handleDeleteClick = () => {
+    if (selectedRow) {
+      setShowDeleteAlert(true);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedRow) return;
+
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('machine')
+        .delete()
+        .eq('serial_no', selectedRow.serial_no);
+
+      if (error) throw error;
+
+      await fetchMachineData();
+      setSelectedRow(null);
+      setToastMessage('Machine deleted successfully!');
+      setIsError(false);
+      setShowToast(true);
+    } catch (error) {
+      console.error('Error deleting machine:', error);
+      setToastMessage('Failed to delete machine');
+      setIsError(true);
+      setShowToast(true);
+    } finally {
+      setIsLoading(false);
+      setShowDeleteAlert(false);
+    }
+  };
+
   const handleMachineCreated = () => {
     fetchMachineData(); // Refresh the data
     setToastMessage('Machine created successfully!');
+    setIsError(false);
     setShowToast(true);
   };
 
@@ -138,6 +177,7 @@ const Machine: React.FC = () => {
     fetchMachineData(); // Refresh the data
     setSelectedRow(null); // Clear selection
     setToastMessage('Machine updated successfully!');
+    setIsError(false);
     setShowToast(true);
   };
 
@@ -155,12 +195,7 @@ const Machine: React.FC = () => {
     },
     { 
       icon: trash, 
-      onClick: () => { 
-        if (selectedRow) {
-          setToastMessage('Delete functionality to be implemented'); 
-          setShowToast(true);
-        }
-      }, 
+      onClick: handleDeleteClick, 
       disabled: !selectedRow,
       title: "Delete Machine" 
     },
@@ -226,7 +261,7 @@ const Machine: React.FC = () => {
           </IonRow>
         </IonGrid>
 
-        <IonLoading isOpen={isLoading} message="Loading machines..." />
+        <IonLoading isOpen={isLoading} message="Loading..." />
 
         {/* Machine Create Modal */}
         {equipmentData && (
@@ -248,12 +283,31 @@ const Machine: React.FC = () => {
           />
         )}
 
+        {/* Delete Confirmation Alert */}
+        <IonAlert
+          isOpen={showDeleteAlert}
+          onDidDismiss={() => setShowDeleteAlert(false)}
+          header={'Confirm Delete'}
+          message={`Are you sure you want to delete machine <strong>${selectedRow?.serial_no}</strong>?`}
+          buttons={[
+            {
+              text: 'Cancel',
+              role: 'cancel',
+              cssClass: 'secondary',
+            },
+            {
+              text: 'Delete',
+              handler: handleDeleteConfirm
+            }
+          ]}
+        />
+
         <IonToast
           isOpen={showToast}
           onDidDismiss={() => setShowToast(false)}
           message={toastMessage}
           duration={3000}
-          color="success"
+          color={isError ? 'danger' : 'success'}
         />
       </IonContent>
     </IonPage>
