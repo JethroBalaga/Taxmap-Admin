@@ -22,6 +22,7 @@ import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 import MachineCreateModal from '../../components/MachineModals/MachineCreateModal';
+import MachineUpdateModal from '../../components/MachineModals/MachineUpdateModal';
 
 // Define the type for the location state
 interface LocationState {
@@ -48,6 +49,7 @@ const Machine: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const history = useHistory();
@@ -120,9 +122,22 @@ const Machine: React.FC = () => {
     setIsCreateModalOpen(true);
   };
 
+  const handleUpdateClick = () => {
+    if (selectedRow) {
+      setIsUpdateModalOpen(true);
+    }
+  };
+
   const handleMachineCreated = () => {
     fetchMachineData(); // Refresh the data
     setToastMessage('Machine created successfully!');
+    setShowToast(true);
+  };
+
+  const handleMachineUpdated = () => {
+    fetchMachineData(); // Refresh the data
+    setSelectedRow(null); // Clear selection
+    setToastMessage('Machine updated successfully!');
     setShowToast(true);
   };
 
@@ -134,12 +149,7 @@ const Machine: React.FC = () => {
     },
     { 
       icon: arrowUpCircle, 
-      onClick: () => { 
-        if (selectedRow) {
-          setToastMessage('Edit functionality to be implemented'); 
-          setShowToast(true);
-        }
-      }, 
+      onClick: handleUpdateClick, 
       disabled: !selectedRow,
       title: "Edit Machine" 
     },
@@ -225,6 +235,16 @@ const Machine: React.FC = () => {
             onClose={() => setIsCreateModalOpen(false)}
             onMachineCreated={handleMachineCreated}
             equipment_id={equipmentData.equipment_id}
+          />
+        )}
+
+        {/* Machine Update Modal */}
+        {selectedRow && (
+          <MachineUpdateModal
+            isOpen={isUpdateModalOpen}
+            onClose={() => setIsUpdateModalOpen(false)}
+            onMachineUpdated={handleMachineUpdated}
+            machineData={selectedRow}
           />
         )}
 
