@@ -13,10 +13,12 @@ import {
   IonButton,
   IonButtons,
   IonLabel,
+  IonToast,
 } from '@ionic/react';
 import { add, arrowUpCircle, trash, arrowBack } from 'ionicons/icons';
 import { useHistory, useLocation } from 'react-router-dom';
 import './../../CSS/Setup.css';
+import MachineCreateModal from '../../components/MachineModals/MachineCreateModal';
 
 // Define the type for the location state
 interface LocationState {
@@ -28,6 +30,10 @@ interface LocationState {
 
 const Machine: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const history = useHistory();
   const location = useLocation();
@@ -44,10 +50,31 @@ const Machine: React.FC = () => {
     history.push('/menu/home/equipment');
   };
 
+  const handleCreateClick = () => {
+    setIsCreateModalOpen(true);
+  };
+
+  const handleMachineCreated = () => {
+    setToastMessage('Machine created successfully!');
+    setShowToast(true);
+  };
+
   const iconButtons = [
-    { icon: add, title: "Add Machine" },
-    { icon: arrowUpCircle, title: "Edit Machine" },
-    { icon: trash, title: "Delete Machine" },
+    { 
+      icon: add, 
+      onClick: handleCreateClick, 
+      title: "Add Machine" 
+    },
+    { 
+      icon: arrowUpCircle, 
+      onClick: () => {}, 
+      title: "Edit Machine" 
+    },
+    { 
+      icon: trash, 
+      onClick: () => {}, 
+      title: "Delete Machine" 
+    },
   ];
 
   return (
@@ -89,6 +116,7 @@ const Machine: React.FC = () => {
                     key={index}
                     icon={btn.icon}
                     className="icon-yellow"
+                    onClick={btn.onClick}
                     title={btn.title}
                   />
                 ))}
@@ -96,6 +124,24 @@ const Machine: React.FC = () => {
             </IonCol>
           </IonRow>
         </IonGrid>
+
+        {/* Machine Create Modal */}
+        {equipmentData && (
+          <MachineCreateModal
+            isOpen={isCreateModalOpen}
+            onClose={() => setIsCreateModalOpen(false)}
+            onMachineCreated={handleMachineCreated}
+            equipment_id={equipmentData.equipment_id}
+          />
+        )}
+
+        <IonToast
+          isOpen={showToast}
+          onDidDismiss={() => setShowToast(false)}
+          message={toastMessage}
+          duration={3000}
+          color="success"
+        />
       </IonContent>
     </IonPage>
   );
