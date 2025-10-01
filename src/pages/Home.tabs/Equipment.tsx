@@ -107,23 +107,6 @@ const Equipment: React.FC = () => {
       setShowDeleteAlert(true);
     }
   };
-
-  const handleManageMachine = () => {
-    if (!selectedRow) return;
-    
-    // Navigate to Machine page with equipment data
-    history.push({
-      pathname: '/menu/home/machine',
-      search: `?equipment_id=${selectedRow.equipment_id}`,
-      state: {
-        equipmentData: {
-          equipment_id: selectedRow.equipment_id,
-          machine_type: selectedRow.machine_type
-        }
-      }
-    });
-  };
-
   const handleDeleteConfirm = async () => {
     if (!selectedRow) return;
 
@@ -184,12 +167,6 @@ const Equipment: React.FC = () => {
       onClick: handleDeleteClick, 
       disabled: !selectedRow,
       title: "Delete Equipment" 
-    },
-    { 
-      icon: cogOutline, 
-      onClick: handleManageMachine, 
-      disabled: !selectedRow,
-      title: "Manage Machine" 
     }
   ];
 
