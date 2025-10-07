@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, useMap, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { createBlueMarkerIcon } from '../utils/markericons';
+import { getMarkerIconByKind } from '../utils/markericons';
 import MapMarkerPopup from './MapMarkerPopup';
 import { supabase } from '../utils/supaBaseClient';
 
@@ -34,6 +34,7 @@ const MapLogic = ({ onMarkerClick }: { onMarkerClick: (tagId: string) => void })
   const [allowZoomOut, setAllowZoomOut] = useState(false);
   const [photoTags, setPhotoTags] = useState<PhotoTag[]>([]);
   const [loading, setLoading] = useState(true);
+  const [markerIcons, setMarkerIcons] = useState<{[tagId: string]: L.Icon}>({});
 
   useEffect(() => {
     // Fetch photo tags from database
@@ -51,7 +52,11 @@ const MapLogic = ({ onMarkerClick }: { onMarkerClick: (tagId: string) => void })
         if (error) {
           console.error('Error fetching photo tags:', error);
         } else if (data) {
+          console.log('Fetched photo tags:', data.length);
           setPhotoTags(data);
+          
+          // Fetch kind information for each tag to determine icons
+          await fetchKindInfoForTags(data);
         }
       } catch (error) {
         console.error('Error loading photo tags:', error);
@@ -60,9 +65,85 @@ const MapLogic = ({ onMarkerClick }: { onMarkerClick: (tagId: string) => void })
       }
     };
 
+    // Corrected function to fetch kind information
+    const fetchKindInfoForTags = async (tags: PhotoTag[]) => {
+      try {
+        const icons: {[tagId: string]: L.Icon} = {};
+        const tagIds = tags.map(tag => tag.tag_id);
+        
+        console.log('Fetching kind info for tags:', tagIds.length);
+        
+        // First get value_info to get form_id for each tag
+        const { data: valueInfoData, error } = await supabase
+          .from('value_info')
+          .select('tag_id, form_id')
+          .in('tag_id', tagIds);
+
+        if (error) {
+          console.error('Error fetching value info:', error);
+          return;
+        }
+
+        if (valueInfoData && valueInfoData.length > 0) {
+          console.log('Value info data found:', valueInfoData.length);
+          
+          // Get unique form_ids
+          const formIds = [...new Set(valueInfoData.map(item => item.form_id))];
+          
+          // Then get kind_id for each form
+          const { data: formData, error: formError } = await supabase
+            .from('formtbl')
+            .select('form_id, kind_id')
+            .in('form_id', formIds);
+
+          if (formError) {
+            console.error('Error fetching form data:', formError);
+          } else if (formData) {
+            console.log('Form data found:', formData.length);
+            
+            // Create a mapping of form_id to kind_id
+            const formKindMap: {[formId: string]: string} = {};
+            formData.forEach(form => {
+              formKindMap[form.form_id] = form.kind_id;
+            });
+
+            console.log('Form kind mapping:', formKindMap);
+
+            // Now assign icons based on tag_id -> form_id -> kind_id
+            valueInfoData.forEach(item => {
+              const kindId = formKindMap[item.form_id];
+              if (kindId) {
+                console.log(`Tag ${item.tag_id} has kind_id: ${kindId}`);
+                icons[item.tag_id] = getMarkerIconByKind(kindId);
+              } else {
+                console.log(`No kind_id found for tag ${item.tag_id}, using default`);
+                icons[item.tag_id] = getMarkerIconByKind('1'); // Default to land
+              }
+            });
+          }
+        } else {
+          console.log('No value info data found for the tags');
+        }
+        
+        // Handle any tags that didn't get an icon from the query
+        tags.forEach(tag => {
+          if (!icons[tag.tag_id]) {
+            console.log(`Tag ${tag.tag_id} not in valueInfoData, using default icon`);
+            icons[tag.tag_id] = getMarkerIconByKind('1'); // Default to land
+          }
+        });
+        
+        console.log('Final icons mapping:', icons);
+        setMarkerIcons(icons);
+      } catch (error) {
+        console.error('Error in fetchKindInfoForTags:', error);
+      }
+    };
+
     fetchPhotoTags();
   }, []);
 
+  // ZOOM HANDLING LOGIC - ADDED FROM THE SAMPLE
   useEffect(() => {
     // Initial map view and restriction
     map.setView([8.35985, 124.869077], DEFAULT_ZOOM);
@@ -71,24 +152,29 @@ const MapLogic = ({ onMarkerClick }: { onMarkerClick: (tagId: string) => void })
     const enforceRestrictions = () => {
       const currentZoom = map.getZoom();
 
+      // Allow zooming out only if user has zoomed in first
       if (currentZoom > DEFAULT_ZOOM) {
         setAllowZoomOut(true);
       }
 
+      // Prevent zooming out beyond restrictions
       if (!allowZoomOut && currentZoom < DEFAULT_ZOOM) {
         map.setZoom(DEFAULT_ZOOM);
       } else if (allowZoomOut && currentZoom < MIN_ZOOM_UNLOCKED) {
         map.setZoom(MIN_ZOOM_UNLOCKED);
       }
 
+      // Keep map within bounds
       if (!manoloFortichBounds.contains(map.getCenter())) {
         map.panInsideBounds(manoloFortichBounds, { animate: false });
       }
     };
 
+    // Set up event listeners for zoom and move
     map.on('zoomend', enforceRestrictions);
     map.on('move', enforceRestrictions);
 
+    // Fix map sizing issues
     setTimeout(() => map.invalidateSize(), 100);
 
     return () => {
@@ -97,15 +183,13 @@ const MapLogic = ({ onMarkerClick }: { onMarkerClick: (tagId: string) => void })
     };
   }, [map, allowZoomOut]);
 
-  const blueMarkerIcon = createBlueMarkerIcon();
-
   return (
     <>
-      {photoTags.map((tag) => (
+      {!loading && photoTags.map((tag) => (
         <Marker
           key={tag.tag_id}
           position={[tag.latitude, tag.longitude]}
-          icon={blueMarkerIcon}
+          icon={markerIcons[tag.tag_id] || getMarkerIconByKind('1')}
           eventHandlers={{
             click: () => {
               onMarkerClick(tag.tag_id);
@@ -121,6 +205,8 @@ const MapLogic = ({ onMarkerClick }: { onMarkerClick: (tagId: string) => void })
               <small>Lat: {tag.latitude.toFixed(6)}</small>
               <br />
               <small>Lng: {tag.longitude.toFixed(6)}</small>
+              <br />
+              <small>Tag ID: {tag.tag_id.substring(0, 8)}...</small>
             </div>
           </Popup>
         </Marker>
