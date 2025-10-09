@@ -348,29 +348,29 @@ const MachineryTable: React.FC = () => {
                           </IonText>
                           <div className="info-grid">
                             <div className="info-item">
-                              <label>Serial Number</label>
+                              <label>Serial Number:</label>
                               <IonText>{machine.serial_no || 'N/A'}</IonText>
                             </div>
                             <div className="info-item">
-                              <label>Brand & Model</label>
+                              <label>Brand & Model:</label>
                               <IonText>{machine.brand_model || 'N/A'}</IonText>
                             </div>
                             <div className="info-item">
-                              <label>Condition</label>
+                              <label>Condition:</label>
                               <IonChip color={getConditionColor(machine.condition)}>
                                 {machine.condition || 'Unknown'}
                               </IonChip>
                             </div>
                             <div className="info-item full-width">
-                              <label>Machine Description</label>
+                              <label>Machine Description:</label>
                               <IonText>{machine.machine_description || 'N/A'}</IonText>
                             </div>
                             <div className="info-item full-width">
-                              <label>Machine Details</label>
+                              <label>Machine Details:</label>
                               <IonText>{machine.machine_details || 'N/A'}</IonText>
                             </div>
                             <div className="info-item">
-                              <label>Purchase Type</label>
+                              <label>Purchase Type:</label>
                               <IonText>{machine.purchase_type || 'N/A'}</IonText>
                             </div>
                           </div>
@@ -380,11 +380,11 @@ const MachineryTable: React.FC = () => {
                         <div className="card-section">
                           <IonText color="medium" className="section-title">
                             <IonIcon icon={calendar} className="section-icon" />
-                            <h4>Timeline</h4>
+                            <h4>Timeline:</h4>
                           </IonText>
                           <div className="info-grid">
                             <div className="info-item">
-                              <label>Date Acquired</label>
+                              <label>Date Acquired:</label>
                               <IonText>{formatDate(machine.date_acquired)}</IonText>
                             </div>
                             <div className="info-item">
@@ -392,7 +392,7 @@ const MachineryTable: React.FC = () => {
                               <IonText>{formatDate(machine.date_installed)}</IonText>
                             </div>
                             <div className="info-item">
-                              <label>Date Operated</label>
+                              <label>Date Operated:</label>
                               <IonText>{formatDate(machine.date_operated)}</IonText>
                             </div>
                           </div>
@@ -401,25 +401,25 @@ const MachineryTable: React.FC = () => {
                         {/* Life Metrics */}
                         <div className="card-section">
                           <IonText color="medium" className="section-title">
-                            <h4>Life Metrics</h4>
+                            <h4>Life Metrics:</h4>
                           </IonText>
                           <div className="info-grid">
                             <div className="info-item">
-                              <label>Years Used</label>
+                              <label>Years Used:</label>
                               <IonText>{machine.years_used || 'N/A'}</IonText>
                             </div>
                             <div className="info-item">
-                              <label>Estimated Life</label>
+                              <label>Estimated Life:</label>
                               <IonText>{machine.estimated_life ? `${machine.estimated_life} years` : 'N/A'}</IonText>
                             </div>
                             <div className="info-item">
-                              <label>Remaining Life</label>
+                              <label>Remaining Life:</label>
                               <IonText className="calculated-value">
                                 {machine.years_remaining ? `${machine.years_remaining} years` : 'N/A'}
                               </IonText>
                             </div>
                             <div className="info-item">
-                              <label>Number of Units</label>
+                              <label>Number of Units:</label>
                               <IonText>{machine.number_of_units || 'N/A'}</IonText>
                             </div>
                           </div>
@@ -429,41 +429,41 @@ const MachineryTable: React.FC = () => {
                         <div className="card-section">
                           <IonText color="medium" className="section-title">
                             <IonIcon icon={cash} className="section-icon" />
-                            <h4>Cost Information</h4>
+                            <h4>Cost Information:</h4>
                           </IonText>
                           <div className="info-grid">
                             <div className="info-item">
-                              <label>Original Cost</label>
+                              <label>Original Cost:</label>
                               <IonText>{formatCurrency(machine.original_cost)}</IonText>
                             </div>
                             <div className="info-item">
-                              <label>Freight</label>
+                              <label>Freight:</label>
                               <IonText>{formatCurrency(machine.freight)}</IonText>
                             </div>
                             <div className="info-item">
-                              <label>Insurance</label>
+                              <label>Insurance:</label>
                               <IonText>{formatCurrency(machine.insurance)}</IonText>
                             </div>
                             <div className="info-item">
-                              <label>Installation</label>
+                              <label>Installation:</label>
                               <IonText>{formatCurrency(machine.installation)}</IonText>
                             </div>
                             <div className="info-item">
-                              <label>Other Costs</label>
+                              <label>Other Costs:</label>
                               <IonText>{formatCurrency(machine.others)}</IonText>
                             </div>
                             <div className="info-item">
-                              <label>Depreciation</label>
+                              <label>Depreciation:</label>
                               <IonText>{machine.depreciation ? `${machine.depreciation}%` : 'N/A'}</IonText>
                             </div>
                             <div className="info-item full-width">
-                              <label>Base Market Value</label>
+                              <label>Base Market Value:</label>
                               <IonText className="calculated-value total-cost">
                                 {formatCurrency(machine.total_cost)}
                               </IonText>
                             </div>
                             <div className="info-item full-width">
-                              <label>Adjusted Market Value</label>
+                              <label>Adjusted Market Value:</label>
                               <IonText className="calculated-value market-value">
                                 {formatCurrency(machine.adjusted_market_value)}
                               </IonText>
