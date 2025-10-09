@@ -25,7 +25,7 @@ import { arrowBack, calculator, cash, time } from 'ionicons/icons';
 import { useParams, useHistory } from 'react-router-dom';
 import { supabase } from '../../utils/supaBaseClient';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
-import '../CSS/MachineryTable.css';
+import '../../CSS/MachineryTable.css';
 
 interface RouteParams {
   formId: string;

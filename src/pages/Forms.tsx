@@ -110,21 +110,19 @@ const Forms: React.FC = () => {
   };
 
  // Update the handleInfoClick function in Forms.tsx
+// Update the handleInfoClick function in Forms.tsx
 const handleInfoClick = () => {
   if (selectedRow) {
     const kindDescription = selectedRow.kind_description?.toUpperCase();
     
     if (kindDescription === 'MACHINERY') {
-      history.push(`/menu/machinerytable/${selectedRow.form_id}`, { 
-        formId: selectedRow.form_id
-      });
+      history.push(`/menu/machinerytable/${selectedRow.form_id}`);
     } else if (kindDescription === 'BUILDING') {
       history.push(`/menu/buildingtable`, { 
         formId: selectedRow.form_id
       });
     } else {
       console.log(`Navigation not configured for kind: ${kindDescription}`);
-      // You could add an alert or toast here to inform the user.
     }
   }
 };
