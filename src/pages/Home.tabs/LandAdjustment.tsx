@@ -16,9 +16,10 @@ import {
 } from '@ionic/react';
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup2.css';
-import { supabase } from './../../utils/supaBaseClient'; // Adjust path as needed
+import { supabase } from './../../utils/supaBaseClient';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import LandAdjustmentCreateModal from '../../components/LandAdjustmentModals/LandAdjustmentCreateModal';
+import LandAdjustmentUpdateModal from '../../components/LandAdjustmentModals/LandAdjustmentUpdateModal'; // Import the update modal
 
 interface LandAdjustmentItem {
   adjustment_id: string;
@@ -32,6 +33,7 @@ const LandAdjustment: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRow, setSelectedRow] = useState<LandAdjustmentItem | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false); // Add state for update modal
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showToast, setShowToast] = useState(false);
@@ -65,7 +67,7 @@ const LandAdjustment: React.FC = () => {
     fetchLandAdjustments();
   }, []);
 
-  // Filter data based on search term :cite[2]:cite[6]
+  // Filter data based on search term
   const filteredData = useMemo(() => {
     if (!searchTerm.trim()) return landAdjustments;
 
@@ -87,16 +89,13 @@ const LandAdjustment: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  // Edit functionality
+  // Edit functionality - UPDATED
   const handleArrowUpClick = () => {
     if (!selectedRow) return;
-    // Add your edit modal logic here
-    console.log('Edit functionality to be implemented for:', selectedRow);
-    setToastMessage('Edit functionality to be implemented');
-    setShowToast(true);
+    setShowUpdateModal(true);
   };
 
-  // Delete functionality :cite[7]
+  // Delete functionality
   const handleTrashClick = () => {
     if (!selectedRow) return;
     setShowDeleteAlert(true);
@@ -134,13 +133,28 @@ const LandAdjustment: React.FC = () => {
   // Handle creation success
   const handleLandAdjustmentCreated = () => {
     fetchLandAdjustments();
+    setSelectedRow(null);
     setToastMessage('Land adjustment created successfully');
+    setIsError(false);
+    setShowToast(true);
+  };
+
+  // Handle update success - NEW FUNCTION
+  const handleLandAdjustmentUpdated = () => {
+    fetchLandAdjustments();
+    setSelectedRow(null);
+    setToastMessage('Land adjustment updated successfully');
     setIsError(false);
     setShowToast(true);
   };
 
   const handleCloseCreateModal = () => {
     setShowCreateModal(false);
+  };
+
+  // Close update modal - NEW FUNCTION
+  const handleCloseUpdateModal = () => {
+    setShowUpdateModal(false);
   };
 
   const iconButtons = [
@@ -203,6 +217,14 @@ const LandAdjustment: React.FC = () => {
           isOpen={showCreateModal}
           onClose={handleCloseCreateModal}
           onLandAdjustmentCreated={handleLandAdjustmentCreated}
+        />
+
+        {/* Update Modal - NEW */}
+        <LandAdjustmentUpdateModal
+          isOpen={showUpdateModal}
+          onClose={handleCloseUpdateModal}
+          onLandAdjustmentUpdated={handleLandAdjustmentUpdated}
+          landAdjustmentData={selectedRow}
         />
 
         {/* Delete Confirmation Alert */}

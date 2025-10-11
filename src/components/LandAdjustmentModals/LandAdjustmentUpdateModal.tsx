@@ -38,6 +38,7 @@ const LandAdjustmentUpdateModal: React.FC<LandAdjustmentUpdateModalProps> = ({
   onLandAdjustmentUpdated = () => {},
   landAdjustmentData
 }) => {
+  const [adjustment_id, setAdjustmentId] = useState('');
   const [description, setDescription] = useState('');
   const [adjustment_factor, setAdjustmentFactor] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -48,19 +49,35 @@ const LandAdjustmentUpdateModal: React.FC<LandAdjustmentUpdateModalProps> = ({
   // Initialize form with existing data when modal opens or data changes
   useEffect(() => {
     if (landAdjustmentData) {
+      setAdjustmentId(landAdjustmentData.adjustment_id);
       setDescription(landAdjustmentData.description);
       setAdjustmentFactor(landAdjustmentData.adjustment_factor.replace(/%/g, ''));
     }
   }, [landAdjustmentData]);
 
   const handleUpdate = async () => {
-    if (!landAdjustmentData || !description || !adjustment_factor) return;
+    if (!landAdjustmentData || !adjustment_id || !description || !adjustment_factor) return;
 
     setIsLoading(true);
     try {
+      // First check if the new adjustment_id already exists (if it was changed)
+      if (adjustment_id !== landAdjustmentData.adjustment_id) {
+        const { data: existingData, error: checkError } = await supabase
+          .from('landadjustmenttbl')
+          .select('adjustment_id')
+          .eq('adjustment_id', adjustment_id)
+          .single();
+
+        if (existingData) {
+          throw new Error('Adjustment ID already exists');
+        }
+      }
+
+      // Update the record
       const { error } = await supabase
         .from('landadjustmenttbl')
         .update({
+          adjustment_id: adjustment_id.toUpperCase(),
           description: description.toUpperCase(),
           adjustment_factor: adjustment_factor
         })
@@ -80,6 +97,10 @@ const LandAdjustmentUpdateModal: React.FC<LandAdjustmentUpdateModalProps> = ({
       setIsLoading(false);
       setShowToast(true);
     }
+  };
+
+  const handleAdjustmentIdChange = (value: string) => {
+    setAdjustmentId(value.toUpperCase());
   };
 
   const handleDescriptionChange = (value: string) => {
@@ -102,6 +123,7 @@ const LandAdjustmentUpdateModal: React.FC<LandAdjustmentUpdateModalProps> = ({
   };
 
   const resetForm = () => {
+    setAdjustmentId('');
     setDescription('');
     setAdjustmentFactor('');
   };
@@ -124,9 +146,15 @@ const LandAdjustmentUpdateModal: React.FC<LandAdjustmentUpdateModalProps> = ({
           <IonGrid className="form-grid">
             <IonRow>
               <IonCol className="form-column">
-                <IonItem lines="none" className="district-label-item">
-                  <IonLabel className="district-label">Adjustment ID: {landAdjustmentData?.adjustment_id}</IonLabel>
-                </IonItem>
+                <div className="input-wrapper">
+                  <Input
+                    label="Adjustment ID"
+                    value={adjustment_id}
+                    onChange={handleAdjustmentIdChange}
+                    placeholder="Enter adjustment ID"
+                    className="modal-input"
+                  />
+                </div>
 
                 <div className="input-wrapper">
                   <Input
@@ -161,7 +189,7 @@ const LandAdjustmentUpdateModal: React.FC<LandAdjustmentUpdateModalProps> = ({
                   <Button
                     variant="primary"
                     onClick={handleUpdate}
-                    disabled={!description || !adjustment_factor || isLoading}
+                    disabled={!adjustment_id || !description || !adjustment_factor || isLoading}
                     className="update-btn"
                   >
                     {isLoading ? 'Updating...' : 'Update'}
