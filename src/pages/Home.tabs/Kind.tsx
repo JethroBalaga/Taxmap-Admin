@@ -140,9 +140,9 @@ const Kind: React.FC = () => {
   const handleLandManagement = () => {
     if (!selectedRow || !isLand) return;
     
-    // Navigate to Land management page or show functionality
+    // Navigate to Land Adjustment page
     history.push({
-      pathname: '/menu/home/land',
+      pathname: '/menu/home/landadjustment',
       search: `?kind_id=${selectedRow.kind_id}`,
       state: {
         kindData: {
