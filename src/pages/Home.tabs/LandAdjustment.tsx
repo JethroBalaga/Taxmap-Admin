@@ -14,12 +14,12 @@ import {
   IonAlert,
   IonToast
 } from '@ionic/react';
-import { add, arrowUpCircle, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, trash, leafOutline } from 'ionicons/icons'; // Added leafOutline
 import './../../CSS/Setup2.css';
 import { supabase } from './../../utils/supaBaseClient';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import LandAdjustmentCreateModal from '../../components/LandAdjustmentModals/LandAdjustmentCreateModal';
-import LandAdjustmentUpdateModal from '../../components/LandAdjustmentModals/LandAdjustmentUpdateModal'; // Import the update modal
+import LandAdjustmentUpdateModal from '../../components/LandAdjustmentModals/LandAdjustmentUpdateModal';
 
 interface LandAdjustmentItem {
   adjustment_id: string;
@@ -33,7 +33,7 @@ const LandAdjustment: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRow, setSelectedRow] = useState<LandAdjustmentItem | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showUpdateModal, setShowUpdateModal] = useState(false); // Add state for update modal
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showToast, setShowToast] = useState(false);
@@ -89,7 +89,7 @@ const LandAdjustment: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  // Edit functionality - UPDATED
+  // Edit functionality
   const handleArrowUpClick = () => {
     if (!selectedRow) return;
     setShowUpdateModal(true);
@@ -99,6 +99,13 @@ const LandAdjustment: React.FC = () => {
   const handleTrashClick = () => {
     if (!selectedRow) return;
     setShowDeleteAlert(true);
+  };
+
+  // Leaf outline functionality - always enabled
+  const handleLeafClick = () => {
+    console.log('Leaf functionality to be implemented');
+    setToastMessage('Leaf functionality to be implemented');
+    setShowToast(true);
   };
 
   // Confirm delete
@@ -139,7 +146,7 @@ const LandAdjustment: React.FC = () => {
     setShowToast(true);
   };
 
-  // Handle update success - NEW FUNCTION
+  // Handle update success
   const handleLandAdjustmentUpdated = () => {
     fetchLandAdjustments();
     setSelectedRow(null);
@@ -152,7 +159,6 @@ const LandAdjustment: React.FC = () => {
     setShowCreateModal(false);
   };
 
-  // Close update modal - NEW FUNCTION
   const handleCloseUpdateModal = () => {
     setShowUpdateModal(false);
   };
@@ -160,7 +166,8 @@ const LandAdjustment: React.FC = () => {
   const iconButtons = [
     { icon: add, onClick: handleCreateClick, disabled: false, title: "Create New" },
     { icon: arrowUpCircle, onClick: handleArrowUpClick, disabled: !selectedRow, title: "Edit" },
-    { icon: trash, onClick: handleTrashClick, disabled: !selectedRow, title: "Delete" }
+    { icon: trash, onClick: handleTrashClick, disabled: !selectedRow, title: "Delete" },
+    { icon: leafOutline, onClick: handleLeafClick, disabled: false, title: "Leaf Function" } // Always enabled
   ];
 
   return (
@@ -219,7 +226,7 @@ const LandAdjustment: React.FC = () => {
           onLandAdjustmentCreated={handleLandAdjustmentCreated}
         />
 
-        {/* Update Modal - NEW */}
+        {/* Update Modal */}
         <LandAdjustmentUpdateModal
           isOpen={showUpdateModal}
           onClose={handleCloseUpdateModal}
