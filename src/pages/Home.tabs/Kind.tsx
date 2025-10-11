@@ -14,7 +14,7 @@ import {
   IonAlert,
   IonToast
 } from '@ionic/react';
-import { add, arrowUpCircle, buildOutline, businessOutline, readerOutline, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, buildOutline, businessOutline, readerOutline, trash, earthOutline } from 'ionicons/icons';
 import './../../CSS/Setup2.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
@@ -45,6 +45,9 @@ const Kind: React.FC = () => {
   
   // Check if selected row has description "MACHINERY"
   const isMachinery = selectedRow && selectedRow.description.toUpperCase() === 'MACHINERY';
+
+  // Check if selected row has description "LAND"
+  const isLand = selectedRow && selectedRow.description.toUpperCase() === 'LAND';
 
   // Fetch data
   const fetchKinds = async () => {
@@ -134,6 +137,22 @@ const Kind: React.FC = () => {
     });
   };
 
+  const handleLandManagement = () => {
+    if (!selectedRow || !isLand) return;
+    
+    // Navigate to Land management page or show functionality
+    history.push({
+      pathname: '/menu/home/land',
+      search: `?kind_id=${selectedRow.kind_id}`,
+      state: {
+        kindData: {
+          kind_id: selectedRow.kind_id,
+          description: selectedRow.description
+        }
+      }
+    });
+  };
+
   const handleDeleteConfirm = async () => {
     if (!selectedRow) return;
 
@@ -176,7 +195,8 @@ const Kind: React.FC = () => {
     { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Kind" },
     { icon: readerOutline, onClick: handleManageAssessmentLevels, disabled: !selectedRow, title: "Manage Assessment Levels" },
     { icon: businessOutline, onClick: handleBuildingStructuralType, disabled: !isBuilding, title: "Building Structural Type" },
-    { icon: buildOutline, onClick: handleManageEquipment, disabled: !isMachinery, title: "Manage Equipment" }
+    { icon: buildOutline, onClick: handleManageEquipment, disabled: !isMachinery, title: "Manage Equipment" },
+    { icon: earthOutline, onClick: handleLandManagement, disabled: !isLand, title: "Land Management" }
   ];
 
   return (
