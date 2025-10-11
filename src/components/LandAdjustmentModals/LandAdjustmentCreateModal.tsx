@@ -47,7 +47,7 @@ const LandAdjustmentCreateModal: React.FC<LandAdjustmentCreateModalProps> = ({
         .insert([{
           adjustment_id: adjustment_id.toUpperCase(),
           description: description.toUpperCase(),
-          adjustment_factor: adjustment_factor.toUpperCase()
+          adjustment_factor: adjustment_factor
         }]);
 
       if (error) throw error;
@@ -75,7 +75,18 @@ const LandAdjustmentCreateModal: React.FC<LandAdjustmentCreateModalProps> = ({
   };
 
   const handleAdjustmentFactorChange = (value: string) => {
-    setAdjustmentFactor(value.toUpperCase());
+    // Remove any existing % signs and allow numbers with optional minus sign
+    const cleanedValue = value.replace(/%/g, '');
+    
+    // Allow numbers with optional minus sign and decimal places
+    if (cleanedValue === '' || /^-?\d*\.?\d*$/.test(cleanedValue)) {
+      setAdjustmentFactor(cleanedValue);
+    }
+  };
+
+  const getDisplayAdjustmentFactor = () => {
+    if (adjustment_factor === '') return '';
+    return adjustment_factor + '%';
   };
 
   const resetForm = () => {
@@ -125,9 +136,9 @@ const LandAdjustmentCreateModal: React.FC<LandAdjustmentCreateModalProps> = ({
                 <div className="input-wrapper">
                   <Input
                     label="Adjustment Factor"
-                    value={adjustment_factor}
+                    value={getDisplayAdjustmentFactor()}
                     onChange={handleAdjustmentFactorChange}
-                    placeholder="Enter adjustment factor"
+                    placeholder="Enter adjustment factor (e.g., 23%, -9%)"
                     className="modal-input"
                   />
                 </div>
