@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   IonContent,
   IonHeader,
@@ -9,33 +9,134 @@ import {
   IonRow,
   IonCol,
   IonIcon,
-  IonSearchbar
+  IonSearchbar,
+  IonLoading,
+  IonAlert,
+  IonToast
 } from '@ionic/react';
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
-import './../../CSS/Setup2.css'; // Adjust path as needed
+import './../../CSS/Setup2.css';
+import { supabase } from './../../utils/supaBaseClient'; // Adjust path as needed
+import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import LandAdjustmentCreateModal from '../../components/LandAdjustmentModals/LandAdjustmentCreateModal';
+
+interface LandAdjustmentItem {
+  adjustment_id: string;
+  description: string;
+  adjustment_factor: string;
+  created_at?: string;
+}
+
 const LandAdjustment: React.FC = () => {
+  const [landAdjustments, setLandAdjustments] = useState<LandAdjustmentItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedRow, setSelectedRow] = useState<LandAdjustmentItem | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [isError, setIsError] = useState(false);
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
 
-  // Functions for icons
+  // Fetch land adjustments data
+  const fetchLandAdjustments = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('landadjustmenttbl')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setLandAdjustments(data || []);
+    } catch (error) {
+      console.error('Error fetching land adjustments:', error);
+      setToastMessage('Failed to load land adjustments');
+      setIsError(true);
+      setShowToast(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLandAdjustments();
+  }, []);
+
+  // Filter data based on search term :cite[2]:cite[6]
+  const filteredData = useMemo(() => {
+    if (!searchTerm.trim()) return landAdjustments;
+
+    const term = searchTerm.toLowerCase();
+    return landAdjustments.filter(item =>
+      item.adjustment_id.toLowerCase().includes(term) ||
+      item.description.toLowerCase().includes(term) ||
+      item.adjustment_factor.toLowerCase().includes(term)
+    );
+  }, [landAdjustments, searchTerm]);
+
+  // Row selection handler
+  const handleRowClick = (rowData: LandAdjustmentItem) => {
+    setSelectedRow(rowData);
+  };
+
+  // Create functionality
   const handleCreateClick = () => {
     setShowCreateModal(true);
   };
 
+  // Edit functionality
   const handleArrowUpClick = () => {
-    console.log('Edit functionality to be implemented');
+    if (!selectedRow) return;
+    // Add your edit modal logic here
+    console.log('Edit functionality to be implemented for:', selectedRow);
+    setToastMessage('Edit functionality to be implemented');
+    setShowToast(true);
   };
 
+  // Delete functionality :cite[7]
   const handleTrashClick = () => {
-    console.log('Delete functionality to be implemented');
+    if (!selectedRow) return;
+    setShowDeleteAlert(true);
   };
 
+  // Confirm delete
+  const handleDeleteConfirm = async () => {
+    if (!selectedRow) return;
+
+    try {
+      setIsLoading(true);
+      const { error } = await supabase
+        .from('landadjustmenttbl')
+        .delete()
+        .eq('adjustment_id', selectedRow.adjustment_id);
+
+      if (error) throw error;
+
+      await fetchLandAdjustments();
+      setSelectedRow(null);
+      setToastMessage('Land adjustment deleted successfully');
+      setIsError(false);
+      setShowToast(true);
+    } catch (error) {
+      console.error('Error deleting land adjustment:', error);
+      setToastMessage('Failed to delete land adjustment');
+      setIsError(true);
+      setShowToast(true);
+    } finally {
+      setIsLoading(false);
+      setShowDeleteAlert(false);
+    }
+  };
+
+  // Handle creation success
   const handleLandAdjustmentCreated = () => {
-    // Refresh your data here when needed
-    console.log('Land adjustment created - refresh data');
-    // You can add data refresh logic here later
+    fetchLandAdjustments();
+    setToastMessage('Land adjustment created successfully');
+    setIsError(false);
+    setShowToast(true);
   };
 
   const handleCloseCreateModal = () => {
@@ -44,8 +145,8 @@ const LandAdjustment: React.FC = () => {
 
   const iconButtons = [
     { icon: add, onClick: handleCreateClick, disabled: false, title: "Create New" },
-    { icon: arrowUpCircle, onClick: handleArrowUpClick, disabled: false, title: "Edit" },
-    { icon: trash, onClick: handleTrashClick, disabled: false, title: "Delete" }
+    { icon: arrowUpCircle, onClick: handleArrowUpClick, disabled: !selectedRow, title: "Edit" },
+    { icon: trash, onClick: handleTrashClick, disabled: !selectedRow, title: "Delete" }
   ];
 
   return (
@@ -62,7 +163,7 @@ const LandAdjustment: React.FC = () => {
             <IonCol size="12" className="search-container">
               <IonSearchbar
                 ref={searchRef}
-                placeholder="Search residential land..."
+                placeholder="Search land adjustments..."
                 value={searchTerm}
                 onIonInput={(e) => setSearchTerm(e.detail.value || '')}
                 debounce={200}
@@ -74,7 +175,7 @@ const LandAdjustment: React.FC = () => {
                     key={index}
                     icon={btn.icon}
                     className={`icon-yellow ${btn.disabled ? 'icon-disabled' : ''}`}
-                    onClick={btn.onClick}
+                    onClick={btn.disabled ? undefined : btn.onClick}
                     title={btn.title}
                   />
                 ))}
@@ -84,19 +185,51 @@ const LandAdjustment: React.FC = () => {
 
           <IonRow>
             <IonCol size="12">
-              {/* Add your table or list component here later */}
-              <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
-                Residential Land data will be displayed here
-              </div>
+              <DynamicTable
+                data={filteredData}
+                title="Land Adjustments"
+                keyField="adjustment_id"
+                onRowClick={handleRowClick}
+                selectedRow={selectedRow}
+              />
             </IonCol>
           </IonRow>
         </IonGrid>
 
-        {/* Land Adjustment Create Modal */}
+        <IonLoading isOpen={isLoading} message="Loading..." />
+
+        {/* Create Modal */}
         <LandAdjustmentCreateModal
           isOpen={showCreateModal}
           onClose={handleCloseCreateModal}
           onLandAdjustmentCreated={handleLandAdjustmentCreated}
+        />
+
+        {/* Delete Confirmation Alert */}
+        <IonAlert
+          isOpen={showDeleteAlert}
+          onDidDismiss={() => setShowDeleteAlert(false)}
+          header={'Confirm Delete'}
+          message={`Are you sure you want to delete adjustment ${selectedRow?.adjustment_id} (${selectedRow?.description})?`}
+          buttons={[
+            {
+              text: 'Cancel',
+              role: 'cancel',
+              cssClass: 'secondary',
+            },
+            {
+              text: 'Delete',
+              handler: handleDeleteConfirm
+            }
+          ]}
+        />
+
+        <IonToast
+          isOpen={showToast}
+          onDidDismiss={() => setShowToast(false)}
+          message={toastMessage}
+          duration={3000}
+          color={isError ? 'danger' : 'success'}
         />
       </IonContent>
     </IonPage>
