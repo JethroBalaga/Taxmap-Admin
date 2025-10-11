@@ -13,14 +13,15 @@ import {
 } from '@ionic/react';
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup2.css'; // Adjust path as needed
-
+import LandAdjustmentCreateModal from '../../components/LandAdjustmentModals/LandAdjustmentCreateModal';
 const LandAdjustment: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
 
-  // Placeholder functions for icons - to be implemented later
+  // Functions for icons
   const handleCreateClick = () => {
-    console.log('Create functionality to be implemented');
+    setShowCreateModal(true);
   };
 
   const handleArrowUpClick = () => {
@@ -29,6 +30,16 @@ const LandAdjustment: React.FC = () => {
 
   const handleTrashClick = () => {
     console.log('Delete functionality to be implemented');
+  };
+
+  const handleLandAdjustmentCreated = () => {
+    // Refresh your data here when needed
+    console.log('Land adjustment created - refresh data');
+    // You can add data refresh logic here later
+  };
+
+  const handleCloseCreateModal = () => {
+    setShowCreateModal(false);
   };
 
   const iconButtons = [
@@ -80,6 +91,13 @@ const LandAdjustment: React.FC = () => {
             </IonCol>
           </IonRow>
         </IonGrid>
+
+        {/* Land Adjustment Create Modal */}
+        <LandAdjustmentCreateModal
+          isOpen={showCreateModal}
+          onClose={handleCloseCreateModal}
+          onLandAdjustmentCreated={handleLandAdjustmentCreated}
+        />
       </IonContent>
     </IonPage>
   );
