@@ -25,13 +25,7 @@ interface LandAdjustmentItem {
   description: string;
   adjustment_factor: string;
   adjustment_type: string;
-  class_id: string;
   created_at?: string;
-}
-
-interface ClassItem {
-  class_id: string;
-  classification: string;
 }
 
 interface LandAdjustmentUpdateModalProps {
@@ -51,8 +45,6 @@ const LandAdjustmentUpdateModal: React.FC<LandAdjustmentUpdateModalProps> = ({
   const [description, setDescription] = useState('');
   const [adjustment_factor, setAdjustmentFactor] = useState('');
   const [adjustment_type, setAdjustmentType] = useState('');
-  const [class_id, setClassId] = useState('');
-  const [classes, setClasses] = useState<ClassItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -67,11 +59,6 @@ const LandAdjustmentUpdateModal: React.FC<LandAdjustmentUpdateModalProps> = ({
     'Market'
   ];
 
-  // Fetch classes for dropdown
-  useEffect(() => {
-    fetchClasses();
-  }, []);
-
   // Initialize form with existing data when modal opens or data changes
   useEffect(() => {
     if (landAdjustmentData) {
@@ -79,26 +66,11 @@ const LandAdjustmentUpdateModal: React.FC<LandAdjustmentUpdateModalProps> = ({
       setDescription(landAdjustmentData.description);
       setAdjustmentFactor(landAdjustmentData.adjustment_factor.replace(/%/g, ''));
       setAdjustmentType(landAdjustmentData.adjustment_type || '');
-      setClassId(landAdjustmentData.class_id || '');
     }
   }, [landAdjustmentData]);
 
-  const fetchClasses = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('classtbl')
-        .select('class_id, classification')
-        .order('class_id');
-
-      if (error) throw error;
-      setClasses(data || []);
-    } catch (error: any) {
-      console.error('Error fetching classes:', error);
-    }
-  };
-
   const handleUpdate = async () => {
-    if (!landAdjustmentData || !adjustment_id || !description || !adjustment_factor || !adjustment_type || !class_id) return;
+    if (!landAdjustmentData || !adjustment_id || !description || !adjustment_factor || !adjustment_type) return;
 
     setIsLoading(true);
     try {
@@ -122,8 +94,7 @@ const LandAdjustmentUpdateModal: React.FC<LandAdjustmentUpdateModalProps> = ({
           adjustment_id: adjustment_id.toUpperCase(),
           description: description.toUpperCase(),
           adjustment_factor: adjustment_factor,
-          adjustment_type: adjustment_type,
-          class_id: class_id
+          adjustment_type: adjustment_type
         })
         .eq('adjustment_id', landAdjustmentData.adjustment_id);
 
@@ -152,10 +123,7 @@ const LandAdjustmentUpdateModal: React.FC<LandAdjustmentUpdateModalProps> = ({
   };
 
   const handleAdjustmentFactorChange = (value: string) => {
-    // Remove any existing % signs and allow numbers with optional minus sign
     const cleanedValue = value.replace(/%/g, '');
-    
-    // Allow numbers with optional minus sign and decimal places
     if (cleanedValue === '' || /^-?\d*\.?\d*$/.test(cleanedValue)) {
       setAdjustmentFactor(cleanedValue);
     }
@@ -171,7 +139,6 @@ const LandAdjustmentUpdateModal: React.FC<LandAdjustmentUpdateModalProps> = ({
     setDescription('');
     setAdjustmentFactor('');
     setAdjustmentType('');
-    setClassId('');
   };
 
   const handleClose = () => {
@@ -231,24 +198,6 @@ const LandAdjustmentUpdateModal: React.FC<LandAdjustmentUpdateModalProps> = ({
                 </div>
 
                 <div className="input-wrapper">
-                  <IonItem className="modal-input">
-                    <IonLabel position="stacked">Class</IonLabel>
-                    <IonSelect
-                      value={class_id}
-                      placeholder="Select class"
-                      onIonChange={(e) => setClassId(e.detail.value)}
-                      interface="action-sheet"
-                    >
-                      {classes.map((classItem) => (
-                        <IonSelectOption key={classItem.class_id} value={classItem.class_id}>
-                          {classItem.class_id} - {classItem.classification}
-                        </IonSelectOption>
-                      ))}
-                    </IonSelect>
-                  </IonItem>
-                </div>
-
-                <div className="input-wrapper">
                   <Input
                     label="Adjustment Factor"
                     value={getDisplayAdjustmentFactor()}
@@ -271,7 +220,7 @@ const LandAdjustmentUpdateModal: React.FC<LandAdjustmentUpdateModalProps> = ({
                   <Button
                     variant="primary"
                     onClick={handleUpdate}
-                    disabled={!adjustment_id || !description || !adjustment_factor || !adjustment_type || !class_id || isLoading}
+                    disabled={!adjustment_id || !description || !adjustment_factor || !adjustment_type || isLoading}
                     className="update-btn"
                   >
                     {isLoading ? 'Updating...' : 'Update'}

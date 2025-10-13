@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   IonModal,
   IonHeader,
@@ -26,11 +26,6 @@ interface LandAdjustmentCreateModalProps {
   onLandAdjustmentCreated?: () => void;
 }
 
-interface ClassItem {
-  class_id: string;
-  classification: string;
-}
-
 const LandAdjustmentCreateModal: React.FC<LandAdjustmentCreateModalProps> = ({
   isOpen,
   onClose,
@@ -40,8 +35,6 @@ const LandAdjustmentCreateModal: React.FC<LandAdjustmentCreateModalProps> = ({
   const [description, setDescription] = useState('');
   const [adjustment_factor, setAdjustmentFactor] = useState('');
   const [adjustment_type, setAdjustmentType] = useState('');
-  const [class_id, setClassId] = useState('');
-  const [classes, setClasses] = useState<ClassItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -56,26 +49,8 @@ const LandAdjustmentCreateModal: React.FC<LandAdjustmentCreateModalProps> = ({
     'Market'
   ];
 
-  useEffect(() => {
-    fetchClasses();
-  }, []);
-
-  const fetchClasses = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('classtbl')
-        .select('class_id, classification')
-        .order('class_id');
-
-      if (error) throw error;
-      setClasses(data || []);
-    } catch (error: any) {
-      console.error('Error fetching classes:', error);
-    }
-  };
-
   const handleCreate = async () => {
-    if (!adjustment_id || !description || !adjustment_factor || !adjustment_type || !class_id) return;
+    if (!adjustment_id || !description || !adjustment_factor || !adjustment_type) return;
 
     setIsLoading(true);
     try {
@@ -85,8 +60,7 @@ const LandAdjustmentCreateModal: React.FC<LandAdjustmentCreateModalProps> = ({
           adjustment_id: adjustment_id.toUpperCase(),
           description: description.toUpperCase(),
           adjustment_factor: adjustment_factor,
-          adjustment_type: adjustment_type,
-          class_id: class_id
+          adjustment_type: adjustment_type
         }]);
 
       if (error) throw error;
@@ -114,10 +88,7 @@ const LandAdjustmentCreateModal: React.FC<LandAdjustmentCreateModalProps> = ({
   };
 
   const handleAdjustmentFactorChange = (value: string) => {
-    // Remove any existing % signs and allow numbers with optional minus sign
     const cleanedValue = value.replace(/%/g, '');
-    
-    // Allow numbers with optional minus sign and decimal places
     if (cleanedValue === '' || /^-?\d*\.?\d*$/.test(cleanedValue)) {
       setAdjustmentFactor(cleanedValue);
     }
@@ -133,7 +104,6 @@ const LandAdjustmentCreateModal: React.FC<LandAdjustmentCreateModalProps> = ({
     setDescription('');
     setAdjustmentFactor('');
     setAdjustmentType('');
-    setClassId('');
   };
 
   const handleClose = () => {
@@ -193,24 +163,6 @@ const LandAdjustmentCreateModal: React.FC<LandAdjustmentCreateModalProps> = ({
                 </div>
 
                 <div className="input-wrapper">
-                  <IonItem className="modal-input">
-                    <IonLabel position="stacked">Class</IonLabel>
-                    <IonSelect
-                      value={class_id}
-                      placeholder="Select class"
-                      onIonChange={(e) => setClassId(e.detail.value)}
-                      interface="action-sheet"
-                    >
-                      {classes.map((classItem) => (
-                        <IonSelectOption key={classItem.class_id} value={classItem.class_id}>
-                          {classItem.class_id} - {classItem.classification}
-                        </IonSelectOption>
-                      ))}
-                    </IonSelect>
-                  </IonItem>
-                </div>
-
-                <div className="input-wrapper">
                   <Input
                     label="Adjustment Factor"
                     value={getDisplayAdjustmentFactor()}
@@ -233,7 +185,7 @@ const LandAdjustmentCreateModal: React.FC<LandAdjustmentCreateModalProps> = ({
                   <Button
                     variant="primary"
                     onClick={handleCreate}
-                    disabled={!adjustment_id || !description || !adjustment_factor || !adjustment_type || !class_id || isLoading}
+                    disabled={!adjustment_id || !description || !adjustment_factor || !adjustment_type || isLoading}
                     className="create-btn"
                   >
                     {isLoading ? 'Creating...' : 'Create'}

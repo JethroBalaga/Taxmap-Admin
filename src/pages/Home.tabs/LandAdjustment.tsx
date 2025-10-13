@@ -26,7 +26,6 @@ interface LandAdjustmentItem {
   description: string;
   adjustment_factor: string;
   adjustment_type: string;
-  class_id: string;
   created_at?: string;
 }
 
@@ -78,8 +77,8 @@ const LandAdjustment: React.FC = () => {
       item.adjustment_id.toLowerCase().includes(term) ||
       item.description.toLowerCase().includes(term) ||
       item.adjustment_factor.toLowerCase().includes(term) ||
-      item.adjustment_type.toLowerCase().includes(term) ||
-      item.class_id.toLowerCase().includes(term)
+      item.adjustment_type.toLowerCase().includes(term)
+
     );
   }, [landAdjustments, searchTerm]);
 
