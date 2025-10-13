@@ -14,7 +14,7 @@ import {
   IonAlert,
   IonToast
 } from '@ionic/react';
-import { add, arrowUpCircle, trash, leafOutline } from 'ionicons/icons'; // Added leafOutline
+import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup2.css';
 import { supabase } from './../../utils/supaBaseClient';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
@@ -25,6 +25,8 @@ interface LandAdjustmentItem {
   adjustment_id: string;
   description: string;
   adjustment_factor: string;
+  adjustment_type: string;
+  class_id: string;
   created_at?: string;
 }
 
@@ -75,7 +77,9 @@ const LandAdjustment: React.FC = () => {
     return landAdjustments.filter(item =>
       item.adjustment_id.toLowerCase().includes(term) ||
       item.description.toLowerCase().includes(term) ||
-      item.adjustment_factor.toLowerCase().includes(term)
+      item.adjustment_factor.toLowerCase().includes(term) ||
+      item.adjustment_type.toLowerCase().includes(term) ||
+      item.class_id.toLowerCase().includes(term)
     );
   }, [landAdjustments, searchTerm]);
 
@@ -99,13 +103,6 @@ const LandAdjustment: React.FC = () => {
   const handleTrashClick = () => {
     if (!selectedRow) return;
     setShowDeleteAlert(true);
-  };
-
-  // Leaf outline functionality - always enabled
-  const handleLeafClick = () => {
-    console.log('Leaf functionality to be implemented');
-    setToastMessage('Leaf functionality to be implemented');
-    setShowToast(true);
   };
 
   // Confirm delete
@@ -166,8 +163,7 @@ const LandAdjustment: React.FC = () => {
   const iconButtons = [
     { icon: add, onClick: handleCreateClick, disabled: false, title: "Create New" },
     { icon: arrowUpCircle, onClick: handleArrowUpClick, disabled: !selectedRow, title: "Edit" },
-    { icon: trash, onClick: handleTrashClick, disabled: !selectedRow, title: "Delete" },
-    { icon: leafOutline, onClick: handleLeafClick, disabled: false, title: "Leaf Function" } // Always enabled
+    { icon: trash, onClick: handleTrashClick, disabled: !selectedRow, title: "Delete" }
   ];
 
   return (
