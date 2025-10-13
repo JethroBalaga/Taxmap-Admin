@@ -11,7 +11,9 @@ import {
   IonLoading,
   IonToast,
   IonLabel,
-  IonItem
+  IonItem,
+  IonSelect,
+  IonSelectOption
 } from '@ionic/react';
 import Input from '../Globalcomponents/Input';
 import './../../CSS/Modal.css';
@@ -32,13 +34,23 @@ const LandAdjustmentCreateModal: React.FC<LandAdjustmentCreateModalProps> = ({
   const [adjustment_id, setAdjustmentId] = useState('');
   const [description, setDescription] = useState('');
   const [adjustment_factor, setAdjustmentFactor] = useState('');
+  const [adjustment_type, setAdjustmentType] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [isError, setIsError] = useState(false);
 
+  const adjustmentTypes = [
+    'Stripping',
+    'Corner Influence',
+    'Commercial Frontage',
+    'Agricultural Frontage',
+    'Weather Road',
+    'Market'
+  ];
+
   const handleCreate = async () => {
-    if (!adjustment_id || !description || !adjustment_factor) return;
+    if (!adjustment_id || !description || !adjustment_factor || !adjustment_type) return;
 
     setIsLoading(true);
     try {
@@ -47,7 +59,8 @@ const LandAdjustmentCreateModal: React.FC<LandAdjustmentCreateModalProps> = ({
         .insert([{
           adjustment_id: adjustment_id.toUpperCase(),
           description: description.toUpperCase(),
-          adjustment_factor: adjustment_factor
+          adjustment_factor: adjustment_factor,
+          adjustment_type: adjustment_type
         }]);
 
       if (error) throw error;
@@ -93,6 +106,7 @@ const LandAdjustmentCreateModal: React.FC<LandAdjustmentCreateModalProps> = ({
     setAdjustmentId('');
     setDescription('');
     setAdjustmentFactor('');
+    setAdjustmentType('');
   };
 
   const handleClose = () => {
@@ -134,6 +148,24 @@ const LandAdjustmentCreateModal: React.FC<LandAdjustmentCreateModalProps> = ({
                 </div>
 
                 <div className="input-wrapper">
+                  <IonItem className="modal-input">
+                    <IonLabel position="stacked">Adjustment Type</IonLabel>
+                    <IonSelect
+                      value={adjustment_type}
+                      placeholder="Select adjustment type"
+                      onIonChange={(e) => setAdjustmentType(e.detail.value)}
+                      interface="action-sheet"
+                    >
+                      {adjustmentTypes.map((type) => (
+                        <IonSelectOption key={type} value={type}>
+                          {type}
+                        </IonSelectOption>
+                      ))}
+                    </IonSelect>
+                  </IonItem>
+                </div>
+
+                <div className="input-wrapper">
                   <Input
                     label="Adjustment Factor"
                     value={getDisplayAdjustmentFactor()}
@@ -156,7 +188,7 @@ const LandAdjustmentCreateModal: React.FC<LandAdjustmentCreateModalProps> = ({
                   <Button
                     variant="primary"
                     onClick={handleCreate}
-                    disabled={!adjustment_id || !description || !adjustment_factor || isLoading}
+                    disabled={!adjustment_id || !description || !adjustment_factor || !adjustment_type || isLoading}
                     className="create-btn"
                   >
                     {isLoading ? 'Creating...' : 'Create'}
