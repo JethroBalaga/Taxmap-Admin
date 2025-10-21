@@ -44,7 +44,9 @@ const Logs: React.FC = () => {
         'Building Code',
         'Building Component',
         'Building Subcomponent',
-        'Admin Activity' // ✅ Added new option
+        'Admin Activity',
+        'Equipment', // ✅ Added new option
+        'Land Adjustment' // ✅ Added new option
     ];
 
     // Fetch logs based on selected table
@@ -96,8 +98,14 @@ const Logs: React.FC = () => {
                 case 'Building Subcomponent':
                     tableName = 'building_subcomponenttbl_logs';
                     break;
-                case 'Admin Activity': // ✅ New case
+                case 'Admin Activity':
                     tableName = 'user_activity_logs';
+                    break;
+                case 'Equipment': // ✅ New case
+                    tableName = 'equipment_logs';
+                    break;
+                case 'Land Adjustment': // ✅ New case
+                    tableName = 'landadjustmenttbl_logs';
                     break;
                 default:
                     tableName = '';
