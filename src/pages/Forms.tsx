@@ -113,7 +113,7 @@ const Forms: React.FC = () => {
 const handleInfoClick = () => {
   if (selectedRow) {
     const kindDescription = selectedRow.kind_description?.toUpperCase();
-    const classId = selectedRow.class_id?.toUpperCase();  // Changed from classification to class_id
+    const classId = selectedRow.class_id?.toUpperCase();
     
     if (kindDescription === 'MACHINERY') {
       history.push(`/menu/machinerytable/${selectedRow.form_id}`);
@@ -121,8 +121,10 @@ const handleInfoClick = () => {
       history.push(`/menu/buildingtable`, { 
         formId: selectedRow.form_id
       });
-    } else if (kindDescription === 'LAND' && classId === 'A') {  // Fixed condition
+    } else if (kindDescription === 'LAND' && classId === 'A') {
       history.push(`/menu/agriculturalland/${selectedRow.form_id}`);
+    } else if (kindDescription === 'LAND' && classId !== 'A') {
+      history.push(`/menu/nonagriculturalland/${selectedRow.form_id}`);
     } else {
       console.log(`Navigation not configured for kind: ${kindDescription} with class: ${classId}`);
     }
