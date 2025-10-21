@@ -16,12 +16,15 @@ import {
   IonIcon,
   IonLoading,
   IonAlert,
-  IonButtons
+  IonButtons,
+  IonText
 } from '@ionic/react';
-import { arrowBackOutline } from 'ionicons/icons';
+import { arrowBackOutline, leaf, trendingUp, calculator } from 'ionicons/icons';
 import { supabase } from '../../utils/supaBaseClient';
 import { useHistory, useParams } from 'react-router-dom';
+import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import '../../CSS/Setup.css';
+import '../../CSS/AgriculturalCard.css';
 
 interface FormData {
   form_id: string;
@@ -30,12 +33,33 @@ interface FormData {
   class_id: string;
   kind_description: string;
   status: string;
-  // Add other fields from your form_view as needed
   [key: string]: any;
+}
+
+interface LandAdjustmentData {
+  agrilandadjustment_id: string;
+  value_info_id: string;
+  frontage: number;
+  weather_road: number;
+  market: number;
+  total_adjustments: number;
+  adjusted_market_value: number;
+  created_at: string;
+}
+
+interface AgriculturalLandValuation {
+  value_info_id: string;
+  rate: number;
+  base_market_value: number;
+  adjusted_market_value: number;
+  assessment_level: string;
+  assessed_value: number;
 }
 
 const AgriculturalLand: React.FC = () => {
   const [formData, setFormData] = useState<FormData | null>(null);
+  const [valuationData, setValuationData] = useState<AgriculturalLandValuation[]>([]);
+  const [adjustmentData, setAdjustmentData] = useState<LandAdjustmentData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
@@ -47,6 +71,13 @@ const AgriculturalLand: React.FC = () => {
       loadFormData();
     }
   }, [formId]);
+
+  useEffect(() => {
+    if (formData) {
+      loadValuationData();
+      loadAdjustmentData();
+    }
+  }, [formData]);
 
   const loadFormData = async () => {
     setIsLoading(true);
@@ -88,6 +119,85 @@ const AgriculturalLand: React.FC = () => {
     }
   };
 
+  const loadValuationData = async () => {
+    try {
+      // First get value_info_id from form_id
+      const { data: valueInfoData, error: valueError } = await supabase
+        .from('value_info')
+        .select('value_info_id')
+        .eq('form_id', formId);
+
+      if (valueError) {
+        console.error('Error fetching value_info:', valueError);
+        return;
+      }
+
+      if (!valueInfoData || valueInfoData.length === 0) {
+        console.log('No value_info found for form_id:', formId);
+        setValuationData([]);
+        return;
+      }
+
+      const valueInfoIds = valueInfoData.map(item => item.value_info_id);
+
+      // Then get agricultural land valuation data using value_info_ids
+      const { data: valuationData, error: valuationError } = await supabase
+        .from('agricultural_land_valuation_view')
+        .select('*')
+        .in('value_info_id', valueInfoIds);
+
+      if (valuationError) {
+        console.error('Error fetching agricultural land valuation:', valuationError);
+        return;
+      }
+
+      console.log('Valuation data:', valuationData);
+      setValuationData(valuationData || []);
+    } catch (error) {
+      console.error('Failed to load valuation data:', error);
+    }
+  };
+
+  const loadAdjustmentData = async () => {
+    try {
+      // First get value_info_id from form_id
+      const { data: valueInfoData, error: valueError } = await supabase
+        .from('value_info')
+        .select('value_info_id')
+        .eq('form_id', formId);
+
+      if (valueError) {
+        console.error('Error fetching value_info:', valueError);
+        return;
+      }
+
+      if (!valueInfoData || valueInfoData.length === 0) {
+        console.log('No value_info found for form_id:', formId);
+        setAdjustmentData(null);
+        return;
+      }
+
+      const valueInfoIds = valueInfoData.map(item => item.value_info_id);
+
+      // Get land adjustment data from the view
+      const { data: adjustmentData, error: adjustmentError } = await supabase
+        .from('land_adjustment_view')
+        .select('*')
+        .in('value_info_id', valueInfoIds);
+
+      if (adjustmentError) {
+        console.error('Error fetching land adjustment data:', adjustmentError);
+        return;
+      }
+
+      console.log('Adjustment data:', adjustmentData);
+      // Take the first adjustment record if multiple exist
+      setAdjustmentData(adjustmentData && adjustmentData.length > 0 ? adjustmentData[0] : null);
+    } catch (error) {
+      console.error('Failed to load adjustment data:', error);
+    }
+  };
+
   const handleBack = () => {
     history.goBack();
   };
@@ -99,7 +209,7 @@ const AgriculturalLand: React.FC = () => {
       .join(' ');
   };
 
-  // Filter out form_id from the data to display
+  // Filter out form_id from the form data to display
   const getDisplayData = () => {
     if (!formData) return [];
     
@@ -109,6 +219,32 @@ const AgriculturalLand: React.FC = () => {
         field: formatFieldName(key),
         value: value || 'N/A'
       }));
+  };
+
+  // Format valuation data for DynamicTable
+  const getValuationDisplayData = () => {
+    return valuationData.map(item => {
+      const formatCurrency = (value: number) => {
+        return new Intl.NumberFormat('en-PH', {
+          style: 'currency',
+          currency: 'PHP',
+          minimumFractionDigits: 2
+        }).format(value);
+      };
+
+      return {
+        rate: `₱${item.rate.toLocaleString()}`,
+        base_market_value: formatCurrency(item.base_market_value),
+        adjusted_market_value: formatCurrency(item.adjusted_market_value),
+        assessment_level: item.assessment_level,
+        assessed_value: formatCurrency(item.assessed_value)
+      };
+    });
+  };
+
+  // Handle row clicks for valuation table
+  const handleValuationRowClick = (rowData: any) => {
+    console.log('Valuation row clicked:', rowData);
   };
 
   return (
@@ -146,7 +282,7 @@ const AgriculturalLand: React.FC = () => {
               <IonCol size="12">
                 <IonCard>
                   <IonCardHeader>
-                    <IonCardTitle>Agricultural Land Details</IonCardTitle>
+                    <IonCardTitle>Form Details</IonCardTitle>
                   </IonCardHeader>
                   <IonCardContent>
                     {getDisplayData().map((item, index) => (
@@ -157,6 +293,113 @@ const AgriculturalLand: React.FC = () => {
                     ))}
                   </IonCardContent>
                 </IonCard>
+              </IonCol>
+            </IonRow>
+          )}
+
+          {/* Agricultural Land Valuation Table - KEEP THE DYNAMIC TABLE */}
+          {valuationData.length > 0 && (
+            <IonRow>
+              <IonCol size="12">
+                <DynamicTable
+                  data={getValuationDisplayData()}
+                  title="Agricultural Land Valuation"
+                  keyField="value_info_id"
+                  onRowClick={handleValuationRowClick}
+                />
+              </IonCol>
+            </IonRow>
+          )}
+
+          {/* Land Adjustment Data Card - AFTER THE DYNAMIC TABLE */}
+          {adjustmentData && (
+            <IonRow>
+              <IonCol size="12">
+                <IonCard className="agricultural-card">
+                  <IonCardHeader>
+                    <IonCardTitle className="agricultural-title">
+                      <IonIcon icon={leaf} className="agricultural-title-icon" />
+                      Land Adjustment Data
+                    </IonCardTitle>
+                  </IonCardHeader>
+
+                  <IonCardContent>
+                    <div className="agricultural-section">
+                      <IonText className="agricultural-section-title">
+                        <IonIcon icon={trendingUp} className="agricultural-section-icon" />
+                        <h4>Adjustment Factors</h4>
+                      </IonText>
+                      <div className="agricultural-grid">
+                        <div className="agricultural-item">
+                          <label>Frontage</label>
+                          <IonText className="agricultural-value">
+                            {adjustmentData.frontage || 'N/A'}
+                          </IonText>
+                        </div>
+                        <div className="agricultural-item">
+                          <label>Weather Road</label>
+                          <IonText className="agricultural-value">
+                            {adjustmentData.weather_road || 'N/A'}
+                          </IonText>
+                        </div>
+                        <div className="agricultural-item">
+                          <label>Market</label>
+                          <IonText className="agricultural-value">
+                            {adjustmentData.market || 'N/A'}
+                          </IonText>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="agricultural-section">
+                      <IonText className="agricultural-section-title">
+                        <IonIcon icon={calculator} className="agricultural-section-icon" />
+                        <h4>Calculations</h4>
+                      </IonText>
+                      <div className="agricultural-grid">
+                        <div className="agricultural-item">
+                          <label>Total Adjustments</label>
+                          <IonText className="agricultural-value total-adjustment">
+                            {adjustmentData.total_adjustments}
+                          </IonText>
+                        </div>
+                        <div className="agricultural-item">
+                          <label>Adjusted Market Value %</label>
+                          <IonText className="agricultural-value adjusted-market-value">
+                            {adjustmentData.adjusted_market_value}%
+                          </IonText>
+                        </div>
+                      </div>
+                    </div>
+                  </IonCardContent>
+                </IonCard>
+              </IonCol>
+            </IonRow>
+          )}
+
+          {/* Show message if no adjustment data found */}
+          {!isLoading && !adjustmentData && (
+            <IonRow>
+              <IonCol size="12">
+                <div style={{ textAlign: 'center', padding: '20px' }}>
+                  <IonText>
+                    <h3>No Land Adjustment Data Found</h3>
+                    <p style={{ marginTop: '10px', color: 'var(--ion-color-medium)' }}>
+                      No land adjustment data has been submitted for this form yet.
+                    </p>
+                  </IonText>
+                </div>
+              </IonCol>
+            </IonRow>
+          )}
+
+          {/* Show message if no valuation data found */}
+          {!isLoading && valuationData.length === 0 && formData && (
+            <IonRow>
+              <IonCol size="12">
+                <div style={{ textAlign: 'center', padding: '20px' }}>
+                  No valuation data found for this agricultural land.
+                </div>
               </IonCol>
             </IonRow>
           )}
