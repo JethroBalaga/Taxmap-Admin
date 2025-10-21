@@ -22,6 +22,7 @@ import {
 import { arrowBackOutline } from 'ionicons/icons';
 import { supabase } from '../../utils/supaBaseClient';
 import { useHistory, useParams } from 'react-router-dom';
+import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import '../../CSS/Setup.css';
 
 interface FormData {
@@ -34,8 +35,18 @@ interface FormData {
   [key: string]: any;
 }
 
+interface ComprehensiveValuation {
+  value_info_id: string;
+  rate: number;
+  base_market_value: number;
+  adjusted_market_value: number;
+  assessment_level: string;
+  assessed_value: number;
+}
+
 const NonAgriculturalLand: React.FC = () => {
   const [formData, setFormData] = useState<FormData | null>(null);
+  const [valuationData, setValuationData] = useState<ComprehensiveValuation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
@@ -47,6 +58,12 @@ const NonAgriculturalLand: React.FC = () => {
       loadFormData();
     }
   }, [formId]);
+
+  useEffect(() => {
+    if (formData) {
+      loadValuationData();
+    }
+  }, [formData]);
 
   const loadFormData = async () => {
     setIsLoading(true);
@@ -89,6 +106,45 @@ const NonAgriculturalLand: React.FC = () => {
     }
   };
 
+  const loadValuationData = async () => {
+    try {
+      // First get value_info_id from form_id
+      const { data: valueInfoData, error: valueError } = await supabase
+        .from('value_info')
+        .select('value_info_id')
+        .eq('form_id', formId);
+
+      if (valueError) {
+        console.error('Error fetching value_info:', valueError);
+        return;
+      }
+
+      if (!valueInfoData || valueInfoData.length === 0) {
+        console.log('No value_info found for form_id:', formId);
+        setValuationData([]);
+        return;
+      }
+
+      const valueInfoIds = valueInfoData.map(item => item.value_info_id);
+
+      // Then get comprehensive valuation data using value_info_ids
+      const { data: valuationData, error: valuationError } = await supabase
+        .from('comprehensive_valuation_view')
+        .select('*')
+        .in('value_info_id', valueInfoIds);
+
+      if (valuationError) {
+        console.error('Error fetching comprehensive valuation:', valuationError);
+        return;
+      }
+
+      console.log('Comprehensive valuation data:', valuationData);
+      setValuationData(valuationData || []);
+    } catch (error) {
+      console.error('Failed to load valuation data:', error);
+    }
+  };
+
   const handleBack = () => {
     history.goBack();
   };
@@ -110,6 +166,32 @@ const NonAgriculturalLand: React.FC = () => {
         field: formatFieldName(key),
         value: value || 'N/A'
       }));
+  };
+
+  // Format valuation data for DynamicTable
+  const getValuationDisplayData = () => {
+    return valuationData.map(item => {
+      const formatCurrency = (value: number) => {
+        return new Intl.NumberFormat('en-PH', {
+          style: 'currency',
+          currency: 'PHP',
+          minimumFractionDigits: 2
+        }).format(value);
+      };
+
+      return {
+        rate: `₱${item.rate.toLocaleString()}`,
+        base_market_value: formatCurrency(item.base_market_value),
+        adjusted_market_value: formatCurrency(item.adjusted_market_value),
+        assessment_level: item.assessment_level,
+        assessed_value: formatCurrency(item.assessed_value)
+      };
+    });
+  };
+
+  // Handle row clicks for valuation table
+  const handleValuationRowClick = (rowData: any) => {
+    console.log('Valuation row clicked:', rowData);
   };
 
   return (
@@ -158,6 +240,31 @@ const NonAgriculturalLand: React.FC = () => {
                     ))}
                   </IonCardContent>
                 </IonCard>
+              </IonCol>
+            </IonRow>
+          )}
+
+          {/* Comprehensive Valuation Table */}
+          {valuationData.length > 0 && (
+            <IonRow>
+              <IonCol size="12">
+                <DynamicTable
+                  data={getValuationDisplayData()}
+                  title="Comprehensive Valuation"
+                  keyField="value_info_id"
+                  onRowClick={handleValuationRowClick}
+                />
+              </IonCol>
+            </IonRow>
+          )}
+
+          {/* Show message if no valuation data found */}
+          {!isLoading && valuationData.length === 0 && formData && (
+            <IonRow>
+              <IonCol size="12">
+                <div style={{ textAlign: 'center', padding: '20px' }}>
+                  No valuation data found for this non-agricultural land.
+                </div>
               </IonCol>
             </IonRow>
           )}
