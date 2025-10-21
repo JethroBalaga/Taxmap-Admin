@@ -15,7 +15,8 @@ import {
   IonButton,
   IonIcon,
   IonLoading,
-  IonAlert
+  IonAlert,
+  IonButtons
 } from '@ionic/react';
 import { arrowBackOutline } from 'ionicons/icons';
 import { supabase } from '../../utils/supaBaseClient';
@@ -26,7 +27,7 @@ interface FormData {
   form_id: string;
   declarant_name: string;
   district_name: string;
-  classification: string;
+  class_id: string;
   kind_description: string;
   status: string;
   // Add other fields from your form_view as needed
@@ -63,13 +64,18 @@ const AgriculturalLand: React.FC = () => {
         return;
       }
 
+      console.log('Raw form data:', data);
+
       if (data) {
-        // Check if the form is LAND with Classification A
-        if (data.kind_description?.toUpperCase() === 'LAND' && 
-            data.classification?.toUpperCase() === 'A') {
+        const kind = data.kind_description?.toUpperCase();
+        const classId = data.class_id?.toUpperCase();
+        
+        console.log(`Checking conditions - Kind: ${kind}, Class: ${classId}`);
+        
+        if (kind === 'LAND' && classId === 'A') {
           setFormData(data);
         } else {
-          setAlertMessage('This form is not an Agricultural Land (LAND with Classification A)');
+          setAlertMessage(`This form is not an Agricultural Land. Found: Kind=${kind}, Class=${classId}. Required: Kind=LAND, Class=A`);
           setShowAlert(true);
         }
       }
@@ -83,7 +89,7 @@ const AgriculturalLand: React.FC = () => {
   };
 
   const handleBack = () => {
-    history.push('/forms', { selectedFormId: formId });
+    history.goBack();
   };
 
   const formatFieldName = (fieldName: string): string => {
@@ -105,100 +111,66 @@ const AgriculturalLand: React.FC = () => {
       }));
   };
 
-  if (isLoading) {
-    return (
-      <IonPage>
-        <IonHeader>
-          <IonToolbar>
-            <IonTitle>Loading...</IonTitle>
-          </IonToolbar>
-        </IonHeader>
-        <IonContent>
-          <IonLoading isOpen={true} message="Loading Agricultural Land Data..." />
-        </IonContent>
-      </IonPage>
-    );
-  }
-
-  if (!formData) {
-    return (
-      <IonPage>
-        <IonHeader>
-          <IonToolbar>
-            <IonButton fill="clear" onClick={handleBack} slot="start">
-              <IonIcon icon={arrowBackOutline} />
-              Back
-            </IonButton>
-            <IonTitle>Agricultural Land - Not Found</IonTitle>
-          </IonToolbar>
-        </IonHeader>
-        <IonContent>
-          <IonGrid>
-            <IonRow>
-              <IonCol size="12">
-                <IonCard>
-                  <IonCardContent>
-                    <p>Form data not found or you don't have access to view this form.</p>
-                  </IonCardContent>
-                </IonCard>
-              </IonCol>
-            </IonRow>
-          </IonGrid>
-        </IonContent>
-      </IonPage>
-    );
-  }
-
-  const displayData = getDisplayData();
-
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonButton fill="clear" onClick={handleBack} slot="start">
-            <IonIcon icon={arrowBackOutline} />
-            Back
-          </IonButton>
+          <IonButtons slot="start">
+            <IonButton onClick={handleBack}>
+              <IonIcon icon={arrowBackOutline} />
+              Back to Forms
+            </IonButton>
+          </IonButtons>
           <IonTitle>Agricultural Land - Form {formId}</IonTitle>
         </IonToolbar>
       </IonHeader>
 
-      <IonContent fullscreen>
-        <IonLoading isOpen={isLoading} message="Loading Agricultural Land Data..." />
+      <IonContent>
+        <IonLoading isOpen={isLoading} message="Loading agricultural land details..." />
         
         <IonAlert
           isOpen={showAlert}
           onDidDismiss={() => {
             setShowAlert(false);
-            if (alertMessage.includes('not an Agricultural Land')) {
-              history.goBack();
-            }
+            history.goBack();
           }}
-          header={'Alert'}
+          header={'Access Denied'}
           message={alertMessage}
           buttons={['OK']}
         />
 
         <IonGrid>
-          <IonRow>
-            <IonCol size="12" size-md="8" offset-md="2">
-              <IonCard>
-                <IonCardHeader>
-                  <IonCardTitle>
-                    Agricultural Land Details
-                  </IonCardTitle>
-                </IonCardHeader>
-                <IonCardContent>
-                  {displayData.map((item, index) => (
-                    <div key={index} className="data-field">
-                      <strong>{item.field}:</strong> 
-                      <span className="field-value">{item.value}</span>
-                    </div>
-                  ))}
-                </IonCardContent>
-              </IonCard>
-            </IonCol>
-          </IonRow>
+          {/* Main Form Data Card */}
+          {formData && (
+            <IonRow>
+              <IonCol size="12">
+                <IonCard>
+                  <IonCardHeader>
+                    <IonCardTitle>Agricultural Land Details</IonCardTitle>
+                  </IonCardHeader>
+                  <IonCardContent>
+                    {getDisplayData().map((item, index) => (
+                      <div key={index} className="data-field">
+                        <strong>{item.field}:</strong> 
+                        <span className="field-value">{item.value}</span>
+                      </div>
+                    ))}
+                  </IonCardContent>
+                </IonCard>
+              </IonCol>
+            </IonRow>
+          )}
+
+          {/* Show message if no form data found */}
+          {!isLoading && !formData && (
+            <IonRow>
+              <IonCol size="12">
+                <div style={{ textAlign: 'center', padding: '20px' }}>
+                  No agricultural land data found for this form.
+                </div>
+              </IonCol>
+            </IonRow>
+          )}
         </IonGrid>
       </IonContent>
     </IonPage>
