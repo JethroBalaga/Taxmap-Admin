@@ -137,7 +137,7 @@ const Menu: React.FC = () => {
             <Route path="/menu/machinerytable/:formId" component={MachineryTable} />
             <Route path="/menu/agriculturalland/:formId" component={AgriculturalLand} />
             <Route exact path="/menu">
-              <Redirect to="/menu/home" />
+              <Redirect to="/menu/home" /> 
             </Route>
           </IonRouterOutlet>
         </IonContent>

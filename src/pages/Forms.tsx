@@ -109,12 +109,11 @@ const Forms: React.FC = () => {
     setSelectedRow(rowData);
   };
 
- // Update the handleInfoClick function in Forms.tsx
 // Update the handleInfoClick function in Forms.tsx
 const handleInfoClick = () => {
   if (selectedRow) {
     const kindDescription = selectedRow.kind_description?.toUpperCase();
-    const classification = selectedRow.classification?.toUpperCase();
+    const classId = selectedRow.class_id?.toUpperCase();  // Changed from classification to class_id
     
     if (kindDescription === 'MACHINERY') {
       history.push(`/menu/machinerytable/${selectedRow.form_id}`);
@@ -122,10 +121,10 @@ const handleInfoClick = () => {
       history.push(`/menu/buildingtable`, { 
         formId: selectedRow.form_id
       });
-    } else if (kindDescription === 'LAND' && classification === 'A') {
+    } else if (kindDescription === 'LAND' && classId === 'A') {  // Fixed condition
       history.push(`/menu/agriculturalland/${selectedRow.form_id}`);
     } else {
-      console.log(`Navigation not configured for kind: ${kindDescription} with classification: ${classification}`);
+      console.log(`Navigation not configured for kind: ${kindDescription} with class: ${classId}`);
     }
   }
 };

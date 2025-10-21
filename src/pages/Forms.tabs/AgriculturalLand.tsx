@@ -20,7 +20,7 @@ import {
 import { arrowBackOutline } from 'ionicons/icons';
 import { supabase } from '../../utils/supaBaseClient';
 import { useHistory, useParams } from 'react-router-dom';
-import '../CSS/Setup.css';
+import '../../CSS/Setup.css';
 
 interface FormData {
   form_id: string;
