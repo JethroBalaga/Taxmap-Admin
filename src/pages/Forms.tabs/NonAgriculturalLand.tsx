@@ -44,9 +44,20 @@ interface ComprehensiveValuation {
   assessed_value: number;
 }
 
+interface AdjustmentData {
+  value_info_id: string;
+  adjustment_id: string;
+  adjustment_type: string;
+  description: string;
+  adjustment_factor: number;
+  additional_factor?: number;
+  adjusted_market_value: number;
+}
+
 const NonAgriculturalLand: React.FC = () => {
   const [formData, setFormData] = useState<FormData | null>(null);
   const [valuationData, setValuationData] = useState<ComprehensiveValuation[]>([]);
+  const [adjustmentData, setAdjustmentData] = useState<AdjustmentData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
@@ -62,6 +73,7 @@ const NonAgriculturalLand: React.FC = () => {
   useEffect(() => {
     if (formData) {
       loadValuationData();
+      loadAdjustmentData();
     }
   }, [formData]);
 
@@ -145,6 +157,66 @@ const NonAgriculturalLand: React.FC = () => {
     }
   };
 
+  const loadAdjustmentData = async () => {
+    try {
+      // First get value_info_id from form_id
+      const { data: valueInfoData, error: valueError } = await supabase
+        .from('value_info')
+        .select('value_info_id')
+        .eq('form_id', formId);
+
+      if (valueError) {
+        console.error('Error fetching value_info:', valueError);
+        return;
+      }
+
+      if (!valueInfoData || valueInfoData.length === 0) {
+        console.log('No value_info found for form_id:', formId);
+        setAdjustmentData([]);
+        return;
+      }
+
+      const valueInfoIds = valueInfoData.map(item => item.value_info_id);
+
+      // First try to get other adjustments
+      const { data: otherAdjustments, error: otherError } = await supabase
+        .from('other_adjustments_view')
+        .select('*')
+        .in('value_info_id', valueInfoIds);
+
+      if (otherError) {
+        console.error('Error fetching other adjustments:', otherError);
+      }
+
+      console.log('Other adjustments data:', otherAdjustments);
+
+      // If other adjustments exist, use them
+      if (otherAdjustments && otherAdjustments.length > 0) {
+        setAdjustmentData(otherAdjustments);
+        return;
+      }
+
+      // If no other adjustments, try stripping adjustments
+      const { data: strippingAdjustments, error: strippingError } = await supabase
+        .from('stripping_adjustments_view')
+        .select('*')
+        .in('value_info_id', valueInfoIds);
+
+      if (strippingError) {
+        console.error('Error fetching stripping adjustments:', strippingError);
+      }
+
+      console.log('Stripping adjustments data:', strippingAdjustments);
+      
+      // Use stripping adjustments if available, otherwise empty array
+      setAdjustmentData(strippingAdjustments || []);
+      
+    } catch (error) {
+      console.error('Failed to load adjustment data:', error);
+      setAdjustmentData([]);
+    }
+  };
+
   const handleBack = () => {
     history.goBack();
   };
@@ -189,9 +261,47 @@ const NonAgriculturalLand: React.FC = () => {
     });
   };
 
+  // Format adjustment data for DynamicTable
+  const getAdjustmentDisplayData = () => {
+    const adjustmentRows = adjustmentData.map(item => {
+      const formatCurrency = (value: number) => {
+        return new Intl.NumberFormat('en-PH', {
+          style: 'currency',
+          currency: 'PHP',
+          minimumFractionDigits: 2
+        }).format(value);
+      };
+
+      const formatPercentage = (value: number) => {
+        return `${value}%`;
+      };
+
+      const rowData: any = {
+        adjustment_type: item.adjustment_type,
+        description: item.description,
+        adjustment_factor: formatPercentage(item.adjustment_factor),
+        adjusted_market_value: formatCurrency(item.adjusted_market_value)
+      };
+
+      // Only include additional_factor if it exists and is not null/undefined
+      if (item.additional_factor !== null && item.additional_factor !== undefined) {
+        rowData.additional_factor = formatPercentage(item.additional_factor);
+      }
+
+      return rowData;
+    });
+
+    return adjustmentRows;
+  };
+
   // Handle row clicks for valuation table
   const handleValuationRowClick = (rowData: any) => {
     console.log('Valuation row clicked:', rowData);
+  };
+
+  // Handle row clicks for adjustment table
+  const handleAdjustmentRowClick = (rowData: any) => {
+    console.log('Adjustment row clicked:', rowData);
   };
 
   return (
@@ -258,12 +368,37 @@ const NonAgriculturalLand: React.FC = () => {
             </IonRow>
           )}
 
+          {/* Adjustments Table */}
+          {adjustmentData.length > 0 && (
+            <IonRow>
+              <IonCol size="12">
+                <DynamicTable
+                  data={getAdjustmentDisplayData()}
+                  title="Adjustments"
+                  keyField="adjustment_id"
+                  onRowClick={handleAdjustmentRowClick}
+                />
+              </IonCol>
+            </IonRow>
+          )}
+
           {/* Show message if no valuation data found */}
           {!isLoading && valuationData.length === 0 && formData && (
             <IonRow>
               <IonCol size="12">
                 <div style={{ textAlign: 'center', padding: '20px' }}>
                   No valuation data found for this non-agricultural land.
+                </div>
+              </IonCol>
+            </IonRow>
+          )}
+
+          {/* Show message if no adjustment data found */}
+          {!isLoading && adjustmentData.length === 0 && formData && (
+            <IonRow>
+              <IonCol size="12">
+                <div style={{ textAlign: 'center', padding: '20px' }}>
+                  No adjustment data found for this non-agricultural land.
                 </div>
               </IonCol>
             </IonRow>
