@@ -12,10 +12,12 @@ import {
     IonLoading,
     IonSearchbar,
     IonAlert,
-    IonToast
+    IonToast,
+    IonButtons,
+    IonButton
 } from '@ionic/react';
 import { useLocation, useHistory } from 'react-router-dom';
-import { add, arrowUpCircle, constructOutline, cubeOutline, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, constructOutline, cubeOutline, trash, arrowBack } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
@@ -43,6 +45,13 @@ const Structure: React.FC = () => {
     const [isError, setIsError] = useState(false);
     const searchRef = useRef<HTMLIonSearchbarElement>(null);
     const history = useHistory();
+    const location = useLocation();
+
+    // Reset state when location changes (including tab navigation)
+    useEffect(() => {
+        setSelectedRow(null);
+        setSearchTerm('');
+    }, [location.pathname]);
 
     // Fetch structures
     const fetchStructures = useCallback(async () => {
@@ -110,7 +119,6 @@ const Structure: React.FC = () => {
         });
     };
 
-    // NEW: Handle cube outline click to navigate to BuildingCom page
     const handleCubeOutlineClick = () => {
         if (!selectedRow) return;
         
@@ -119,6 +127,11 @@ const Structure: React.FC = () => {
             search: `?structure_code=${selectedRow.structure_code}`,
             state: { structureData: selectedRow }
         });
+    };
+
+    // Add back button handler
+    const handleBackClick = () => {
+        history.push('/menu/home');
     };
 
     const handleDeleteConfirm = async () => {
@@ -150,6 +163,8 @@ const Structure: React.FC = () => {
     const handleStructureCreated = () => {
         fetchStructures();
         setShowCreateModal(false);
+        setToastMessage('Structure created successfully!');
+        setShowToast(true);
     };
 
     const handleStructureUpdated = () => {
@@ -165,13 +180,18 @@ const Structure: React.FC = () => {
         { icon: arrowUpCircle, onClick: handleEditClick, disabled: !selectedRow, title: "Edit Structure" },
         { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Structure" },
         { icon: constructOutline, onClick: handleConstructClick, disabled: !selectedRow, title: "Building Code" },
-        { icon: cubeOutline, onClick: handleCubeOutlineClick, disabled: false, title: "Building Component" } // Updated onClick
+        { icon: cubeOutline, onClick: handleCubeOutlineClick, disabled: !selectedRow, title: "Building Component" } // Fixed: should be disabled when no selection
     ];
 
     return (
         <IonPage>
             <IonHeader>
                 <IonToolbar>
+                    <IonButtons slot="start">
+                        <IonButton onClick={handleBackClick}>
+                            <IonIcon icon={arrowBack} />
+                        </IonButton>
+                    </IonButtons>
                     <IonTitle>Structure Setup</IonTitle>
                 </IonToolbar>
             </IonHeader>
@@ -183,6 +203,7 @@ const Structure: React.FC = () => {
                             <IonSearchbar
                                 ref={searchRef}
                                 placeholder="Search structures..."
+                                value={searchTerm}
                                 onIonInput={(e) => setSearchTerm(e.detail.value || '')}
                                 debounce={0}
                             />
