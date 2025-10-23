@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   IonContent,
   IonHeader,
@@ -12,10 +12,12 @@ import {
   IonCol,
   IonLoading,
   IonAlert,
-  IonToast
+  IonToast,
+  IonButtons,
+  IonButton
 } from '@ionic/react';
-import { useLocation } from 'react-router-dom';
-import { add, arrowUpCircle, trash } from 'ionicons/icons';
+import { useLocation, useHistory } from 'react-router-dom';
+import { add, arrowUpCircle, trash, arrowBack } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import TaxrateCreateModal from '../../components/TaxrateModals/TaxrateCreateModal';
 import TaxrateUpdateModal from '../../components/TaxrateModals/TaxrateUpdateModal';
@@ -41,14 +43,23 @@ const Taxrate: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const location = useLocation();
+  const history = useHistory();
   const [isError, setIsError] = useState(false);
+  const [districtId, setDistrictId] = useState<string | null>(null);
 
-  // Get district_id from URL
-  const queryParams = new URLSearchParams(location.search);
-  const districtId = queryParams.get('district_id');
+  // Reset state when URL changes (including tab navigation)
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const id = queryParams.get('district_id');
+    
+    setDistrictId(id);
+    setSelectedRow(null);
+    setSearchTerm('');
+    setTaxrates([]);
+  }, [location.search]);
 
   // Fetch tax rates
-  const fetchTaxrates = async () => {
+  const fetchTaxrates = useCallback(async () => {
     if (!districtId) {
       setToastMessage('District ID is missing');
       setIsError(true);
@@ -75,11 +86,13 @@ const Taxrate: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [districtId]);
 
   useEffect(() => {
-    fetchTaxrates();
-  }, [districtId]);
+    if (districtId) {
+      fetchTaxrates();
+    }
+  }, [districtId, fetchTaxrates]);
 
   // Filter data based on search term
   const filteredData = useMemo(() => {
@@ -141,25 +154,25 @@ const Taxrate: React.FC = () => {
     }
   };
 
-  // Icon buttons - moved after function declarations
+  const handleBackClick = () => {
+    history.push('/menu/home/district');
+  };
+
   const iconButtons = [
-    { icon: add, onClick: () => setShowCreateModal(true), disabled: false, title: "Add Tax Rate" },
+    { icon: add, onClick: () => setShowCreateModal(true), disabled: !districtId, title: "Add Tax Rate" },
     { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Tax Rate" },
     { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Tax Rate" },
   ];
-
-  // Add debug logging
-  console.log('Taxrate component rendering', {
-    districtId,
-    taxratesCount: taxrates.length,
-    filteredDataCount: filteredData.length,
-    isLoading
-  });
 
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
+          <IonButtons slot="start">
+            <IonButton onClick={handleBackClick}>
+              <IonIcon icon={arrowBack} />
+            </IonButton>
+          </IonButtons>
           <IonTitle>{districtId ? `Tax Rates - District ${districtId}` : 'Tax Rates'}</IonTitle>
         </IonToolbar>
       </IonHeader>
