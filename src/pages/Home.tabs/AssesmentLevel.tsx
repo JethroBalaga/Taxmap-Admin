@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
     IonContent,
     IonHeader,
@@ -12,13 +12,15 @@ import {
     IonLoading,
     IonSearchbar,
     IonAlert,
-    IonToast
+    IonToast,
+    IonButtons,
+    IonButton
 } from '@ionic/react';
-import { add, arrowUpCircle, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, trash, arrowBack } from 'ionicons/icons';
 import './../../CSS/Setup2.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useHistory } from 'react-router-dom';
 import AssessmentCreateModal from '../../components/AssesmentLevelModals/AssesmentCreateModal';
 import AssessmentUpdateModal from '../../components/AssesmentLevelModals/AssessmentUpdateModal';
 
@@ -45,15 +47,24 @@ const AssessmentLevel: React.FC = () => {
     const searchRef = useRef<HTMLIonSearchbarElement>(null);
     const [isError, setIsError] = useState(false);
     const location = useLocation();
+    const history = useHistory();
     const [showUpdateModal, setShowUpdateModal] = useState(false);
     const [selectedAssessmentLevel, setSelectedAssessmentLevel] = useState<AssessmentLevelItem | null>(null);
+    const [kindId, setKindId] = useState<string | null>(null);
 
-    // Get kind_id from URL
-    const queryParams = new URLSearchParams(location.search);
-    const kindId = queryParams.get('kind_id');
+    // Reset state when URL changes (including tab navigation)
+    useEffect(() => {
+        const queryParams = new URLSearchParams(location.search);
+        const id = queryParams.get('kind_id');
+        
+        setKindId(id);
+        setSelectedRow(null);
+        setSearchTerm('');
+        setAssessmentLevels([]);
+    }, [location.search]);
 
     // Fetch data
-    const fetchAssessmentLevels = async () => {
+    const fetchAssessmentLevels = useCallback(async () => {
         if (!kindId) return;
 
         setIsLoading(true);
@@ -75,11 +86,13 @@ const AssessmentLevel: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [kindId]);
 
     useEffect(() => {
-        fetchAssessmentLevels();
-    }, [kindId]);
+        if (kindId) {
+            fetchAssessmentLevels();
+        }
+    }, [kindId, fetchAssessmentLevels]);
 
     // Filter data based on search term
     const filteredData = useMemo(() => {
@@ -153,19 +166,27 @@ const AssessmentLevel: React.FC = () => {
         }
     };
 
+    const handleBackClick = () => {
+        history.push('/menu/home/kind');
+    };
+
     // Icon buttons configuration
     const iconButtons = [
-        { icon: add, onClick: handleCreateClick, disabled: false, title: "Add Assessment Level" },
+        { icon: add, onClick: handleCreateClick, disabled: !kindId, title: "Add Assessment Level" },
         { icon: arrowUpCircle, onClick: handleEditClick, disabled: !selectedRow, title: "Edit Assessment Level" },
         { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Assessment Level" }
-
     ];
 
     return (
         <IonPage>
             <IonHeader>
                 <IonToolbar>
-                    <IonTitle>Assessment Levels - Kind {kindId}</IonTitle>
+                    <IonButtons slot="start">
+                        <IonButton onClick={handleBackClick}>
+                            <IonIcon icon={arrowBack} />
+                        </IonButton>
+                    </IonButtons>
+                    <IonTitle>{kindId ? `Assessment Levels - Kind ${kindId}` : 'Assessment Levels'}</IonTitle>
                 </IonToolbar>
             </IonHeader>
 
@@ -176,6 +197,7 @@ const AssessmentLevel: React.FC = () => {
                             <IonSearchbar
                                 ref={searchRef}
                                 placeholder="Search by year, ID, or level..."
+                                value={searchTerm}
                                 onIonInput={(e) => setSearchTerm(e.detail.value || '')}
                                 debounce={200}
                             />
