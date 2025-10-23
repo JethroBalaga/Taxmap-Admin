@@ -13,9 +13,11 @@ import {
   IonSearchbar,
   IonLoading,
   IonToast,
-  IonAlert
+  IonAlert,
+  IonButtons,
+  IonButton
 } from '@ionic/react';
-import { add, arrowUpCircle, cashOutline, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, cashOutline, trash, arrowBack } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import SubclassCreateModal from '../../components/SubclassModals/SubclassCreateModal';
 import SubclassUpdateModal from '../../components/SubclassModals/SubclassUpdateModal';
@@ -157,9 +159,12 @@ const Subclass: React.FC = () => {
 
   const handleRate = () => {
     if (selectedRow) {
-      // Pass both subclass_id and class_id for proper back navigation
       history.push(`/menu/home/subclassrate?subclass_id=${selectedRow.subclass_id}&class_id=${classId}`);
     }
+  };
+
+  const handleBackClick = () => {
+    history.push('/menu/home/classification');
   };
 
   const iconButtons = [
@@ -173,6 +178,11 @@ const Subclass: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
+          <IonButtons slot="start">
+            <IonButton onClick={handleBackClick}>
+              <IonIcon icon={arrowBack} />
+            </IonButton>
+          </IonButtons>
           <IonTitle>
             {classId ? `Subclasses (Class ID: ${classId})` : 'Subclasses'}
           </IonTitle>
