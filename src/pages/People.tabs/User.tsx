@@ -57,6 +57,9 @@ const User: React.FC = () => {
     const [showAdminPassword, setShowAdminPassword] = useState(false);
     const [isPasswordCorrect, setIsPasswordCorrect] = useState<boolean | null>(null);
     const [currentAdmin, setCurrentAdmin] = useState<any>(null);
+    const [deleteAdminPassword, setDeleteAdminPassword] = useState('');
+    const [showDeleteAdminPassword, setShowDeleteAdminPassword] = useState(false);
+    const [isDeletePasswordCorrect, setIsDeletePasswordCorrect] = useState<boolean | null>(null);
 
     // Focus search input on mount
     useEffect(() => {
@@ -196,12 +199,46 @@ const User: React.FC = () => {
         }
     };
 
+    // Check delete admin password in real-time
+    const checkDeleteAdminPassword = async (password: string) => {
+        if (!currentAdmin || !password) {
+            setIsDeletePasswordCorrect(null);
+            return false;
+        }
+
+        try {
+            const userData = await getAdminUserData();
+            
+            if (!userData) {
+                setIsDeletePasswordCorrect(false);
+                return false;
+            }
+
+            const isCorrect = await bcrypt.compare(password, userData.user_password);
+            setIsDeletePasswordCorrect(isCorrect);
+            return isCorrect;
+        } catch (error) {
+            console.error('Error checking admin password:', error);
+            setIsDeletePasswordCorrect(false);
+            return false;
+        }
+    };
+
     const handleAdminPasswordChange = async (password: string) => {
         setAdminPassword(password);
         if (password) {
             await checkAdminPassword(password);
         } else {
             setIsPasswordCorrect(null);
+        }
+    };
+
+    const handleDeleteAdminPasswordChange = async (password: string) => {
+        setDeleteAdminPassword(password);
+        if (password) {
+            await checkDeleteAdminPassword(password);
+        } else {
+            setIsDeletePasswordCorrect(null);
         }
     };
 
@@ -291,19 +328,66 @@ const User: React.FC = () => {
 
     const handleDeleteClick = async () => {
         if (!selectedRow) return;
+
+        // Prevent admin from deleting themselves
+        if (selectedRow.user_id === currentAdmin?.id) {
+            setToastMessage('You cannot delete your own account');
+            setIsError(true);
+            setShowToast(true);
+            return;
+        }
+
+        // Prevent deleting other admins (optional - remove if you want to allow deleting other admins)
+        if (selectedRow.user_role === 'admin') {
+            setToastMessage('Cannot delete other administrators');
+            setIsError(true);
+            setShowToast(true);
+            return;
+        }
+
         setShowDeleteAlert(true);
     };
 
     const handleDeleteConfirm = async () => {
-        if (!selectedRow) return;
+        if (!selectedRow || !currentAdmin) return;
 
         try {
             setIsLoading(true);
-            // Delete functionality to be implemented later
-            console.log('Delete user:', selectedRow);
-            
-            setToastMessage(`Delete functionality for ${selectedRow.username} coming soon!`);
+
+            // Verify admin password first
+            const userData = await getAdminUserData();
+            if (!userData) {
+                setToastMessage('Admin verification failed');
+                setIsError(true);
+                setShowToast(true);
+                return;
+            }
+
+            const isCorrect = await bcrypt.compare(deleteAdminPassword, userData.user_password);
+            if (!isCorrect) {
+                setToastMessage('Invalid admin password');
+                setIsError(true);
+                setShowToast(true);
+                return;
+            }
+
+            // Delete the user from auth and cascade to users table
+            const { error } = await supabase.auth.admin.deleteUser(selectedRow.user_id);
+
+            if (error) throw error;
+
+            setToastMessage(`User ${selectedRow.username} has been deleted successfully`);
             setShowToast(true);
+            
+            // Refresh the user list
+            fetchUsers();
+            
+            // Reset states
+            setShowDeleteAlert(false);
+            setDeleteAdminPassword('');
+            setIsDeletePasswordCorrect(null);
+            setShowDeleteAdminPassword(false);
+            
         } catch (error) {
             console.error('Error deleting user:', error);
             setToastMessage('Failed to delete user');
@@ -311,7 +395,6 @@ const User: React.FC = () => {
             setShowToast(true);
         } finally {
             setIsLoading(false);
-            setShowDeleteAlert(false);
         }
     };
 
@@ -466,23 +549,83 @@ const User: React.FC = () => {
                     </IonContent>
                 </IonModal>
 
-                <IonAlert
-                    isOpen={showDeleteAlert}
-                    onDidDismiss={() => setShowDeleteAlert(false)}
-                    header={'Confirm Delete'}
-                    message={`Are you sure you want to delete the user <strong>${selectedRow?.username}</strong>?`}
-                    buttons={[
-                        {
-                            text: 'Cancel',
-                            role: 'cancel',
-                            cssClass: 'secondary',
-                        },
-                        {
-                            text: 'Delete',
-                            handler: handleDeleteConfirm
-                        }
-                    ]}
-                />
+                {/* Delete Confirmation Modal with Admin Password */}
+                <IonModal isOpen={showDeleteAlert} onDidDismiss={() => {
+                    setShowDeleteAlert(false);
+                    setDeleteAdminPassword('');
+                    setIsDeletePasswordCorrect(null);
+                    setShowDeleteAdminPassword(false);
+                }}>
+                    <IonHeader>
+                        <IonToolbar>
+                            <IonTitle>Delete User Confirmation</IonTitle>
+                            <IonButtons slot="end">
+                                <IonButton onClick={() => setShowDeleteAlert(false)}>Close</IonButton>
+                            </IonButtons>
+                        </IonToolbar>
+                    </IonHeader>
+                    <IonContent className="ion-padding">
+                        <div style={{ textAlign: 'center', padding: '20px' }}>
+                            <h2>Confirm Delete User</h2>
+                            <p>You are about to permanently delete the user: <strong>{selectedRow?.username}</strong></p>
+                            <p style={{ color: 'var(--ion-color-danger)', fontSize: '14px' }}>
+                                This action cannot be undone and will permanently remove all user data.
+                            </p>
+                            
+                            <IonItem style={{ margin: '20px 0' }}>
+                                <IonLabel position="stacked">Admin Password Verification</IonLabel>
+                                <IonInput
+                                    type={showDeleteAdminPassword ? "text" : "password"}
+                                    value={deleteAdminPassword}
+                                    onIonInput={(e) => handleDeleteAdminPasswordChange(e.detail.value!)}
+                                    placeholder="Enter your admin password to confirm"
+                                />
+                                <IonButtons slot="end">
+                                    <IonButton onClick={() => setShowDeleteAdminPassword(!showDeleteAdminPassword)}>
+                                        <IonIcon icon={showDeleteAdminPassword ? eyeOff : eye} />
+                                    </IonButton>
+                                </IonButtons>
+                            </IonItem>
+
+                            {/* Password validation indicator */}
+                            {deleteAdminPassword && (
+                                <div style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center', 
+                                    margin: '10px 0',
+                                    color: isDeletePasswordCorrect ? 'green' : 'red'
+                                }}>
+                                    <IonIcon 
+                                        icon={isDeletePasswordCorrect ? checkmarkCircle : closeCircle} 
+                                        style={{ marginRight: '8px' }}
+                                    />
+                                    <span>
+                                        {isDeletePasswordCorrect ? 'Password is correct' : 'Password is incorrect'}
+                                    </span>
+                                </div>
+                            )}
+
+                            <IonButton
+                                onClick={handleDeleteConfirm}
+                                expand="block"
+                                style={{ margin: '10px 0' }}
+                                disabled={!isDeletePasswordCorrect}
+                                color="danger"
+                            >
+                                Confirm Delete User
+                            </IonButton>
+
+                            <IonButton
+                                onClick={() => setShowDeleteAlert(false)}
+                                expand="block"
+                                fill="outline"
+                            >
+                                Cancel
+                            </IonButton>
+                        </div>
+                    </IonContent>
+                </IonModal>
 
                 <IonToast
                     isOpen={showToast}
