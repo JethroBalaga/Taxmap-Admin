@@ -14,7 +14,7 @@ import {
   IonCardContent,
   IonAvatar,
 } from '@ionic/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // Added useEffect
 import { supabase } from '../utils/supaBaseClient';
 import Logo from '../Images/Flag_of_Manolo_Fortich,_Bukidnon.png';
 import backgroundImg from '../Images/Background.jpg';
@@ -39,6 +39,27 @@ const Login: React.FC = () => {
   const [alertMessage, setAlertMessage] = useState('');
   const [showAlert, setShowAlert] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [hasExistingAdmins, setHasExistingAdmins] = useState(false); // New state
+
+  // Check if admins exist on component mount
+  useEffect(() => {
+    checkExistingAdmins();
+  }, []);
+
+  const checkExistingAdmins = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('admins')
+        .select('user_id')
+        .limit(1);
+
+      if (!error && data && data.length > 0) {
+        setHasExistingAdmins(true);
+      }
+    } catch (error) {
+      console.error('Error checking existing admins:', error);
+    }
+  };
 
   const doLogin = async () => {
     try {
@@ -173,20 +194,23 @@ const Login: React.FC = () => {
                   Login
                 </IonButton>
 
-                <IonButton
-                  routerLink="/adminregistration"
-                  expand="block"
-                  fill="clear"
-                  shape="round"
-                  style={{
-                    '--color': 'white',
-                    '--background': 'transparent',
-                    '--border-color': 'transparent'
-                  }}
-                  className="login-secondary-button"
-                >
-                  Add First Admin
-                </IonButton>
+                {/* Only show "Add First Admin" if no admins exist */}
+                {!hasExistingAdmins && (
+                  <IonButton
+                    routerLink="/adminregistration"
+                    expand="block"
+                    fill="clear"
+                    shape="round"
+                    style={{
+                      '--color': 'white',
+                      '--background': 'transparent',
+                      '--border-color': 'transparent'
+                    }}
+                    className="login-secondary-button"
+                  >
+                    Add First Admin
+                  </IonButton>
+                )}
               </div>
             </IonCardContent>
           </IonCard>
