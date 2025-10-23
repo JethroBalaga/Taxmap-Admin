@@ -23,7 +23,7 @@ import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 import BuildingSubComCreateModal from '../../components/BuildingSubcomModals/BuildingSubComCreateModal';
-import BuildingSubComUpdateModal from '../../components/BuildingSubcomModals/BuildingSubComUpdateModal'; // Import the update modal
+import BuildingSubComUpdateModal from '../../components/BuildingSubcomModals/BuildingSubComUpdateModal';
 
 // Define the type for building subcomponent data
 interface BuildingSubComItem {
@@ -46,7 +46,7 @@ interface LocationState {
 const BuildingSubCom: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [showUpdateModal, setShowUpdateModal] = useState(false); // State for update modal
+    const [showUpdateModal, setShowUpdateModal] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [buildingSubComponents, setBuildingSubComponents] = useState<BuildingSubComItem[]>([]);
     const [selectedRow, setSelectedRow] = useState<BuildingSubComItem | null>(null);
@@ -54,17 +54,30 @@ const BuildingSubCom: React.FC = () => {
     const [toastMessage, setToastMessage] = useState('');
     const [isError, setIsError] = useState(false);
     const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+    const [buildingComId, setBuildingComId] = useState<string | null>(null);
+    const [buildingComData, setBuildingComData] = useState<LocationState['buildingComData'] | null>(null);
     const searchRef = useRef<HTMLIonSearchbarElement>(null);
     const history = useHistory();
     const location = useLocation();
 
-    // Get building_com_id from URL parameters
-    const queryParams = new URLSearchParams(location.search);
-    const buildingComId = queryParams.get('building_com_id');
-
-    // Get building component data from navigation state
-    const locationState = location.state as LocationState;
-    const buildingComData = locationState?.buildingComData;
+    // Reset state when URL changes (including tab navigation)
+    useEffect(() => {
+        const queryParams = new URLSearchParams(location.search);
+        const comId = queryParams.get('building_com_id');
+        
+        setBuildingComId(comId);
+        setSelectedRow(null);
+        setSearchTerm('');
+        setBuildingSubComponents([]);
+        
+        // Get building component data from navigation state
+        const locationState = location.state as LocationState;
+        if (locationState?.buildingComData) {
+            setBuildingComData(locationState.buildingComData);
+        } else {
+            setBuildingComData(null);
+        }
+    }, [location.search, location.state]);
 
     // Fetch building sub-components from Supabase
     const fetchBuildingSubComponents = useCallback(async () => {
@@ -92,8 +105,10 @@ const BuildingSubCom: React.FC = () => {
     }, [buildingComId]);
 
     useEffect(() => {
-        fetchBuildingSubComponents();
-    }, [fetchBuildingSubComponents]);
+        if (buildingComId) {
+            fetchBuildingSubComponents();
+        }
+    }, [buildingComId, fetchBuildingSubComponents]);
 
     // Filter data based on search term
     const filteredData = useMemo(() => {
@@ -118,7 +133,7 @@ const BuildingSubCom: React.FC = () => {
 
     const handleEditClick = () => {
         if (selectedRow) {
-            setShowUpdateModal(true); // Open the update modal
+            setShowUpdateModal(true);
         }
     };
 
@@ -165,6 +180,7 @@ const BuildingSubCom: React.FC = () => {
 
     const handleBuildingSubComCreated = () => {
         fetchBuildingSubComponents();
+        setShowCreateModal(false);
         setToastMessage('Building Sub-Component created successfully!');
         setShowToast(true);
     };
@@ -178,7 +194,7 @@ const BuildingSubCom: React.FC = () => {
     };
 
     const iconButtons = [
-        { icon: add, onClick: handleAddClick, disabled: false, title: "Add Building Sub-Component" },
+        { icon: add, onClick: handleAddClick, disabled: !buildingComId, title: "Add Building Sub-Component" },
         { icon: arrowUpCircle, onClick: handleEditClick, disabled: !selectedRow, title: "Edit Building Sub-Component" },
         { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Building Sub-Component" }
     ];
@@ -212,6 +228,7 @@ const BuildingSubCom: React.FC = () => {
                             <IonSearchbar
                                 ref={searchRef}
                                 placeholder="Search building sub-components..."
+                                value={searchTerm}
                                 onIonInput={(e) => setSearchTerm(e.detail.value || '')}
                                 debounce={300}
                             />
