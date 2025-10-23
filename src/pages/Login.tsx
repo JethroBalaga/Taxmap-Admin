@@ -174,7 +174,7 @@ const Login: React.FC = () => {
                 </IonButton>
 
                 <IonButton
-                  routerLink="/registration"
+                  routerLink="/adminregistration"
                   expand="block"
                   fill="clear"
                   shape="round"
@@ -185,7 +185,7 @@ const Login: React.FC = () => {
                   }}
                   className="login-secondary-button"
                 >
-                  Add A Taxmap Admin or User
+                  Add First Admin
                 </IonButton>
               </div>
             </IonCardContent>

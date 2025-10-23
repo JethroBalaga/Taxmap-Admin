@@ -19,7 +19,7 @@ import SuccessModal from '../components/RegistrationCommponents/SuccessModal';
 import AlertBox from '../components/RegistrationCommponents/AlertBox';
 import backgroundImg from '../Images/Manolo 2.jpg';
 
-const Register: React.FC = () => {
+const AdminRegister: React.FC = () => {
   const [formData, setFormData] = useState({
     username: '',
     firstName: '',
@@ -269,4 +269,4 @@ const Register: React.FC = () => {
   );
 };
 
-export default Register;
+export default AdminRegister;
