@@ -37,9 +37,9 @@ interface LocationState {
 
 // Define the type for building code data
 interface BuildingCodeItem {
-    building_code: string; // Changed from number to string
+    building_code: string;
     description: string;
-    rate: number; // Changed from string to number
+    rate: number;
     created_at?: string;
 }
 
@@ -57,14 +57,27 @@ const BuildingCode: React.FC = () => {
     const searchRef = useRef<HTMLIonSearchbarElement>(null);
     const location = useLocation();
     const history = useHistory();
+    const [structureCode, setStructureCode] = useState<string | null>(null);
+    const [structureData, setStructureData] = useState<LocationState['structureData'] | null>(null);
 
-    // Get structure_code from URL parameters
-    const queryParams = new URLSearchParams(location.search);
-    const structureCode = queryParams.get('structure_code');
-
-    // Get structure data from navigation state with proper typing
-    const locationState = location.state as LocationState;
-    const structureData = locationState?.structureData;
+    // Reset state when URL changes (including tab navigation)
+    useEffect(() => {
+        const queryParams = new URLSearchParams(location.search);
+        const code = queryParams.get('structure_code');
+        
+        setStructureCode(code);
+        setSelectedRow(null);
+        setSearchTerm('');
+        setBuildingCodes([]);
+        
+        // Get structure data from navigation state with proper typing
+        const locationState = location.state as LocationState;
+        if (locationState?.structureData) {
+            setStructureData(locationState.structureData);
+        } else {
+            setStructureData(null);
+        }
+    }, [location.search, location.state]);
 
     // Fetch building codes when structureCode changes
     const fetchBuildingCodes = useCallback(async () => {
@@ -74,7 +87,7 @@ const BuildingCode: React.FC = () => {
         try {
             const { data, error } = await supabase
                 .from('building_codetbl')
-                .select('building_code, description, rate, created_at') // Removed structure_code from select
+                .select('building_code, description, rate, created_at')
                 .eq('structure_code', structureCode)
                 .order('created_at', { ascending: false });
 
@@ -91,8 +104,10 @@ const BuildingCode: React.FC = () => {
     }, [structureCode]);
 
     useEffect(() => {
-        fetchBuildingCodes();
-    }, [fetchBuildingCodes]);
+        if (structureCode) {
+            fetchBuildingCodes();
+        }
+    }, [structureCode, fetchBuildingCodes]);
 
     // Filter data based on search term
     const filteredData = useMemo(() => {
@@ -126,20 +141,7 @@ const BuildingCode: React.FC = () => {
     };
 
     const handleBackClick = () => {
-        const queryParams = new URLSearchParams(location.search);
-        const structureCode = queryParams.get('structure_code');
-
-        if (structureCode) {
-            // Navigate back to the structure page with the structure_code
-            history.push(`/menu/home/structure?structure_code=${structureCode}`);
-        } else {
-            // Fallback: go back in history or navigate to default structure page
-            if (history.length > 1) {
-                history.goBack();
-            } else {
-                history.push('/menu/home/structure');
-            }
-        }
+        history.push('/menu/home/structure');
     };
 
     const handleDeleteConfirm = async () => {
@@ -150,8 +152,8 @@ const BuildingCode: React.FC = () => {
             const { error } = await supabase
                 .from('building_codetbl')
                 .delete()
-                .eq('building_code', selectedRow.building_code) // Changed to use building_code instead of building_code_id
-                .eq('structure_code', structureCode); // Added structure_code to ensure we delete the correct record
+                .eq('building_code', selectedRow.building_code)
+                .eq('structure_code', structureCode);
 
             if (error) throw error;
 
@@ -172,6 +174,8 @@ const BuildingCode: React.FC = () => {
     const handleBuildingCodeCreated = () => {
         fetchBuildingCodes();
         setShowCreateModal(false);
+        setToastMessage('Building code created successfully!');
+        setShowToast(true);
     };
 
     const handleBuildingCodeUpdated = () => {
@@ -183,7 +187,7 @@ const BuildingCode: React.FC = () => {
     };
 
     const iconButtons = [
-        { icon: add, onClick: handleAddClick, disabled: false, title: "Add Building Code" },
+        { icon: add, onClick: handleAddClick, disabled: !structureCode, title: "Add Building Code" },
         { icon: arrowUpCircle, onClick: handleEditClick, disabled: !selectedRow, title: "Edit Building Code" },
         { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Building Code" }
     ];
@@ -217,6 +221,7 @@ const BuildingCode: React.FC = () => {
                             <IonSearchbar
                                 ref={searchRef}
                                 placeholder="Search building codes..."
+                                value={searchTerm}
                                 onIonInput={(e) => setSearchTerm(e.detail.value || '')}
                                 debounce={0}
                             />
@@ -240,7 +245,7 @@ const BuildingCode: React.FC = () => {
                             <DynamicTable
                                 data={filteredData}
                                 title="Building Codes"
-                                keyField="building_code" // Changed to use building_code as key
+                                keyField="building_code"
                                 onRowClick={handleRowClick}
                                 selectedRow={selectedRow} 
                             />
@@ -258,7 +263,7 @@ const BuildingCode: React.FC = () => {
                     />
                 )}
 
-                {/* Building Code Update Modal - To be implemented */}
+                {/* Building Code Update Modal */}
                 <BuildingUpdateModal
                     isOpen={showUpdateModal}
                     onClose={() => setShowUpdateModal(false)}
