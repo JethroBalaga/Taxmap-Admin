@@ -21,7 +21,7 @@ import { add, arrowUpCircle, trash, arrowBack } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import ScrCreateModal from '../../components/SubclassRateModals/ScrCreateModal';
-import ScrUpdateModal from '../../components/SubclassRateModals/ScrUpdateModal'; // Import the update modal
+import ScrUpdateModal from '../../components/SubclassRateModals/ScrUpdateModal';
 import { supabase } from '../../utils/supaBaseClient';
 
 interface SubclassRateItem {
@@ -45,16 +45,19 @@ const SubclassRate: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [isError, setIsError] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false); // State for update modal
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
-  // Get subclass_id from URL when component mounts
+  // Reset state when subclass_id changes
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const id = queryParams.get('subclass_id');
-    if (id) {
+    
+    if (id && id !== subclassId) {
       setSubclassId(id);
+      setSelectedRow(null);
+      setRates([]);
     }
-  }, [location]);
+  }, [location.search, subclassId]);
 
   // Fetch rates when subclassId changes
   const fetchRates = useCallback(async () => {
@@ -178,7 +181,6 @@ const SubclassRate: React.FC = () => {
     { icon: add, onClick: handleAddRate, disabled: !subclassId, title: "Add Rate" },
     { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Rate" },
     { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Rate" }
-
   ];
 
   return (
@@ -235,7 +237,6 @@ const SubclassRate: React.FC = () => {
 
         <IonLoading isOpen={isLoading} message="Loading..." />
 
-        {/* ScrCreateModal */}
         {subclassId && (
           <ScrCreateModal
             isOpen={isCreateModalOpen}
@@ -245,7 +246,6 @@ const SubclassRate: React.FC = () => {
           />
         )}
 
-        {/* ScrUpdateModal */}
         <ScrUpdateModal
           isOpen={isUpdateModalOpen}
           onClose={() => setIsUpdateModalOpen(false)}
