@@ -12,12 +12,14 @@ import {
   IonLoading,
   IonSearchbar,
   IonAlert,
-  IonToast
+  IonToast,
+  IonButtons,
+  IonButton
 } from '@ionic/react';
-import { add, arrowUpCircle, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, trash, arrowBack } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useHistory } from 'react-router-dom';
 import { supabase } from '../../utils/supaBaseClient';
 import BarangayCreateModal from '../../components/BarangayModals/BarangayCreateModal';
 import BarangayUpdateModal from '../../components/BarangayModals/BarangayUpdateModal';
@@ -31,6 +33,7 @@ interface BarangayItem {
 
 const Barangay: React.FC = () => {
   const location = useLocation();
+  const history = useHistory();
   const [districtId, setDistrictId] = useState<number | null>(null);
   const [barangays, setBarangays] = useState<BarangayItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -39,16 +42,25 @@ const Barangay: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [isError, setIsError] = useState(false);
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
 
-  // Get district_id from URL params
+  // Reset state when URL changes (including tab navigation)
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const id = queryParams.get('district_id');
+    
     if (id) {
       setDistrictId(Number(id));
+    } else {
+      setDistrictId(null);
     }
-  }, [location]);
+    setSelectedRow(null);
+    setSearchTerm('');
+    setBarangays([]);
+  }, [location.search]);
 
   // Fetch barangays when districtId changes
   const fetchBarangays = useCallback(async () => {
@@ -66,14 +78,19 @@ const Barangay: React.FC = () => {
       setBarangays(data || []);
     } catch (error) {
       console.error('Error fetching barangays:', error);
+      setToastMessage('Failed to load barangays');
+      setIsError(true);
+      setShowToast(true);
     } finally {
       setIsLoading(false);
     }
   }, [districtId]);
 
   useEffect(() => {
-    fetchBarangays();
-  }, [fetchBarangays]);
+    if (districtId) {
+      fetchBarangays();
+    }
+  }, [districtId, fetchBarangays]);
 
   // Filter data based on search term
   const filteredData = useMemo(() => {
@@ -135,20 +152,24 @@ const Barangay: React.FC = () => {
   const handleBarangayCreated = () => {
     fetchBarangays();
     setShowCreateModal(false);
+    setToastMessage('Barangay created successfully!');
+    setShowToast(true);
   };
 
   const handleBarangayUpdated = () => {
     fetchBarangays();
     setSelectedRow(null);
     setShowUpdateModal(false);
+    setToastMessage('Barangay updated successfully!');
+    setShowToast(true);
   };
 
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const [isError, setIsError] = useState(false);
+  const handleBackClick = () => {
+    history.push('/menu/home/district');
+  };
 
   const iconButtons = [
-    { icon: add, onClick: handleCreateClick, disabled: false, title: "Add Barangay" },
+    { icon: add, onClick: handleCreateClick, disabled: !districtId, title: "Add Barangay" },
     { icon: arrowUpCircle, onClick: handleEditClick, disabled: !selectedRow, title: "Edit Barangay" },
     { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Barangay" }
   ];
@@ -157,6 +178,11 @@ const Barangay: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
+          <IonButtons slot="start">
+            <IonButton onClick={handleBackClick}>
+              <IonIcon icon={arrowBack} />
+            </IonButton>
+          </IonButtons>
           <IonTitle>
             {districtId ? `Barangays (District ID: ${districtId})` : 'Barangays'}
           </IonTitle>
@@ -170,6 +196,7 @@ const Barangay: React.FC = () => {
               <IonSearchbar
                 ref={searchRef}
                 placeholder="Search barangays..."
+                value={searchTerm}
                 onIonInput={(e) => setSearchTerm(e.detail.value || '')}
                 debounce={0}
               />
@@ -202,12 +229,14 @@ const Barangay: React.FC = () => {
         </IonGrid>
 
         {/* Create Modal */}
-        <BarangayCreateModal
-          isOpen={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
-          onBarangayCreated={handleBarangayCreated}
-          district_id={districtId || 0}
-        />
+        {districtId && (
+          <BarangayCreateModal
+            isOpen={showCreateModal}
+            onClose={() => setShowCreateModal(false)}
+            onBarangayCreated={handleBarangayCreated}
+            district_id={districtId}
+          />
+        )}
 
         {/* Update Modal */}
         <BarangayUpdateModal
