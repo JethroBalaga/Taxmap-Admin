@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   IonContent,
   IonHeader,
@@ -12,14 +12,17 @@ import {
   IonSearchbar,
   IonLoading,
   IonAlert,
-  IonToast
+  IonToast,
+  IonButtons,
+  IonButton
 } from '@ionic/react';
-import { add, arrowUpCircle, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, trash, arrowBack } from 'ionicons/icons';
 import './../../CSS/Setup2.css';
 import { supabase } from './../../utils/supaBaseClient';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import LandAdjustmentCreateModal from '../../components/LandAdjustmentModals/LandAdjustmentCreateModal';
 import LandAdjustmentUpdateModal from '../../components/LandAdjustmentModals/LandAdjustmentUpdateModal';
+import { useHistory, useLocation } from 'react-router-dom';
 
 interface LandAdjustmentItem {
   adjustment_id: string;
@@ -41,9 +44,17 @@ const LandAdjustment: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [isError, setIsError] = useState(false);
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
+  const history = useHistory();
+  const location = useLocation();
+
+  // Reset state when location changes (including tab navigation)
+  useEffect(() => {
+    setSelectedRow(null);
+    setSearchTerm('');
+  }, [location.pathname]);
 
   // Fetch land adjustments data
-  const fetchLandAdjustments = async () => {
+  const fetchLandAdjustments = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -62,11 +73,11 @@ const LandAdjustment: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchLandAdjustments();
-  }, []);
+  }, [fetchLandAdjustments]);
 
   // Filter data based on search term
   const filteredData = useMemo(() => {
@@ -78,7 +89,6 @@ const LandAdjustment: React.FC = () => {
       item.description.toLowerCase().includes(term) ||
       item.adjustment_factor.toLowerCase().includes(term) ||
       item.adjustment_type.toLowerCase().includes(term)
-
     );
   }, [landAdjustments, searchTerm]);
 
@@ -102,6 +112,11 @@ const LandAdjustment: React.FC = () => {
   const handleTrashClick = () => {
     if (!selectedRow) return;
     setShowDeleteAlert(true);
+  };
+
+  // Back button functionality
+  const handleBackClick = () => {
+    history.push('/menu/home');
   };
 
   // Confirm delete
@@ -136,7 +151,7 @@ const LandAdjustment: React.FC = () => {
   // Handle creation success
   const handleLandAdjustmentCreated = () => {
     fetchLandAdjustments();
-    setSelectedRow(null);
+    setShowCreateModal(false);
     setToastMessage('Land adjustment created successfully');
     setIsError(false);
     setShowToast(true);
@@ -146,6 +161,7 @@ const LandAdjustment: React.FC = () => {
   const handleLandAdjustmentUpdated = () => {
     fetchLandAdjustments();
     setSelectedRow(null);
+    setShowUpdateModal(false);
     setToastMessage('Land adjustment updated successfully');
     setIsError(false);
     setShowToast(true);
@@ -169,6 +185,11 @@ const LandAdjustment: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
+          <IonButtons slot="start">
+            <IonButton onClick={handleBackClick}>
+              <IonIcon icon={arrowBack} />
+            </IonButton>
+          </IonButtons>
           <IonTitle>Residential Land</IonTitle>
         </IonToolbar>
       </IonHeader>
