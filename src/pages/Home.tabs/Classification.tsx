@@ -12,15 +12,17 @@ import {
   IonLoading,
   IonSearchbar,
   IonAlert,
-  IonToast
+  IonToast,
+  IonButtons,
+  IonButton
 } from '@ionic/react';
-import { add, arrowUpCircle, layersOutline, trash, briefcaseOutline } from 'ionicons/icons';
+import { add, arrowUpCircle, layersOutline, trash, briefcaseOutline, arrowBack } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import ClassificationCreateModal from '../../components/ClassificationModals/ClassificationCreateModal';
 import ClassificationUpdateModal from '../../components/ClassificationModals/ClassificationUpdateModal';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 
 interface ClassificationItem {
   class_id: string;
@@ -30,6 +32,7 @@ interface ClassificationItem {
 
 const Classification: React.FC = () => {
   const history = useHistory();
+  const location = useLocation();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [classifications, setClassifications] = useState<ClassificationItem[]>([]);
@@ -43,6 +46,12 @@ const Classification: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const [isError, setIsError] = useState(false);
+
+  // Reset state when location changes (prevents stale data on refresh/navigation)
+  useEffect(() => {
+    setSelectedRow(null);
+    setSearchTerm('');
+  }, [location.pathname]);
 
   // Focus search input on mount
   useEffect(() => {
@@ -195,6 +204,11 @@ const Classification: React.FC = () => {
     }
   };
 
+  // Add back button handler
+  const handleBackClick = () => {
+    history.push('/menu/home');
+  };
+
   const iconButtons = [
     { icon: add, onClick: () => setShowCreateModal(true), disabled: false, title: "Add Classification" },
     { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Classification" },
@@ -218,6 +232,7 @@ const Classification: React.FC = () => {
               <IonSearchbar
                 ref={searchRef}
                 placeholder="Search classifications..."
+                value={searchTerm}
                 onIonInput={(e) => setSearchTerm(e.detail.value || '')}
                 debounce={0}
               />
