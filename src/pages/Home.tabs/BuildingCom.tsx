@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
     IonContent,
     IonHeader,
@@ -18,7 +18,7 @@ import {
     IonLabel
 } from '@ionic/react';
 import { add, arrowUpCircle, trash, arrowBack, appsOutline } from 'ionicons/icons';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import BuildingComCreateModal from '../../components/BuildingComModals/BuildingComCreateModal';
@@ -45,9 +45,18 @@ const BuildingCom: React.FC = () => {
     const [isError, setIsError] = useState(false);
     const searchRef = useRef<HTMLIonSearchbarElement>(null);
     const history = useHistory();
+    const location = useLocation();
+
+    // Reset state when location changes (including tab navigation)
+    useEffect(() => {
+        setSelectedRow(null);
+        setSearchTerm('');
+        // Note: We don't reset buildingComponents here since we want to keep the data
+        // but we reset selection and search when navigating
+    }, [location.pathname]);
 
     // Fetch building components from Supabase
-    const fetchBuildingComponents = async () => {
+    const fetchBuildingComponents = useCallback(async () => {
         setIsLoading(true);
         try {
             const { data, error } = await supabase
@@ -66,11 +75,11 @@ const BuildingCom: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchBuildingComponents();
-    }, []);
+    }, [fetchBuildingComponents]);
 
     // Filter data based on search term
     const filteredData = useMemo(() => {
@@ -149,6 +158,7 @@ const BuildingCom: React.FC = () => {
 
     const handleBuildingComCreated = () => {
         fetchBuildingComponents();
+        setShowCreateModal(false);
         setToastMessage('Building component created successfully!');
         setShowToast(true);
     };
@@ -188,6 +198,7 @@ const BuildingCom: React.FC = () => {
                             <IonSearchbar
                                 ref={searchRef}
                                 placeholder="Search building components..."
+                                value={searchTerm}
                                 onIonInput={(e) => setSearchTerm(e.detail.value || '')}
                                 debounce={300}
                             />
