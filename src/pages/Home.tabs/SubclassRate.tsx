@@ -47,17 +47,16 @@ const SubclassRate: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
-  // Reset state when subclass_id changes
+  // Reset state when URL changes (including tab navigation)
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const id = queryParams.get('subclass_id');
     
-    if (id && id !== subclassId) {
-      setSubclassId(id);
-      setSelectedRow(null);
-      setRates([]);
-    }
-  }, [location.search, subclassId]);
+    setSubclassId(id);
+    setSelectedRow(null);
+    setRates([]);
+    setSearchTerm('');
+  }, [location.search]);
 
   // Fetch rates when subclassId changes
   const fetchRates = useCallback(async () => {
@@ -85,8 +84,10 @@ const SubclassRate: React.FC = () => {
   }, [subclassId]);
 
   useEffect(() => {
-    fetchRates();
-  }, [fetchRates]);
+    if (subclassId) {
+      fetchRates();
+    }
+  }, [subclassId, fetchRates]);
 
   // Filter data based on search term
   const filteredData = useMemo(() => {
@@ -204,6 +205,7 @@ const SubclassRate: React.FC = () => {
             <IonCol size="12" className="search-container">
               <IonSearchbar
                 placeholder="Search rates..."
+                value={searchTerm}
                 onIonInput={(e) => setSearchTerm(e.detail.value || '')}
                 debounce={0}
               />
