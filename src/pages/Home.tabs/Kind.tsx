@@ -11,15 +11,13 @@ import {
   IonIcon,
   IonLoading,
   IonSearchbar,
-  IonAlert,
   IonToast
 } from '@ionic/react';
-import { add, arrowUpCircle, buildOutline, businessOutline, readerOutline, trash, earthOutline } from 'ionicons/icons';
+import { businessOutline, readerOutline, buildOutline, earthOutline } from 'ionicons/icons';
 import './../../CSS/Setup2.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 import { useHistory } from 'react-router-dom';
-import KindUpdateModal from '../../components/KindModals/KindUpdateModal';
 
 interface KindItem {
   kind_id: number;
@@ -32,11 +30,9 @@ const Kind: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRow, setSelectedRow] = useState<KindItem | null>(null);
-  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [isError, setIsError] = useState(false);
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const history = useHistory();
 
@@ -88,16 +84,6 @@ const Kind: React.FC = () => {
 
   const handleRowClick = (rowData: KindItem) => {
     setSelectedRow(rowData);
-  };
-
-  const handleUpdateClick = () => {
-    if (!selectedRow) return;
-    setShowUpdateModal(true);
-  };
-
-  const handleDeleteClick = () => {
-    if (!selectedRow) return;
-    setShowDeleteAlert(true);
   };
 
   const handleManageAssessmentLevels = () => {
@@ -153,46 +139,7 @@ const Kind: React.FC = () => {
     });
   };
 
-  const handleDeleteConfirm = async () => {
-    if (!selectedRow) return;
-
-    try {
-      setIsLoading(true);
-      const { error } = await supabase
-        .from('kindtbl')
-        .delete()
-        .eq('kind_id', selectedRow.kind_id);
-
-      if (error) throw error;
-
-      await fetchKinds();
-      setSelectedRow(null);
-      setToastMessage('Kind deleted successfully');
-      setIsError(false);
-      setShowToast(true);
-    } catch (error) {
-      console.error('Error deleting kind:', error);
-      setToastMessage('Failed to delete kind');
-      setIsError(true);
-      setShowToast(true);
-    } finally {
-      setIsLoading(false);
-      setShowDeleteAlert(false);
-    }
-  };
-
-  const handleKindUpdated = () => {
-    fetchKinds();
-    setSelectedRow(null);
-    setToastMessage('Kind updated successfully');
-    setIsError(false);
-    setShowToast(true);
-  };
-
   const iconButtons = [
-    { icon: add, onClick: () => { setToastMessage('Add functionality to be implemented'); setShowToast(true); }, disabled: false, title: "Add Kind" },
-    { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Kind" },
-    { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Kind" },
     { icon: readerOutline, onClick: handleManageAssessmentLevels, disabled: !selectedRow, title: "Manage Assessment Levels" },
     { icon: businessOutline, onClick: handleBuildingStructuralType, disabled: !isBuilding, title: "Building Structural Type" },
     { icon: buildOutline, onClick: handleManageEquipment, disabled: !isMachinery, title: "Manage Equipment" },
@@ -246,31 +193,6 @@ const Kind: React.FC = () => {
         </IonGrid>
 
         <IonLoading isOpen={isLoading} message="Loading..." />
-
-        <KindUpdateModal
-          isOpen={showUpdateModal}
-          onClose={() => setShowUpdateModal(false)}
-          kindData={selectedRow}
-          onKindUpdated={handleKindUpdated}
-        />
-
-        <IonAlert
-          isOpen={showDeleteAlert}
-          onDidDismiss={() => setShowDeleteAlert(false)}
-          header={'Confirm Delete'}
-          message={`Are you sure you want to delete kind #${selectedRow?.kind_id} (${selectedRow?.description})?`}
-          buttons={[
-            {
-              text: 'Cancel',
-              role: 'cancel',
-              cssClass: 'secondary',
-            },
-            {
-              text: 'Delete',
-              handler: handleDeleteConfirm
-            }
-          ]}
-        />
 
         <IonToast
           isOpen={showToast}
