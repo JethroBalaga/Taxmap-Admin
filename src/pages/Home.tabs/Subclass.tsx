@@ -47,19 +47,15 @@ const Subclass: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [isError, setIsError] = useState(false);
 
-  // Get class_id from URL when component mounts
+  // Reset state when URL changes (including tab navigation)
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const id = queryParams.get('class_id');
-    if (id) {
-      setClassId(id);
-    }
-  }, [location]);
-
-  // Reset selected row when classId changes
-  useEffect(() => {
+    
+    setClassId(id);
     setSelectedRow(null);
-  }, [classId]);
+    setSearchTerm('');
+  }, [location.search]);
 
   // Fetch subclasses when classId changes
   const fetchSubclasses = useCallback(async () => {
@@ -87,8 +83,10 @@ const Subclass: React.FC = () => {
   }, [classId]);
 
   useEffect(() => {
-    fetchSubclasses();
-  }, [fetchSubclasses]);
+    if (classId) {
+      fetchSubclasses();
+    }
+  }, [classId, fetchSubclasses]);
 
   // Filter data based on search term
   const filteredData = useMemo(() => {
@@ -195,6 +193,7 @@ const Subclass: React.FC = () => {
             <IonCol size="12" className="search-container">
               <IonSearchbar
                 placeholder="Search subclasses..."
+                value={searchTerm}
                 onIonInput={(e) => setSearchTerm(e.detail.value || '')}
                 debounce={0}
               />
