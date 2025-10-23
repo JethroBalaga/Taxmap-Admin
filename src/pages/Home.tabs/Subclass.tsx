@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useLocation, useHistory } from 'react-router-dom'; // Added useHistory
+import { useLocation, useHistory } from 'react-router-dom';
 import {
   IonContent,
   IonHeader,
@@ -32,7 +32,7 @@ interface SubclassItem {
 
 const Subclass: React.FC = () => {
   const location = useLocation();
-  const history = useHistory(); // Added history for navigation
+  const history = useHistory();
   const [classId, setClassId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -53,6 +53,11 @@ const Subclass: React.FC = () => {
       setClassId(id);
     }
   }, [location]);
+
+  // Reset selected row when classId changes
+  useEffect(() => {
+    setSelectedRow(null);
+  }, [classId]);
 
   // Fetch subclasses when classId changes
   const fetchSubclasses = useCallback(async () => {
@@ -152,7 +157,8 @@ const Subclass: React.FC = () => {
 
   const handleRate = () => {
     if (selectedRow) {
-      history.push(`/menu/home/subclassrate?subclass_id=${selectedRow.subclass_id}`);
+      // Pass both subclass_id and class_id for proper back navigation
+      history.push(`/menu/home/subclassrate?subclass_id=${selectedRow.subclass_id}&class_id=${classId}`);
     }
   };
 
@@ -161,7 +167,6 @@ const Subclass: React.FC = () => {
     { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Subclass" },
     { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Subclass" },
     { icon: cashOutline, onClick: handleRate, disabled: !selectedRow, title: "View Rates" }
-
   ];
 
   return (
