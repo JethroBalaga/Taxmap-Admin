@@ -8,7 +8,14 @@ import {
   IonSelectOption,
   IonLabel,
   IonInput,
-  IonItem
+  IonItem,
+  IonModal,
+  IonButton,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonButtons,
+  IonIcon
 } from '@ionic/react';
 import { supabase } from '../utils/supaBaseClient';
 import bcrypt from 'bcryptjs';
@@ -20,6 +27,8 @@ import VerificationModal from '../components/RegistrationCommponents/Verificatio
 import SuccessModal from '../components/RegistrationCommponents/SuccessModal';
 import AlertBox from '../components/RegistrationCommponents/AlertBox';
 import backgroundImg from '../Images/Manolo 2.jpg';
+import { useHistory } from 'react-router-dom';
+import { eye, eyeOff, checkmarkCircle, closeCircle } from 'ionicons/icons';
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -29,8 +38,7 @@ const Register: React.FC = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'user',
-    adminPassword: '' // Added admin password field
+    role: 'user'
   });
 
   const [showVerificationModal, setShowVerificationModal] = useState(false);
@@ -43,6 +51,11 @@ const Register: React.FC = () => {
     color: 'primary'
   });
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [showAdminPasswordModal, setShowAdminPasswordModal] = useState(false);
+  const [adminPassword, setAdminPassword] = useState('');
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
+  const [isPasswordCorrect, setIsPasswordCorrect] = useState<boolean | null>(null);
+  const history = useHistory();
 
   // Get current user session
   useEffect(() => {
@@ -83,27 +96,94 @@ const Register: React.FC = () => {
     return { value: 1, label: 'Very Strong', color: 'primary' };
   };
 
-  const verifyAdminPassword = async (): Promise<boolean> => {
-    if (!currentUser) return false;
+  // Get admin user data with password
+  const getAdminUserData = async () => {
+    if (!currentUser) return null;
 
     try {
-      // Check if current user is admin
-      const { data: adminData, error } = await supabase
+      // First check if user is admin
+      const { data: adminData, error: adminError } = await supabase
         .from('admins')
-        .select('*')
+        .select('user_id')
         .eq('user_id', currentUser.id)
         .single();
 
-      if (error || !adminData) {
+      if (adminError || !adminData) {
+        return null;
+      }
+
+      // Then get the user data with password
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('user_password')
+        .eq('user_id', currentUser.id)
+        .single();
+
+      if (userError || !userData) {
+        return null;
+      }
+
+      return userData;
+    } catch (error) {
+      console.error('Error getting admin user data:', error);
+      return null;
+    }
+  };
+
+  // Check admin password in real-time against the users table
+  const checkAdminPassword = async (password: string) => {
+    if (!currentUser || !password) {
+      setIsPasswordCorrect(null);
+      return false;
+    }
+
+    try {
+      const userData = await getAdminUserData();
+      
+      if (!userData) {
+        setIsPasswordCorrect(false);
+        return false;
+      }
+
+      // Verify admin password against the stored hash in users table
+      const isCorrect = await bcrypt.compare(password, userData.user_password);
+      setIsPasswordCorrect(isCorrect);
+      return isCorrect;
+    } catch (error) {
+      console.error('Error checking admin password:', error);
+      setIsPasswordCorrect(false);
+      return false;
+    }
+  };
+
+  const handleAdminPasswordChange = async (password: string) => {
+    setAdminPassword(password);
+    if (password) {
+      await checkAdminPassword(password);
+    } else {
+      setIsPasswordCorrect(null);
+    }
+  };
+
+  const verifyAdminPassword = async (): Promise<boolean> => {
+    if (!currentUser) {
+      setAlertMessage('No user session found.');
+      setShowAlert(true);
+      return false;
+    }
+
+    try {
+      const userData = await getAdminUserData();
+      
+      if (!userData) {
         setAlertMessage('Only administrators can create new users.');
         setShowAlert(true);
         return false;
       }
 
-      // Verify admin password (you might want to implement a more secure way)
-      // For now, we'll check if the admin password matches a predefined value
-      // You can modify this to check against the actual admin's password
-      if (formData.adminPassword === 'admin123' || formData.adminPassword.length > 0) {
+      // Verify admin password against the stored hash in users table
+      const isCorrect = await bcrypt.compare(adminPassword, userData.user_password);
+      if (isCorrect) {
         return true;
       } else {
         setAlertMessage('Invalid admin password.');
@@ -140,21 +220,26 @@ const Register: React.FC = () => {
       return;
     }
 
-    // 3️⃣ Verify admin password if creating admin account
-    if (formData.role === 'admin') {
-      if (!formData.adminPassword) {
-        setAlertMessage('Admin password is required to create admin accounts.');
-        setShowAlert(true);
-        return;
-      }
+    // 3️⃣ Show admin password modal for verification
+    setShowAdminPasswordModal(true);
+  };
 
-      const isAdminVerified = await verifyAdminPassword();
-      if (!isAdminVerified) {
-        return;
-      }
+  const handleAdminVerification = async () => {
+    if (!adminPassword) {
+      setAlertMessage('Please enter admin password.');
+      setShowAlert(true);
+      return;
     }
 
-    setShowVerificationModal(true);
+    const verified = await verifyAdminPassword();
+    if (verified) {
+      setShowAdminPasswordModal(false);
+      setAdminPassword('');
+      setIsPasswordCorrect(null);
+      setShowAdminPassword(false);
+      // Now show the final verification modal
+      setShowVerificationModal(true);
+    }
   };
 
   const doRegister = async () => {
@@ -293,19 +378,6 @@ const Register: React.FC = () => {
                 </IonSelect>
               </div>
 
-              {formData.role === 'admin' && (
-                <IonItem className="registration-input">
-                  <IonLabel position="stacked">Admin Password</IonLabel>
-                  <IonInput
-                    type="password"
-                    placeholder="Enter admin password to verify"
-                    value={formData.adminPassword}
-                    onIonInput={(e) => handleInputChange('adminPassword', e.detail.value!)}
-                    clearInput
-                  />
-                </IonItem>
-              )}
-
               <RegisterButton
                 onClick={handleOpenVerificationModal}
                 className="registration-button"
@@ -321,6 +393,80 @@ const Register: React.FC = () => {
                 Back to Users
               </RegisterButton>
 
+              {/* Admin Password Verification Modal */}
+              <IonModal isOpen={showAdminPasswordModal} onDidDismiss={() => {
+                setShowAdminPasswordModal(false);
+                setAdminPassword('');
+                setIsPasswordCorrect(null);
+                setShowAdminPassword(false);
+              }}>
+                <IonHeader>
+                  <IonToolbar>
+                    <IonTitle>Admin Verification Required</IonTitle>
+                    <IonButtons slot="end">
+                      <IonButton onClick={() => setShowAdminPasswordModal(false)}>Close</IonButton>
+                    </IonButtons>
+                  </IonToolbar>
+                </IonHeader>
+                <IonContent className="ion-padding">
+                  <div style={{ textAlign: 'center', padding: '20px' }}>
+                    <h2>Admin Verification</h2>
+                    <p>Please enter your admin password to proceed with user registration.</p>
+                    
+                    <IonItem style={{ margin: '20px 0' }}>
+                      <IonLabel position="stacked">Admin Password</IonLabel>
+                      <IonInput
+                        type={showAdminPassword ? "text" : "password"}
+                        value={adminPassword}
+                        onIonInput={(e) => handleAdminPasswordChange(e.detail.value!)}
+                        placeholder="Enter your admin password"
+                      />
+                      <IonButtons slot="end">
+                        <IonButton onClick={() => setShowAdminPassword(!showAdminPassword)}>
+                          <IonIcon icon={showAdminPassword ? eyeOff : eye} />
+                        </IonButton>
+                      </IonButtons>
+                    </IonItem>
+
+                    {/* Password validation indicator */}
+                    {adminPassword && (
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        margin: '10px 0',
+                        color: isPasswordCorrect ? 'green' : 'red'
+                      }}>
+                        <IonIcon 
+                          icon={isPasswordCorrect ? checkmarkCircle : closeCircle} 
+                          style={{ marginRight: '8px' }}
+                        />
+                        <span>
+                          {isPasswordCorrect ? 'Password is correct' : 'Password is incorrect'}
+                        </span>
+                      </div>
+                    )}
+
+                    <IonButton
+                      onClick={handleAdminVerification}
+                      expand="block"
+                      style={{ margin: '10px 0' }}
+                      disabled={!isPasswordCorrect}
+                    >
+                      Verify & Continue
+                    </IonButton>
+
+                    <IonButton
+                      onClick={() => setShowAdminPasswordModal(false)}
+                      expand="block"
+                      fill="outline"
+                    >
+                      Cancel
+                    </IonButton>
+                  </div>
+                </IonContent>
+              </IonModal>
+
               <VerificationModal
                 isOpen={showVerificationModal}
                 onClose={() => setShowVerificationModal(false)}
@@ -330,7 +476,10 @@ const Register: React.FC = () => {
 
               <SuccessModal
                 isOpen={showSuccessModal}
-                onClose={() => setShowSuccessModal(false)}
+                onClose={() => {
+                  setShowSuccessModal(false);
+                  history.push('/menu/people/user');
+                }}
               />
 
               <AlertBox

@@ -12,6 +12,7 @@ import { Route, Redirect } from 'react-router';
 import { documentOutline, personCircleOutline } from 'ionicons/icons';
 import Declarant from './People.tabs/Declarant';
 import User from './People.tabs/User';
+import Register from './Register';
 
 const People: React.FC = () => {
     const tabs = [
@@ -25,6 +26,7 @@ const People: React.FC = () => {
                 <IonRouterOutlet>
                     <Route exact path="/menu/people/declarant" component={Declarant} />
                     <Route exact path="/menu/people/user" component={User} />
+                    <Route exact path="/menu/people/register" component={Register} />
                     
                     <Route exact path="/menu/people">
                         <Redirect to="/menu/people/declarant" />
