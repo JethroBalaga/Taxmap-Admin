@@ -11,7 +11,8 @@ import {
   IonSearchbar,
   IonIcon,
   IonLoading,
-  IonButton
+  IonButton,
+  IonToast
 } from '@ionic/react';
 import { informationCircleOutline } from 'ionicons/icons';
 import DynamicTable from '../components/Globalcomponents/DynamicTable';
@@ -29,9 +30,11 @@ const Forms: React.FC = () => {
   const [forms, setForms] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedRow, setSelectedRow] = useState<any>(null);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const history = useHistory();
-  const location = useLocation<LocationState>(); // Add type parameter
+  const location = useLocation<LocationState>();
 
   // Fetch forms from the view
   useEffect(() => {
@@ -41,11 +44,9 @@ const Forms: React.FC = () => {
   // Handle navigation state to auto-select row
   useEffect(() => {
     if (location.state?.selectedFormId && forms.length > 0) {
-      // Find the form with the matching ID
       const formToSelect = forms.find(form => form.form_id === location.state.selectedFormId);
       if (formToSelect) {
         setSelectedRow(formToSelect);
-        // Optional: Scroll to the selected row
         setTimeout(() => {
           const selectedElement = document.querySelector('.data-row.selected');
           if (selectedElement) {
@@ -109,27 +110,60 @@ const Forms: React.FC = () => {
     setSelectedRow(rowData);
   };
 
-// Update the handleInfoClick function in Forms.tsx
-const handleInfoClick = () => {
-  if (selectedRow) {
-    const kindDescription = selectedRow.kind_description?.toUpperCase();
-    const classId = selectedRow.class_id?.toUpperCase();
-    
-    if (kindDescription === 'MACHINERY') {
-      history.push(`/menu/machinerytable/${selectedRow.form_id}`);
-    } else if (kindDescription === 'BUILDING') {
-      history.push(`/menu/buildingtable`, { 
-        formId: selectedRow.form_id
-      });
-    } else if (kindDescription === 'LAND' && classId === 'A') {
-      history.push(`/menu/agriculturalland/${selectedRow.form_id}`);
-    } else if (kindDescription === 'LAND' && classId !== 'A') {
-      history.push(`/menu/nonagriculturalland/${selectedRow.form_id}`);
-    } else {
-      console.log(`Navigation not configured for kind: ${kindDescription} with class: ${classId}`);
+  // Update status to "Inspected" and navigate
+  const handleInfoClick = async () => {
+    if (!selectedRow) return;
+
+    try {
+      setIsLoading(true);
+      
+      // Update the status in formtbl to "Inspected"
+      const { error } = await supabase
+        .from('formtbl')
+        .update({ status: 'Inspected' })
+        .eq('form_id', selectedRow.form_id);
+
+      if (error) throw error;
+
+      // Update local state
+      const updatedForms = forms.map(form => 
+        form.form_id === selectedRow.form_id 
+          ? { ...form, status: 'Inspected' }
+          : form
+      );
+      
+      setForms(updatedForms);
+      setSelectedRow({ ...selectedRow, status: 'Inspected' });
+      
+      setToastMessage('Status updated to Inspected');
+      setShowToast(true);
+
+      // Navigate based on kind and class
+      const kindDescription = selectedRow.kind_description?.toUpperCase();
+      const classId = selectedRow.class_id?.toUpperCase();
+      
+      if (kindDescription === 'MACHINERY') {
+        history.push(`/menu/machinerytable/${selectedRow.form_id}`);
+      } else if (kindDescription === 'BUILDING') {
+        history.push(`/menu/buildingtable`, { 
+          formId: selectedRow.form_id
+        });
+      } else if (kindDescription === 'LAND' && classId === 'A') {
+        history.push(`/menu/agriculturalland/${selectedRow.form_id}`);
+      } else if (kindDescription === 'LAND' && classId !== 'A') {
+        history.push(`/menu/nonagriculturalland/${selectedRow.form_id}`);
+      } else {
+        console.log(`Navigation not configured for kind: ${kindDescription} with class: ${classId}`);
+      }
+
+    } catch (error) {
+      console.error('Failed to update status:', error);
+      setToastMessage('Failed to update status');
+      setShowToast(true);
+    } finally {
+      setIsLoading(false);
     }
-  }
-};
+  };
 
   return (
     <IonPage>
@@ -160,10 +194,11 @@ const handleInfoClick = () => {
                 <IonButton
                   fill="clear"
                   onClick={handleInfoClick}
+                  disabled={!selectedRow}
                 >
                   <IonIcon
                     icon={informationCircleOutline}
-                    className="icon-yellow"
+                    className={`icon-yellow ${!selectedRow ? 'icon-disabled' : ''}`}
                   />
                 </IonButton>
               </div>
@@ -182,6 +217,14 @@ const handleInfoClick = () => {
             </IonCol>
           </IonRow>
         </IonGrid>
+
+        <IonToast
+          isOpen={showToast}
+          onDidDismiss={() => setShowToast(false)}
+          message={toastMessage}
+          duration={2000}
+          position="top"
+        />
       </IonContent>
     </IonPage>
   );
