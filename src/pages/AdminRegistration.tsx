@@ -4,8 +4,6 @@ import {
   IonPage,
   IonCard,
   IonCardContent,
-  IonSelect,
-  IonSelectOption,
   IonLabel
 } from '@ionic/react';
 import { supabase } from '../utils/supaBaseClient';
@@ -27,7 +25,6 @@ const AdminRegister: React.FC = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'user'
   });
 
   const [showVerificationModal, setShowVerificationModal] = useState(false);
@@ -123,17 +120,16 @@ const AdminRegister: React.FC = () => {
 
       if (userError) throw new Error('Failed to save user data: ' + userError.message);
 
-      // 3️⃣ Insert into admins table if role is admin
-      if (formData.role === 'admin') {
-        const { error: adminError } = await supabase
-          .from('admins')
-          .insert({
-            user_id: userId,
-            username: formData.username,
-            user_email: email
-          });
-        if (adminError) throw new Error('Failed to create admin: ' + adminError.message);
-      }
+      // 3️⃣ Insert into admins table (always admin since this is admin registration)
+      const { error: adminError } = await supabase
+        .from('admins')
+        .insert({
+          user_id: userId,
+          username: formData.username,
+          user_email: email
+        });
+      
+      if (adminError) throw new Error('Failed to create admin: ' + adminError.message);
 
       setShowSuccessModal(true);
     } catch (err) {
@@ -154,7 +150,7 @@ const AdminRegister: React.FC = () => {
         <div className="registration-center-wrapper">
           <IonCard className="registration-card">
             <IonCardContent className="registration-content">
-              <h1 className="registration-title">Create account</h1>
+              <h1 className="registration-title">Create Admin Account</h1>
 
               <RegisterInput
                 label="Username"
@@ -217,23 +213,11 @@ const AdminRegister: React.FC = () => {
                 showToggle
               />
 
-              <div className="registration-input">
-                <IonLabel>Account Type</IonLabel>
-                <IonSelect
-                  value={formData.role}
-                  onIonChange={e => handleInputChange('role', e.detail.value)}
-                  interface="popover"
-                >
-                  <IonSelectOption value="user">User</IonSelectOption>
-                  <IonSelectOption value="admin">Admin</IonSelectOption>
-                </IonSelect>
-              </div>
-
               <RegisterButton
                 onClick={handleOpenVerificationModal}
                 className="registration-button"
               >
-                Register
+                Register Admin
               </RegisterButton>
 
               <RegisterButton

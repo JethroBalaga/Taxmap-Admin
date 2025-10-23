@@ -24,7 +24,6 @@ import RegisterInput from '../components/RegistrationCommponents/RegisterInput';
 import StrengthMeter from '../components/RegistrationCommponents/StrengthMeter';
 import RegisterButton from '../components/RegistrationCommponents/RegisterButton';
 import VerificationModal from '../components/RegistrationCommponents/VerificationModal';
-import SuccessModal from '../components/RegistrationCommponents/SuccessModal';
 import AlertBox from '../components/RegistrationCommponents/AlertBox';
 import backgroundImg from '../Images/Manolo 2.jpg';
 import { useHistory } from 'react-router-dom';
@@ -42,7 +41,6 @@ const Register: React.FC = () => {
   });
 
   const [showVerificationModal, setShowVerificationModal] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [showAlert, setShowAlert] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState({
@@ -284,7 +282,8 @@ const Register: React.FC = () => {
         if (adminError) throw new Error('Failed to create admin: ' + adminError.message);
       }
 
-      setShowSuccessModal(true);
+      // After successful registration, go directly to user.tsx
+      history.push('/menu/people/user?refresh=' + Date.now());
     } catch (err) {
       if (err instanceof Error) setAlertMessage(err.message);
       else setAlertMessage('An unknown error occurred.');
@@ -386,7 +385,7 @@ const Register: React.FC = () => {
               </RegisterButton>
 
               <RegisterButton
-                routerLink="/menu/people/user"
+                onClick={() => history.push('/menu/people/user')}
                 className="registration-secondary-button"
                 fill="clear"
               >
@@ -472,14 +471,6 @@ const Register: React.FC = () => {
                 onClose={() => setShowVerificationModal(false)}
                 onConfirm={doRegister}
                 formData={formData}
-              />
-
-              <SuccessModal
-                isOpen={showSuccessModal}
-                onClose={() => {
-                  setShowSuccessModal(false);
-                  history.push('/menu/people/user');
-                }}
               />
 
               <AlertBox

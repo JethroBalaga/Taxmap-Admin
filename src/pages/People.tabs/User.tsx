@@ -18,7 +18,7 @@ import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 
 interface UserItem {
     user_id: string;
@@ -41,6 +41,7 @@ const User: React.FC = () => {
     const searchRef = useRef<HTMLIonSearchbarElement>(null);
     const [isError, setIsError] = useState(false);
     const history = useHistory();
+    const location = useLocation();
 
     // Focus search input on mount
     useEffect(() => {
@@ -78,9 +79,17 @@ const User: React.FC = () => {
         }
     }, []);
 
+    // Refresh data when coming from registration
     useEffect(() => {
         fetchUsers();
-    }, [fetchUsers]);
+        
+        // Check if we're coming from registration with refresh parameter
+        const urlParams = new URLSearchParams(location.search);
+        if (urlParams.has('refresh')) {
+            setToastMessage('User list refreshed successfully');
+            setShowToast(true);
+        }
+    }, [fetchUsers, location.search]);
 
     // Filter data based on search term
     const filteredData = useMemo(() => {
@@ -137,7 +146,6 @@ const User: React.FC = () => {
     };
 
     const handleAddUser = () => {
-        // Navigate to Register page
         history.push('/menu/people/register');
     };
 
