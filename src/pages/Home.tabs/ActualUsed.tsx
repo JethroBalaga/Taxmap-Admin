@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   IonContent,
   IonHeader,
@@ -12,14 +12,16 @@ import {
   IonSearchbar,
   IonToast,
   IonLoading,
-  IonAlert
+  IonAlert,
+  IonButtons,
+  IonButton
 } from '@ionic/react';
-import { add, arrowUpCircle, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, trash, arrowBack } from 'ionicons/icons';
 import './../../CSS/Setup.css';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useHistory } from 'react-router-dom';
 import { supabase } from '../../utils/supaBaseClient';
 import ActualUsedCreateModal from '../../components/ActualUsedModals/ActualUsedCreateModal';
-import ActualUsedUpdateModal from '../../components/ActualUsedModals/ActualUsedUpdateModal'; // Import the update modal
+import ActualUsedUpdateModal from '../../components/ActualUsedModals/ActualUsedUpdateModal';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 
 interface ClassificationData {
@@ -38,6 +40,7 @@ const ActualUsed: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const location = useLocation();
+  const history = useHistory();
   const [classificationData, setClassificationData] = useState<ClassificationData | null>(null);
   const [actualUsedItems, setActualUsedItems] = useState<ActualUsedItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,12 +50,16 @@ const ActualUsed: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [isError, setIsError] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false); // State for update modal
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
-  // Get classification data from URL and location state when component mounts
+  // Reset state when URL changes (including tab navigation)
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const classId = queryParams.get('class_id');
+    
+    // Reset all state
+    setSelectedRow(null);
+    setSearchTerm('');
     
     // Get classification data from location state
     try {
@@ -81,10 +88,10 @@ const ActualUsed: React.FC = () => {
     } catch (error) {
       console.error('Error parsing classification data:', error);
     }
-  }, [location]);
+  }, [location.search]);
 
   // Fetch actual used items
-  const fetchActualUsedItems = async () => {
+  const fetchActualUsedItems = useCallback(async () => {
     if (!classificationData) return;
 
     setIsLoading(true);
@@ -106,18 +113,22 @@ const ActualUsed: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [classificationData]);
 
   useEffect(() => {
     fetchActualUsedItems();
-  }, [classificationData]);
+  }, [fetchActualUsedItems]);
 
   // Filter data based on search term
-  const filteredData = actualUsedItems.filter(item =>
-    !searchTerm.trim() ||
-    item.actual_used_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredData = useMemo(() => {
+    if (!searchTerm.trim()) return actualUsedItems;
+
+    const term = searchTerm.toLowerCase();
+    return actualUsedItems.filter(item =>
+      item.actual_used_id.toLowerCase().includes(term) ||
+      item.description.toLowerCase().includes(term)
+    );
+  }, [actualUsedItems, searchTerm]);
 
   const handleRowClick = (rowData: ActualUsedItem) => {
     setSelectedRow(rowData);
@@ -179,6 +190,10 @@ const ActualUsed: React.FC = () => {
     setIsUpdateModalOpen(false);
   };
 
+  const handleBackClick = () => {
+    history.push('/menu/home/classification');
+  };
+
   const iconButtons = [
     { icon: add, onClick: handleCreateClick, disabled: !classificationData, title: "Add Actual Used" },
     { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Actual Used" },
@@ -189,8 +204,13 @@ const ActualUsed: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
+          <IonButtons slot="start">
+            <IonButton onClick={handleBackClick}>
+              <IonIcon icon={arrowBack} />
+            </IonButton>
+          </IonButtons>
           <IonTitle>
-            {classificationData ? `Actual Used (Class ID: ${classificationData.class_id})` : 'Actual Used Setup'}
+            {classificationData ? `Actual Used (${classificationData.classification})` : 'Actual Used Setup'}
           </IonTitle>
         </IonToolbar>
       </IonHeader>
@@ -202,6 +222,7 @@ const ActualUsed: React.FC = () => {
               <IonSearchbar
                 ref={searchRef}
                 placeholder="Search actual used items..."
+                value={searchTerm}
                 onIonInput={(e) => setSearchTerm(e.detail.value || '')}
                 debounce={0}
               />
