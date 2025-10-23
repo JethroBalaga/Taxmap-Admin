@@ -14,7 +14,7 @@ import {
   IonCardContent,
   IonAvatar,
 } from '@ionic/react';
-import { useState, useEffect } from 'react'; // Added useEffect
+import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supaBaseClient';
 import Logo from '../Images/Flag_of_Manolo_Fortich,_Bukidnon.png';
 import backgroundImg from '../Images/Background.jpg';
@@ -39,7 +39,7 @@ const Login: React.FC = () => {
   const [alertMessage, setAlertMessage] = useState('');
   const [showAlert, setShowAlert] = useState(false);
   const [showToast, setShowToast] = useState(false);
-  const [hasExistingAdmins, setHasExistingAdmins] = useState(false); // New state
+  const [hasExistingAdmins, setHasExistingAdmins] = useState(false);
 
   // Check if admins exist on component mount
   useEffect(() => {
@@ -69,7 +69,7 @@ const Login: React.FC = () => {
       if (!resolvedEmail.includes('@')) {
         const { data: userData, error: userError } = await supabase
           .from('users')
-          .select('user_email')
+          .select('user_email, suspended')
           .eq('username', resolvedEmail)
           .single();
 
@@ -79,10 +79,17 @@ const Login: React.FC = () => {
           return;
         }
 
+        // Check if user is suspended
+        if (userData.suspended) {
+          setAlertMessage('Your account has been suspended. Please contact administrator.');
+          setShowAlert(true);
+          return;
+        }
+
         resolvedEmail = userData.user_email;
       }
 
-      // 2. Check if the email exists in the admins table
+      // 2. Check if the email exists in the admins table AND check if user is suspended
       const { data: adminData, error: adminError } = await supabase
         .from('admins')
         .select('user_id, user_email')
@@ -95,7 +102,20 @@ const Login: React.FC = () => {
         return;
       }
 
-      // 3. Verify credentials through Supabase Auth
+      // 3. Check if the user is suspended in the users table
+      const { data: userData, error: userCheckError } = await supabase
+        .from('users')
+        .select('suspended')
+        .eq('user_email', resolvedEmail)
+        .single();
+
+      if (!userCheckError && userData && userData.suspended) {
+        setAlertMessage('Your account has been suspended. Please contact administrator.');
+        setShowAlert(true);
+        return;
+      }
+
+      // 4. Verify credentials through Supabase Auth
       const { error: authError } = await supabase.auth.signInWithPassword({
         email: resolvedEmail,
         password
@@ -111,7 +131,7 @@ const Login: React.FC = () => {
         return;
       }
 
-      // 4. Insert login activity into admin_activity_logs
+      // 5. Insert login activity into admin_activity_logs
       const { error: logError } = await supabase.from('admin_activity_logs').insert([
         {
           admin_id: adminData.user_id,
@@ -124,7 +144,7 @@ const Login: React.FC = () => {
         console.error('Failed to log admin login activity:', logError.message);
       }
 
-      // 5. Login successful
+      // 6. Login successful
       setShowToast(true);
       setTimeout(() => {
         navigation.push('/menu', 'forward', 'replace');
