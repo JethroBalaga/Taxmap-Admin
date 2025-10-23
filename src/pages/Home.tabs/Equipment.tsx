@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   IonContent,
   IonHeader,
@@ -13,8 +13,10 @@ import {
   IonToast,
   IonLoading,
   IonAlert,
+  IonButtons,
+  IonButton // Add this import
 } from '@ionic/react';
-import { add, arrowUpCircle, cogOutline, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, trash, arrowBack } from 'ionicons/icons'; // Add arrowBack
 import './../../CSS/Setup.css';
 import { useLocation, useHistory } from 'react-router-dom';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
@@ -32,7 +34,6 @@ interface Equipment {
 const Equipment: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [equipmentData, setEquipmentData] = useState<Equipment[]>([]);
-  const [filteredData, setFilteredData] = useState<Equipment[]>([]);
   const [selectedRow, setSelectedRow] = useState<Equipment | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -46,8 +47,14 @@ const Equipment: React.FC = () => {
   const location = useLocation();
   const history = useHistory();
 
+  // Reset state when location changes
+  useEffect(() => {
+    setSelectedRow(null);
+    setSearchTerm('');
+  }, [location.pathname]);
+
   // Fetch equipment data from Supabase
-  const fetchEquipmentData = async () => {
+  const fetchEquipmentData = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -58,7 +65,6 @@ const Equipment: React.FC = () => {
       if (error) throw error;
 
       setEquipmentData(data || []);
-      setFilteredData(data || []);
     } catch (error) {
       console.error('Error fetching equipment data:', error);
       setToastMessage('Failed to load equipment data');
@@ -67,25 +73,22 @@ const Equipment: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   // Fetch data when component mounts
   useEffect(() => {
     fetchEquipmentData();
-  }, []);
+  }, [fetchEquipmentData]);
 
-  // Filter data based on search term
-  useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredData(equipmentData);
-    } else {
-      const term = searchTerm.toLowerCase();
-      const filtered = equipmentData.filter(item =>
-        item.equipment_id.toLowerCase().includes(term) ||
-        item.machine_type.toLowerCase().includes(term)
-      );
-      setFilteredData(filtered);
-    }
+  // Filter data based on search term using useMemo for better performance
+  const filteredData = useMemo(() => {
+    if (!searchTerm.trim()) return equipmentData;
+
+    const term = searchTerm.toLowerCase();
+    return equipmentData.filter(item =>
+      item.equipment_id.toLowerCase().includes(term) ||
+      item.machine_type.toLowerCase().includes(term)
+    );
   }, [searchTerm, equipmentData]);
 
   const handleRowClick = (rowData: Equipment) => {
@@ -107,6 +110,12 @@ const Equipment: React.FC = () => {
       setShowDeleteAlert(true);
     }
   };
+
+  // Add back button handler
+  const handleBackClick = () => {
+    history.push('/menu/home'); // Adjust this path to your main menu
+  };
+
   const handleDeleteConfirm = async () => {
     if (!selectedRow) return;
 
@@ -136,15 +145,17 @@ const Equipment: React.FC = () => {
   };
 
   const handleEquipmentCreated = () => {
-    fetchEquipmentData(); // Refresh the data
+    fetchEquipmentData();
+    setIsCreateModalOpen(false); // Close modal after creation
     setToastMessage('Equipment created successfully!');
     setIsError(false);
     setShowToast(true);
   };
 
   const handleEquipmentUpdated = () => {
-    fetchEquipmentData(); // Refresh the data
-    setSelectedRow(null); // Clear selection
+    fetchEquipmentData();
+    setSelectedRow(null);
+    setIsUpdateModalOpen(false); // Close modal after update
     setToastMessage('Equipment updated successfully!');
     setIsError(false);
     setShowToast(true);
@@ -174,6 +185,12 @@ const Equipment: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
+          {/* Add back button to header */}
+          <IonButtons slot="start">
+            <IonButton onClick={handleBackClick}>
+              <IonIcon icon={arrowBack} />
+            </IonButton>
+          </IonButtons>
           <IonTitle>Equipment Setup</IonTitle>
         </IonToolbar>
       </IonHeader>
@@ -185,6 +202,7 @@ const Equipment: React.FC = () => {
               <IonSearchbar
                 ref={searchRef}
                 placeholder="Search equipment..."
+                value={searchTerm} // Add value for controlled input
                 onIonInput={(e) => setSearchTerm(e.detail.value || '')}
                 debounce={200}
               />
