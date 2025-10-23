@@ -18,6 +18,7 @@ import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
+import { useHistory } from 'react-router-dom';
 
 interface UserItem {
     user_id: string;
@@ -39,6 +40,7 @@ const User: React.FC = () => {
     const [toastMessage, setToastMessage] = useState('');
     const searchRef = useRef<HTMLIonSearchbarElement>(null);
     const [isError, setIsError] = useState(false);
+    const history = useHistory();
 
     // Focus search input on mount
     useEffect(() => {
@@ -103,6 +105,8 @@ const User: React.FC = () => {
         if (selectedRow) {
             // Update functionality to be implemented later
             console.log('Update user:', selectedRow);
+            setToastMessage(`Update functionality for ${selectedRow.username} coming soon!`);
+            setShowToast(true);
         }
     };
 
@@ -119,8 +123,7 @@ const User: React.FC = () => {
             // Delete functionality to be implemented later
             console.log('Delete user:', selectedRow);
             
-            // Temporary success message
-            setToastMessage(`User ${selectedRow.username} delete functionality coming soon!`);
+            setToastMessage(`Delete functionality for ${selectedRow.username} coming soon!`);
             setShowToast(true);
         } catch (error) {
             console.error('Error deleting user:', error);
@@ -133,13 +136,15 @@ const User: React.FC = () => {
         }
     };
 
+    const handleAddUser = () => {
+        // Navigate to Register page
+        history.push('/menu/people/register');
+    };
+
     const iconButtons = [
         {
             icon: add,
-            onClick: () => {
-                // Add functionality to be implemented later
-                console.log('Add new user');
-            },
+            onClick: handleAddUser,
             disabled: false,
             title: "Add User"
         },
