@@ -51,7 +51,7 @@ const User: React.FC = () => {
     const history = useHistory();
     const location = useLocation();
     
-    // Ban functionality states
+    // Ban/Unban functionality states
     const [showBanModal, setShowBanModal] = useState(false);
     const [adminPassword, setAdminPassword] = useState('');
     const [showAdminPassword, setShowAdminPassword] = useState(false);
@@ -245,17 +245,19 @@ const User: React.FC = () => {
     const handleBanClick = () => {
         if (!selectedRow) return;
 
-        // Prevent admin from banning themselves
+        // Prevent admin from banning/unbanning themselves
         if (selectedRow.user_id === currentAdmin?.id) {
-            setToastMessage('You cannot ban your own account');
+            const action = selectedRow.suspended ? 'unban' : 'ban';
+            setToastMessage(`You cannot ${action} your own account`);
             setIsError(true);
             setShowToast(true);
             return;
         }
 
-        // Prevent banning other admins (optional - remove if you want to allow banning other admins)
+        // Prevent banning/unbanning other admins (optional - remove if you want to allow)
         if (selectedRow.user_role === 'admin') {
-            setToastMessage('Cannot ban other administrators');
+            const action = selectedRow.suspended ? 'unban' : 'ban';
+            setToastMessage(`Cannot ${action} other administrators`);
             setIsError(true);
             setShowToast(true);
             return;
@@ -287,15 +289,17 @@ const User: React.FC = () => {
                 return;
             }
 
-            // Update the user's suspended status
+            // Update the user's suspended status (toggle based on current state)
+            const newSuspendedStatus = !selectedRow.suspended;
             const { error } = await supabase
                 .from('users')
-                .update({ suspended: true })
+                .update({ suspended: newSuspendedStatus })
                 .eq('user_id', selectedRow.user_id);
 
             if (error) throw error;
 
-            setToastMessage(`User ${selectedRow.username} has been banned successfully`);
+            const action = newSuspendedStatus ? 'banned' : 'unbanned';
+            setToastMessage(`User ${selectedRow.username} has been ${action} successfully`);
             setShowToast(true);
             
             // Refresh the user list
@@ -308,8 +312,8 @@ const User: React.FC = () => {
             setShowAdminPassword(false);
             
         } catch (error) {
-            console.error('Error banning user:', error);
-            setToastMessage('Failed to ban user');
+            console.error('Error updating user ban status:', error);
+            setToastMessage('Failed to update user status');
             setIsError(true);
             setShowToast(true);
         } finally {
@@ -402,6 +406,21 @@ const User: React.FC = () => {
         history.push('/menu/people/register');
     };
 
+    // Determine ban button title and icon based on selected row's suspended status
+    const getBanButtonConfig = () => {
+        if (!selectedRow) {
+            return { title: "Ban User", disabled: true };
+        }
+        
+        if (selectedRow.suspended) {
+            return { title: "Unban User", disabled: false };
+        } else {
+            return { title: "Ban User", disabled: false };
+        }
+    };
+
+    const banButtonConfig = getBanButtonConfig();
+
     const iconButtons = [
         {
             icon: add,
@@ -412,8 +431,8 @@ const User: React.FC = () => {
         {
             icon: banOutline,
             onClick: handleBanClick,
-            disabled: !selectedRow,
-            title: "Ban User"
+            disabled: banButtonConfig.disabled,
+            title: banButtonConfig.title
         },
         {
             icon: trash,
@@ -471,7 +490,7 @@ const User: React.FC = () => {
 
                 <IonLoading isOpen={isLoading} message="Loading..." />
 
-                {/* Ban Confirmation Modal with Admin Password */}
+                {/* Ban/Unban Confirmation Modal with Admin Password */}
                 <IonModal isOpen={showBanModal} onDidDismiss={() => {
                     setShowBanModal(false);
                     setAdminPassword('');
@@ -480,7 +499,9 @@ const User: React.FC = () => {
                 }}>
                     <IonHeader>
                         <IonToolbar>
-                            <IonTitle>Ban User Confirmation</IonTitle>
+                            <IonTitle>
+                                {selectedRow?.suspended ? 'Unban User Confirmation' : 'Ban User Confirmation'}
+                            </IonTitle>
                             <IonButtons slot="end">
                                 <IonButton onClick={() => setShowBanModal(false)}>Close</IonButton>
                             </IonButtons>
@@ -488,10 +509,18 @@ const User: React.FC = () => {
                     </IonHeader>
                     <IonContent className="ion-padding">
                         <div style={{ textAlign: 'center', padding: '20px' }}>
-                            <h2>Confirm Ban User</h2>
-                            <p>You are about to ban the user: <strong>{selectedRow?.username}</strong></p>
-                            <p style={{ color: 'var(--ion-color-danger)', fontSize: '14px' }}>
-                                This action will suspend the user's account and prevent them from logging in.
+                            <h2>
+                                {selectedRow?.suspended ? 'Confirm Unban User' : 'Confirm Ban User'}
+                            </h2>
+                            <p>
+                                You are about to {selectedRow?.suspended ? 'unban' : 'ban'} the user: 
+                                <strong>{selectedRow?.username}</strong>
+                            </p>
+                            <p style={{ color: 'var(--ion-color-warning)', fontSize: '14px' }}>
+                                {selectedRow?.suspended 
+                                    ? 'This action will restore the user\'s access and allow them to log in again.'
+                                    : 'This action will suspend the user\'s account and prevent them from logging in.'
+                                }
                             </p>
                             
                             <IonItem style={{ margin: '20px 0' }}>
@@ -533,9 +562,9 @@ const User: React.FC = () => {
                                 expand="block"
                                 style={{ margin: '10px 0' }}
                                 disabled={!isPasswordCorrect}
-                                color="danger"
+                                color={selectedRow?.suspended ? "success" : "danger"}
                             >
-                                Confirm Ban User
+                                {selectedRow?.suspended ? 'Confirm Unban User' : 'Confirm Ban User'}
                             </IonButton>
 
                             <IonButton
