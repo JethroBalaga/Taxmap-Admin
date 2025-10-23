@@ -7,21 +7,24 @@ import {
     IonTabButton,
     IonTabs,
 } from '@ionic/react';
-import { IonReactRouter } from '@ionic/react-router'; // Add this import
+import { IonReactRouter } from '@ionic/react-router';
 import { Route, Redirect } from 'react-router';
-import { documentOutline } from 'ionicons/icons';
+import { documentOutline, personCircleOutline } from 'ionicons/icons';
 import Declarant from './People.tabs/Declarant';
+import User from './People.tabs/User';
 
 const People: React.FC = () => {
     const tabs = [
         { name: 'Declarant', tab: 'declarant', url: '/menu/people/declarant', icon: documentOutline },
+        { name: 'User', tab: 'user', url: '/menu/people/user', icon: personCircleOutline },
     ]
     
     return (
-        <IonReactRouter> {/* Add this wrapper to match Home.tsx */}
+        <IonReactRouter>
             <IonTabs>
                 <IonRouterOutlet>
                     <Route exact path="/menu/people/declarant" component={Declarant} />
+                    <Route exact path="/menu/people/user" component={User} />
                     
                     <Route exact path="/menu/people">
                         <Redirect to="/menu/people/declarant" />
