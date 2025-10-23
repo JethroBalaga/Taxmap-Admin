@@ -27,8 +27,6 @@ interface DeviceItem {
     registered: boolean;
     registered_at: string | null;
     created_at: string;
-    username?: string;
-    user_email?: string;
 }
 
 const DeviceManagement: React.FC = () => {
@@ -61,15 +59,7 @@ const DeviceManagement: React.FC = () => {
 
             let query = supabase
                 .from('deviceregistration')
-                .select(`
-                    device_id,
-                    user_id,
-                    device_name,
-                    registered,
-                    registered_at,
-                    created_at,
-                    users:user_id (username, user_email)
-                `)
+                .select('*')
                 .order('created_at', { ascending: false });
 
             // Filter by user_id if provided
@@ -81,19 +71,14 @@ const DeviceManagement: React.FC = () => {
 
             if (error) throw error;
 
-            // Transform the data to include user information
-            const devicesWithUserInfo = (data || []).map(item => ({
+            // Convert device_id to string to ensure consistency
+            const devicesWithStringId = (data || []).map(item => ({
+                ...item,
                 device_id: String(item.device_id),
-                user_id: String(item.user_id),
-                device_name: item.device_name,
-                registered: item.registered,
-                registered_at: item.registered_at,
-                created_at: item.created_at,
-                username: item.users?.username || 'Unknown',
-                user_email: item.users?.user_email || 'Unknown'
+                user_id: String(item.user_id)
             }));
 
-            setDevices(devicesWithUserInfo);
+            setDevices(devicesWithStringId);
         } catch (error) {
             console.error('Error fetching devices:', error);
             setToastMessage('Failed to load devices');
@@ -116,9 +101,8 @@ const DeviceManagement: React.FC = () => {
         const term = searchTerm.toLowerCase();
         return devices.filter(item =>
             item.device_name.toLowerCase().includes(term) ||
-            item.username?.toLowerCase().includes(term) ||
-            item.user_email?.toLowerCase().includes(term) ||
-            item.device_id.toLowerCase().includes(term)
+            item.device_id.toLowerCase().includes(term) ||
+            item.user_id.toLowerCase().includes(term)
         );
     }, [devices, searchTerm]);
 
