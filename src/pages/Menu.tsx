@@ -25,7 +25,7 @@ import {
 } from 'ionicons/icons';
 
 import { Redirect, Route } from 'react-router';
-import { supabase } from '../utils/supaBaseClient'; // ✅ Supabase client import
+import { supabase } from '../utils/supaBaseClient';
 import Home from './Home';
 import People from './People';
 import Forms from './Forms';
@@ -48,16 +48,8 @@ const Menu: React.FC = () => {
     { name: 'Logs', url: '/menu/logs', icon: terminalOutline },
   ];
 
-  /**
-   * Handles logout by:
-   * 1. Fetching the current user
-   * 2. Logging the logout action to admin_activity_logs
-   * 3. Signing the user out
-   * 4. Redirecting back to the login page
-   */
   const handleLogout = async () => {
     try {
-      // 1. Get the currently logged-in user
       const { data, error: userError } = await supabase.auth.getUser();
       const user = data?.user;
 
@@ -65,22 +57,18 @@ const Menu: React.FC = () => {
         console.error('Error fetching current user:', userError.message);
       }
 
-      // 2. If we have a user, log the logout action
       if (user) {
         await supabase.from('admin_activity_logs').insert([
           {
-            admin_id: user.id,         // Supabase Auth UUID
-            admin_email: user.email,   // Admin email
-            activity_type: 'LOGOUT',   // Activity type
-            timestamp: new Date(),     // Current timestamp
+            admin_id: user.id,
+            admin_email: user.email,
+            activity_type: 'LOGOUT',
+            timestamp: new Date(),
           },
         ]);
       }
 
-      // 3. Sign out the user
       await supabase.auth.signOut();
-
-      // 4. Redirect to login page
       navigation.push('/', 'root', 'replace');
 
     } catch (error) {
@@ -106,7 +94,6 @@ const Menu: React.FC = () => {
             </IonMenuToggle>
           ))}
 
-          {/* ✅ Logout button now logs logout activity */}
           <IonButton
             expand="full"
             color="danger"
@@ -127,22 +114,23 @@ const Menu: React.FC = () => {
             <IonTitle>Menu</IonTitle>
           </IonToolbar>
         </IonHeader>
-        <IonContent className="ion-padding">
-          <IonRouterOutlet id="main">
-            <Route exact path="/menu/home" component={Home} />
-            <Route exact path="/menu/map" component={Map} />
-            <Route exact path="/menu/people" component={People} />
-            <Route exact path="/menu/forms" component={Forms} />
-            <Route exact path="/menu/buildingtable" component={BuildingTable} />
-            <Route exact path="/menu/logs" component={Logs} />
-            <Route path="/menu/machinerytable/:formId" component={MachineryTable} />
-            <Route path="/menu/agriculturalland/:formId" component={AgriculturalLand} />
-            <Route path="/menu/nonagriculturalland/:formId" component={NonAgriculturalLand} />
-            <Route exact path="/menu">
-              <Redirect to="/menu/home" />
-            </Route>
-          </IonRouterOutlet>
-        </IonContent>
+        
+        {/* Move IonRouterOutlet to be direct child of IonPage, not inside IonContent */}
+        <IonRouterOutlet>
+          <Route path="/menu/home" component={Home} />
+          <Route exact path="/menu/map" component={Map} />
+          <Route exact path="/menu/people" component={People} />
+          <Route exact path="/menu/forms" component={Forms} />
+          <Route exact path="/menu/buildingtable" component={BuildingTable} />
+          <Route exact path="/menu/logs" component={Logs} />
+          <Route path="/menu/machinerytable/:formId" component={MachineryTable} />
+          <Route path="/menu/agriculturalland/:formId" component={AgriculturalLand} />
+          <Route path="/menu/nonagriculturalland/:formId" component={NonAgriculturalLand} />
+          
+          <Route exact path="/menu">
+            <Redirect to="/menu/home" />
+          </Route>
+        </IonRouterOutlet>
       </IonPage>
     </>
   );

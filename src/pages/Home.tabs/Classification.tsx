@@ -30,6 +30,44 @@ interface ClassificationItem {
   created_at?: string;
 }
 
+// Error Boundary Component
+const ErrorBoundary: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    console.log('ErrorBoundary mounted for Classification page');
+  }, []);
+
+  const handleOnError = (error: Error, errorInfo: React.ErrorInfo) => {
+    console.error('Error in Classification component:', error);
+    console.error('Error details:', errorInfo);
+    setHasError(true);
+  };
+
+  if (hasError) {
+    return (
+      <IonPage>
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Error</IonTitle>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent>
+          <div style={{ padding: '20px', textAlign: 'center' }}>
+            <h2>Something went wrong</h2>
+            <p>There was an error loading the Classification page.</p>
+            <IonButton onClick={() => window.location.reload()}>
+              Reload Page
+            </IonButton>
+          </div>
+        </IonContent>
+      </IonPage>
+    );
+  }
+
+  return <>{children}</>;
+};
+
 const Classification: React.FC = () => {
   const history = useHistory();
   const location = useLocation();
@@ -47,15 +85,20 @@ const Classification: React.FC = () => {
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const [isError, setIsError] = useState(false);
 
+  console.log('Classification component rendering, path:', location.pathname);
+
   // Reset state when location changes (prevents stale data on refresh/navigation)
   useEffect(() => {
+    console.log('Classification: Location changed, resetting state');
     setSelectedRow(null);
     setSearchTerm('');
   }, [location.pathname]);
 
   // Focus search input on mount
   useEffect(() => {
+    console.log('Classification: Setting up focus timer');
     const timer = setTimeout(() => {
+      console.log('Classification: Attempting to focus searchbar');
       searchRef.current?.setFocus();
     }, 100);
     return () => clearTimeout(timer);
@@ -63,6 +106,7 @@ const Classification: React.FC = () => {
 
   // Fetch data
   const fetchClassifications = useCallback(async () => {
+    console.log('Classification: Starting to fetch classifications');
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -71,6 +115,7 @@ const Classification: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      console.log('Classification: Data fetched successfully, count:', data?.length);
       setClassifications(data || []);
     } catch (error) {
       console.error('Error fetching classifications:', error);
@@ -78,11 +123,13 @@ const Classification: React.FC = () => {
       setIsError(true);
       setShowToast(true);
     } finally {
+      console.log('Classification: Fetch completed, setting loading to false');
       setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    console.log('Classification: useEffect triggered, calling fetchClassifications');
     fetchClassifications();
   }, [fetchClassifications]);
 
@@ -204,11 +251,6 @@ const Classification: React.FC = () => {
     }
   };
 
-  // Add back button handler
-  const handleBackClick = () => {
-    history.push('/menu/home');
-  };
-
   const iconButtons = [
     { icon: add, onClick: () => setShowCreateModal(true), disabled: false, title: "Add Classification" },
     { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit Classification" },
@@ -217,103 +259,107 @@ const Classification: React.FC = () => {
     { icon: briefcaseOutline, onClick: navigateToActualUsed, disabled: !selectedRow, title: "Manage Actual Used" }
   ];
 
+  console.log('Classification: Rendering JSX, isLoading:', isLoading, 'data count:', classifications.length);
+
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Classification Setup</IonTitle>
-        </IonToolbar>
-      </IonHeader>
+    <ErrorBoundary>
+      <IonPage>
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Classification Setup</IonTitle>
+          </IonToolbar>
+        </IonHeader>
 
-      <IonContent fullscreen>
-        <IonGrid>
-          <IonRow>
-            <IonCol size="12" className="search-container">
-              <IonSearchbar
-                ref={searchRef}
-                placeholder="Search classifications..."
-                value={searchTerm}
-                onIonInput={(e) => setSearchTerm(e.detail.value || '')}
-                debounce={0}
-              />
+        <IonContent fullscreen>
+          <IonGrid>
+            <IonRow>
+              <IonCol size="12" className="search-container">
+                <IonSearchbar
+                  ref={searchRef}
+                  placeholder="Search classifications..."
+                  value={searchTerm}
+                  onIonInput={(e) => setSearchTerm(e.detail.value || '')}
+                  debounce={0}
+                />
 
-              <div className="icon-group">
-                {iconButtons.map((btn, index) => (
-                  <IonIcon
-                    key={index}
-                    icon={btn.icon}
-                    className={`icon-yellow ${btn.disabled ? 'icon-disabled' : ''}`}
-                    onClick={btn.disabled ? undefined : btn.onClick}
-                    title={btn.title}
-                  />
-                ))}
-              </div>
-            </IonCol>
-          </IonRow>
+                <div className="icon-group">
+                  {iconButtons.map((btn, index) => (
+                    <IonIcon
+                      key={index}
+                      icon={btn.icon}
+                      className={`icon-yellow ${btn.disabled ? 'icon-disabled' : ''}`}
+                      onClick={btn.disabled ? undefined : btn.onClick}
+                      title={btn.title}
+                    />
+                  ))}
+                </div>
+              </IonCol>
+            </IonRow>
 
-          <IonRow>
-            <IonCol size="12">
-              <DynamicTable
-                data={filteredData}
-                title="Classifications"
-                keyField="class_id"
-                onRowClick={handleRowClick}
-                selectedRow={selectedRow} 
-              />
-            </IonCol>
-          </IonRow>
-        </IonGrid>
+            <IonRow>
+              <IonCol size="12">
+                <DynamicTable
+                  data={filteredData}
+                  title="Classifications"
+                  keyField="class_id"
+                  onRowClick={handleRowClick}
+                  selectedRow={selectedRow} 
+                />
+              </IonCol>
+            </IonRow>
+          </IonGrid>
 
-        <IonLoading isOpen={isLoading} message="Loading..." />
+          <IonLoading isOpen={isLoading} message="Loading..." />
 
-        <ClassificationCreateModal
-          isOpen={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
-          onClassificationCreated={fetchClassifications}
-        />
+          <ClassificationCreateModal
+            isOpen={showCreateModal}
+            onClose={() => setShowCreateModal(false)}
+            onClassificationCreated={fetchClassifications}
+          />
 
-        <ClassificationUpdateModal
-          isOpen={showUpdateModal}
-          onClose={() => setShowUpdateModal(false)}
-          classificationData={selectedClassification}
-          onClassificationUpdated={fetchClassifications}
-        />
+          <ClassificationUpdateModal
+            isOpen={showUpdateModal}
+            onClose={() => setShowUpdateModal(false)}
+            classificationData={selectedClassification}
+            onClassificationUpdated={fetchClassifications}
+          />
 
-        <IonAlert
-          isOpen={showDeleteAlert}
-          onDidDismiss={() => setShowDeleteAlert(false)}
-          header={'Confirm Delete'}
-          message={`Are you sure you want to delete the classification <strong>${selectedRow?.classification}</strong>?`}
-          buttons={[
-            {
-              text: 'Cancel',
-              role: 'cancel',
-              cssClass: 'secondary',
-            },
-            {
-              text: 'Delete',
-              handler: handleDeleteConfirm
-            }
-          ]}
-        />
+          <IonAlert
+            isOpen={showDeleteAlert}
+            onDidDismiss={() => setShowDeleteAlert(false)}
+            header={'Confirm Delete'}
+            message={`Are you sure you want to delete the classification <strong>${selectedRow?.classification}</strong>?`}
+            buttons={[
+              {
+                text: 'Cancel',
+                role: 'cancel',
+                cssClass: 'secondary',
+              },
+              {
+                text: 'Delete',
+                handler: handleDeleteConfirm
+              }
+            ]}
+          />
 
-        <IonAlert
-          isOpen={showCannotDeleteAlert}
-          onDidDismiss={() => setShowCannotDeleteAlert(false)}
-          header={'Cannot Delete'}
-          message={`The classification <strong>${selectedRow?.classification}</strong> cannot be deleted because it has associated subclasses.`}
-          buttons={['OK']}
-        />
+          <IonAlert
+            isOpen={showCannotDeleteAlert}
+            onDidDismiss={() => setShowCannotDeleteAlert(false)}
+            header={'Cannot Delete'}
+            message={`The classification <strong>${selectedRow?.classification}</strong> cannot be deleted because it has associated subclasses.`}
+            buttons={['OK']}
+          />
 
-        <IonToast
-          isOpen={showToast}
-          onDidDismiss={() => setShowToast(false)}
-          message={toastMessage}
-          duration={3000}
-          color={isError ? 'danger' : 'success'}
-        />
-      </IonContent>
-    </IonPage>
+          <IonToast
+            isOpen={showToast}
+            onDidDismiss={() => setShowToast(false)}
+            message={toastMessage}
+            duration={3000}
+            color={isError ? 'danger' : 'success'}
+          />
+        </IonContent>
+      </IonPage>
+    </ErrorBoundary>
   );
 };
 

@@ -8,7 +8,8 @@ import {
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import { albumsOutline, bookOutline, trailSignOutline } from 'ionicons/icons';
-import { Route, Redirect } from 'react-router';
+import { Route, Redirect, useLocation } from 'react-router';
+import { useEffect } from 'react';
 import Classification from './Home.tabs/Classification';
 import District from './Home.tabs/District';
 import Kind from './Home.tabs/Kind';
@@ -26,6 +27,11 @@ import Equipment from './Home.tabs/Equipment';
 import LandAdjustment from './Home.tabs/LandAdjustment';
 
 const Home: React.FC = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    console.log('Current pathname:', location.pathname);
+  }, [location.pathname]);
 
   const tabs = [
     { name: 'Classification', tab: 'classification', url: '/menu/home/classification', icon: bookOutline },
@@ -36,17 +42,8 @@ const Home: React.FC = () => {
   return (
     <IonReactRouter>
       <IonTabs>
-        <IonTabBar slot="bottom">
-
-          {tabs.map((item, index) => (
-            <IonTabButton key={index} tab={item.tab} href={item.url}>
-              <IonIcon icon={item.icon} />
-              <IonLabel>{item.name}</IonLabel>
-            </IonTabButton>
-          ))}
-
-        </IonTabBar>
         <IonRouterOutlet>
+          {/* Specific routes first */}
           <Route exact path="/menu/home/classification" component={Classification} />
           <Route exact path="/menu/home/district" component={District} />
           <Route exact path="/menu/home/kind" component={Kind} />
@@ -63,11 +60,27 @@ const Home: React.FC = () => {
           <Route exact path="/menu/home/equipment" component={Equipment} />
           <Route exact path="/menu/home/landadjustment" component={LandAdjustment} />
 
+          {/* Base path redirect */}
           <Route exact path="/menu/home">
             <Redirect to="/menu/home/classification" />
           </Route>
 
+          {/* Remove the catch-all route since it's causing infinite redirects */}
+          {/* Or use a more specific catch-all that doesn't interfere with existing routes */}
         </IonRouterOutlet>
+
+        <IonTabBar slot="bottom">
+          {tabs.map((item, index) => (
+            <IonTabButton 
+              key={index} 
+              tab={item.tab} 
+              href={item.url}
+            >
+              <IonIcon icon={item.icon} />
+              <IonLabel>{item.name}</IonLabel>
+            </IonTabButton>
+          ))}
+        </IonTabBar>
       </IonTabs>
     </IonReactRouter>
   );
