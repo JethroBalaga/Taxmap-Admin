@@ -514,7 +514,7 @@ const User: React.FC = () => {
                             </h2>
                             <p>
                                 You are about to {selectedRow?.suspended ? 'unban' : 'ban'} the user: 
-                                <strong>{selectedRow?.username}</strong>
+                                <strong> {selectedRow?.username}</strong>
                             </p>
                             <p style={{ color: 'var(--ion-color-warning)', fontSize: '14px' }}>
                                 {selectedRow?.suspended 
