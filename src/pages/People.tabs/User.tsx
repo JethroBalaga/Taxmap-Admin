@@ -20,7 +20,7 @@ import {
     IonLabel,
     IonButtons
 } from '@ionic/react';
-import { add, arrowUpCircle, banOutline, trash, eye, eyeOff, checkmarkCircle, closeCircle } from 'ionicons/icons';
+import { add, arrowUpCircle, banOutline, trash, eye, eyeOff, checkmarkCircle, closeCircle, phonePortraitOutline } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
@@ -406,6 +406,12 @@ const User: React.FC = () => {
         history.push('/menu/people/register');
     };
 
+    const handleCheckDevice = () => {
+        if (selectedRow) {
+            history.push(`/menu/people/devices?user_id=${selectedRow.user_id}`);
+        }
+    };
+
     // Determine ban button title and icon based on selected row's suspended status
     const getBanButtonConfig = () => {
         if (!selectedRow) {
@@ -433,6 +439,12 @@ const User: React.FC = () => {
             onClick: handleBanClick,
             disabled: banButtonConfig.disabled,
             title: banButtonConfig.title
+        },
+        {
+            icon: phonePortraitOutline,
+            onClick: handleCheckDevice,
+            disabled: !selectedRow,
+            title: "Check Device"
         },
         {
             icon: trash,
