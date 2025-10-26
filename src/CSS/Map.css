@@ -3,6 +3,28 @@
   position: relative;
 }
 
+/* Search Bar Styles - Now in header */
+.map-searchbar {
+  --background: rgba(255, 255, 255, 0.95);
+  --backdrop-filter: blur(10px);
+  --border-radius: 8px;
+  --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  --placeholder-color: #666;
+  padding: 8px 16px;
+  width: 50%; /* Half width */
+  margin: 0 auto; /* Center it */
+}
+
+/* Remove the old search bar container styles */
+.search-bar-container {
+  display: none;
+}
+
+/* Remove username styles since we're hiding it */
+.username-center-top {
+  display: none;
+}
+
 /* Map card styling */
 .map-card {
   margin: 0;
@@ -15,4 +37,229 @@
 .map-card > div {
   height: 100%;
   width: 100%;
+}
+
+/* Map controls styling */
+.create-outline-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+  cursor: pointer;
+}
+
+.create-outline-btn:hover {
+  background: #f4f4f4;
+  transform: scale(1.1);
+}
+
+/* Filter button styles */
+.filter-toggle-container {
+  margin-bottom: 0;
+}
+
+.filter-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: auto;
+  min-width: 90px;
+  height: 30px;
+  background: white;
+  border: none;
+  border-radius: 4px;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 0 8px;
+  color: #333;
+}
+
+.filter-toggle-btn:hover {
+  background: #f4f4f4;
+}
+
+.filter-toggle-btn:active {
+  background: #e9e9e9;
+}
+
+/* Filter panel styles */
+.filter-panel {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  padding: 15px;
+  z-index: 1000;
+  min-width: 200px;
+}
+
+/* Fan-shaped filter options */
+.filter-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.filter-option:hover {
+  background: #f5f5f5;
+}
+
+.filter-option.active {
+  background: #e6f7ff;
+  border: 1px solid #1890ff;
+}
+
+.filter-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.filter-label {
+  font-size: 14px;
+  color: #333;
+  flex: 1;
+}
+
+.filter-badge {
+  background: #1890ff;
+  color: white;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 12px;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Fan shape arrangement for multiple filters */
+.filter-fan {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.filter-section {
+  margin-bottom: 15px;
+}
+
+.filter-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+/* FIX: Update control container for multiple buttons - NORMAL ORDER to put filter ABOVE create */
+.leaflet-control-container .leaflet-top.leaflet-right {
+  display: flex;
+  flex-direction: column; /* Normal order - filter above create */
+  align-items: flex-end;
+  gap: 10px;
+}
+
+/* Ensure the filter control comes before create control in the DOM order */
+.leaflet-control-container .leaflet-top.leaflet-right .leaflet-control:nth-child(1) {
+  order: 1; /* Filter button */
+}
+
+.leaflet-control-container .leaflet-top.leaflet-right .leaflet-control:nth-child(2) {
+  order: 2; /* Create button */
+}
+
+/* Ensure Leaflet markers display correctly */
+.leaflet-marker-icon {
+  border: none !important;
+  background: transparent !important;
+}
+
+/* Make markers more interactive */
+.leaflet-marker-icon:hover {
+  transform: scale(1.2);
+  transition: transform 0.2s ease;
+  z-index: 1000;
+}
+
+/* Popup overlay */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Internet status notification */
+.internet-status {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #ff4d4f;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  z-index: 1000;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.internet-status.online {
+  background-color: #52c41a;
+}
+
+/* Remove the old username positioning styles */
+.username-below-header {
+  display: none;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+  .map-searchbar {
+    padding: 6px 12px;
+    width: 80%; /* Wider on mobile for better usability */
+  }
+  
+  /* Adjust map controls for mobile */
+  .filter-toggle-btn {
+    min-width: 80px;
+    font-size: 11px;
+    padding: 0 6px;
+  }
+  
+  .filter-panel {
+    min-width: 180px;
+    padding: 12px;
+  }
 }
