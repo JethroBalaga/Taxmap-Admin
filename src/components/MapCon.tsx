@@ -6,7 +6,7 @@ import { getMarkerIconByKind } from '../utils/markericons';
 import MapMarkerPopup from './MapMarkerPopup';
 import { supabase } from '../utils/supaBaseClient';
 
-const TILE_LAYER_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+const SATELLITE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
 const OPENSTREETMAP_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 const manoloFortichBounds = L.latLngBounds(
   L.latLng(8.25, 124.75),
@@ -114,6 +114,7 @@ const FilterControl = ({
   // Count markers by type
   useEffect(() => {
     const loadCounts = async () => {
+      console.log('Starting to count markers for filter...');
       const counts = {
         all: photoTags.length,
         land: 0,
@@ -123,31 +124,45 @@ const FilterControl = ({
 
       for (const tag of photoTags) {
         try {
-          const { data: valueInfoData } = await supabase
+          console.log(`Counting marker for tag: ${tag.tag_id}`);
+          const { data: valueInfoData, error: valueError } = await supabase
             .from('value_info')
             .select('form_id')
             .eq('tag_id', tag.tag_id)
             .single();
 
+          if (valueError) {
+            console.log(`Error fetching value_info for ${tag.tag_id}:`, valueError);
+            continue;
+          }
+
           if (valueInfoData) {
-            const { data: formData } = await supabase
+            console.log(`Found value_info for ${tag.tag_id}:`, valueInfoData);
+            const { data: formData, error: formError } = await supabase
               .from('formtbl')
               .select('kind_id')
               .eq('form_id', valueInfoData.form_id)
               .single();
 
-            if (formData) {
+            if (formError) {
+              console.log(`Error fetching form data for ${tag.tag_id}:`, formError);
+            } else if (formData) {
+              console.log(`Found form data for ${tag.tag_id}:`, formData);
               const kindStr = String(formData.kind_id).trim();
+              console.log(`Kind string for ${tag.tag_id}: "${kindStr}"`);
+              
               switch (kindStr) {
                 case '1':
                 case 'LAND':
                 case 'land':
                   counts.land++;
+                  console.log(`Incremented land count for ${tag.tag_id}`);
                   break;
                 case '2':
                 case 'BUILDING':
                 case 'building':
                   counts.building++;
+                  console.log(`Incremented building count for ${tag.tag_id}`);
                   break;
                 case '3':
                 case 'MACHINERY':
@@ -155,20 +170,34 @@ const FilterControl = ({
                 case 'EQUIPMENT':
                 case 'equipment':
                   counts.equipment++;
+                  console.log(`Incremented equipment count for ${tag.tag_id}`);
                   break;
+                default:
+                  console.log(`Unknown kind "${kindStr}" for tag ${tag.tag_id}`);
               }
             }
+          } else {
+            console.log(`No value_info found for tag ${tag.tag_id}`);
           }
         } catch (error) {
           console.log(`Error counting marker for ${tag.tag_id}:`, error);
         }
       }
 
+      console.log('Final marker counts:', counts);
       setMarkerCounts(counts);
     };
 
     if (photoTags.length > 0) {
       loadCounts();
+    } else {
+      console.log('No photo tags available for counting');
+      setMarkerCounts({
+        all: 0,
+        land: 0,
+        building: 0,
+        equipment: 0
+      });
     }
   }, [photoTags]);
 
@@ -304,18 +333,44 @@ const MapLogic = ({
     const fetchPhotoTags = async () => {
       try {
         setLoading(true);
+        console.log('Starting to fetch photo tags from tagtbl...');
+        
+        // First, let's check what's in the database without bounds
+        const { data: allData, error: allError } = await supabase
+          .from('tagtbl')
+          .select('tag_id, latitude, longitude, date_taken, created_at')
+          .limit(10);
+
+        if (allError) {
+          console.error('Error fetching all photo tags:', allError);
+        } else {
+          console.log('Sample of all tags in database:', allData);
+        }
+
+        // Now fetch with bounds
+        console.log('Fetching tags within bounds:', manoloFortichBounds);
         const { data, error } = await supabase
           .from('tagtbl')
-          .select('tag_id, latitude, longitude, date_taken, created_at, accuracy, altitude')
+          .select('tag_id, latitude, longitude, date_taken, created_at')
           .gte('latitude', manoloFortichBounds.getSouthWest().lat)
           .lte('latitude', manoloFortichBounds.getNorthEast().lat)
           .gte('longitude', manoloFortichBounds.getSouthWest().lng)
           .lte('longitude', manoloFortichBounds.getNorthEast().lng);
 
         if (error) {
-          console.error('Error fetching photo tags:', error);
+          console.error('Error fetching bounded photo tags:', error);
         } else if (data) {
-          console.log('Fetched photo tags:', data.length);
+          console.log('Fetched photo tags within bounds:', data);
+          console.log('Number of tags found:', data.length);
+          
+          if (data.length === 0) {
+            console.log('No tags found within bounds!');
+            console.log('Bounds details:');
+            console.log('  SouthWest:', manoloFortichBounds.getSouthWest());
+            console.log('  NorthEast:', manoloFortichBounds.getNorthEast());
+            console.log('  Center:', manoloFortichBounds.getCenter());
+          }
+          
           setPhotoTags(data);
           setFilteredPhotoTags(data);
           
@@ -332,10 +387,16 @@ const MapLogic = ({
     // Fetch kind information for tags
     const fetchKindInfoForTags = async (tags: PhotoTag[]) => {
       try {
+        console.log('Starting to fetch kind info for tags...');
         const icons: {[tagId: string]: L.Icon} = {};
         const tagIds = tags.map(tag => tag.tag_id);
         
-        console.log('Fetching kind info for tags:', tagIds.length);
+        console.log('Tag IDs to process:', tagIds);
+        
+        if (tagIds.length === 0) {
+          console.log('No tag IDs to process');
+          return;
+        }
         
         // First get value_info to get form_id for each tag
         const { data: valueInfoData, error } = await supabase
@@ -345,14 +406,20 @@ const MapLogic = ({
 
         if (error) {
           console.error('Error fetching value info:', error);
+          // Set default icons for all tags
+          tags.forEach(tag => {
+            icons[tag.tag_id] = getMarkerIconByKind('1');
+          });
+          setMarkerIcons(icons);
           return;
         }
 
+        console.log('Value info data found:', valueInfoData);
+
         if (valueInfoData && valueInfoData.length > 0) {
-          console.log('Value info data found:', valueInfoData.length);
-          
           // Get unique form_ids
           const formIds = [...new Set(valueInfoData.map(item => item.form_id))];
+          console.log('Form IDs to fetch:', formIds);
           
           // Then get kind_id for each form
           const { data: formData, error: formError } = await supabase
@@ -363,7 +430,7 @@ const MapLogic = ({
           if (formError) {
             console.error('Error fetching form data:', formError);
           } else if (formData) {
-            console.log('Form data found:', formData.length);
+            console.log('Form data found:', formData);
             
             // Create a mapping of form_id to kind_id
             const formKindMap: {[formId: string]: string} = {};
@@ -376,9 +443,11 @@ const MapLogic = ({
             // Now assign icons based on tag_id -> form_id -> kind_id
             valueInfoData.forEach(item => {
               const kindId = formKindMap[item.form_id];
+              console.log(`Processing tag ${item.tag_id}: form_id=${item.form_id}, kind_id=${kindId}`);
+              
               if (kindId) {
-                console.log(`Tag ${item.tag_id} has kind_id: ${kindId}`);
                 icons[item.tag_id] = getMarkerIconByKind(kindId);
+                console.log(`Set icon for tag ${item.tag_id} with kind ${kindId}`);
               } else {
                 console.log(`No kind_id found for tag ${item.tag_id}, using default`);
                 icons[item.tag_id] = getMarkerIconByKind('1'); // Default to land
@@ -397,7 +466,7 @@ const MapLogic = ({
           }
         });
         
-        console.log('Final icons mapping:', icons);
+        console.log('Final icons mapping:', Object.keys(icons).length, 'icons set');
         setMarkerIcons(icons);
       } catch (error) {
         console.error('Error in fetchKindInfoForTags:', error);
@@ -410,13 +479,17 @@ const MapLogic = ({
   // Filter and search functionality
   useEffect(() => {
     const filterAndSearchTags = async () => {
+      console.log('Starting filter and search...');
       if (!searchQuery.trim() && currentFilter === 'all') {
+        console.log('No filter/search applied, showing all tags');
         setFilteredPhotoTags(photoTags);
         return;
       }
 
       const filtered = [];
       const query = searchQuery.toLowerCase().trim();
+      
+      console.log(`Search query: "${query}", Filter: "${currentFilter}"`);
 
       for (const tag of photoTags) {
         try {
@@ -447,8 +520,10 @@ const MapLogic = ({
                      kindStr === 'EQUIPMENT' || kindStr === 'equipment'));
 
                 if (!matchesFilter) {
+                  console.log(`Tag ${tag.tag_id} filtered out (kind: ${kindStr})`);
                   continue;
                 }
+                console.log(`Tag ${tag.tag_id} passed filter (kind: ${kindStr})`);
               }
             }
           }
@@ -491,8 +566,10 @@ const MapLogic = ({
             }
 
             if (!matchesSearch) {
+              console.log(`Tag ${tag.tag_id} filtered out by search`);
               continue;
             }
+            console.log(`Tag ${tag.tag_id} passed search`);
           }
 
           filtered.push(tag);
@@ -501,6 +578,7 @@ const MapLogic = ({
         }
       }
 
+      console.log(`Filtered results: ${filtered.length} tags`);
       setFilteredPhotoTags(filtered);
     };
 
@@ -558,6 +636,7 @@ const MapLogic = ({
           icon={markerIcons[tag.tag_id] || getMarkerIconByKind('1')}
           eventHandlers={{
             click: () => {
+              console.log('Marker clicked:', tag.tag_id);
               onMarkerClick(tag.tag_id);
             }
           }}
@@ -582,7 +661,6 @@ const MapLogic = ({
 };
 
 // Main Map Component
-// Main Map Component
 const MapCon: React.FC<MapConProps> = ({ searchQuery = '', isAdmin = false }) => {
   const [isMounted, setIsMounted] = useState(false);
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
@@ -597,11 +675,13 @@ const MapCon: React.FC<MapConProps> = ({ searchQuery = '', isAdmin = false }) =>
   }, []);
 
   const handleMarkerClick = (tagId: string) => {
+    console.log('Handle marker click called with tagId:', tagId);
     setSelectedTagId(tagId);
     setShowPopup(true);
   };
 
   const handleClosePopup = () => {
+    console.log('Closing popup');
     setShowPopup(false);
     setSelectedTagId(null);
   };
@@ -615,8 +695,7 @@ const MapCon: React.FC<MapConProps> = ({ searchQuery = '', isAdmin = false }) =>
     setIsSatelliteView(!isSatelliteView);
   };
 
-  // CORRECTED LINE - Fixed typo from STERLLITE_URL to SATELLITE_URL
-  const currentTileUrl = isSatelliteView ? TILE_LAYER_URL : OPENSTREETMAP_URL;
+  const currentTileUrl = isSatelliteView ? SATELLITE_URL : OPENSTREETMAP_URL;
   const currentAttribution = isSatelliteView 
     ? 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics'
     : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
@@ -662,12 +741,39 @@ const MapCon: React.FC<MapConProps> = ({ searchQuery = '', isAdmin = false }) =>
 
       {/* Custom Popup Overlay */}
       {showPopup && selectedTagId && (
-        <div className="popup-overlay-container">
-          <MapMarkerPopup 
-            photoTagId={selectedTagId} 
-            onClose={handleClosePopup} 
+        <>
+          {/* Overlay background */}
+          <div 
+            className="popup-overlay" 
+            onClick={handleClosePopup}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              zIndex: 999
+            }}
           />
-        </div>
+          {/* Popup content */}
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 1000,
+            width: '90%',
+            maxWidth: '400px',
+            maxHeight: '80vh',
+            overflow: 'auto'
+          }}>
+            <MapMarkerPopup 
+              photoTagId={selectedTagId} 
+              onClose={handleClosePopup} 
+            />
+          </div>
+        </>
       )}
     </div>
   );
