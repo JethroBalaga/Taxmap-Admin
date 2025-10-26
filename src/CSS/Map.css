@@ -1,6 +1,9 @@
 /* Map content container */
 .map-content {
   position: relative;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
 }
 
 /* Search Bar Styles - Now in header */
@@ -39,22 +42,76 @@
   width: 100%;
 }
 
-/* Map controls styling */
-.create-outline-btn {
+/* Ensure Leaflet markers display correctly */
+.leaflet-marker-icon {
+  border: none !important;
+  background: transparent !important;
+}
+
+/* Make markers more interactive */
+.leaflet-marker-icon:hover {
+  transform: scale(1.2);
+  transition: transform 0.2s ease;
+  z-index: 1000;
+}
+
+/* Custom popup styles */
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+}
+
+.leaflet-popup-content {
+  margin: 8px 12px;
+}
+
+/* Satellite toggle button styles - POSITIONED ABOVE ZOOM CONTROLS */
+.satellite-toggle-container {
+  margin-bottom: 0;
+}
+
+/* Target the topleft control container and adjust layout */
+.leaflet-control-container .leaflet-top.leaflet-left {
+  display: flex;
+  flex-direction: column-reverse; /* This reverses the order so toggle is above zoom */
+  align-items: flex-start;
+}
+
+/* Ensure proper spacing between controls with margin bottom */
+.leaflet-control-container .leaflet-top.leaflet-left .leaflet-control {
+  margin-top: 10px;
+  margin-bottom: 10px; /* Added margin bottom for both toggle and zoom */
+}
+
+/* Remove top margin from the first control (zoom) to avoid extra space */
+.leaflet-control-container .leaflet-top.leaflet-left .leaflet-control-zoom {
+  margin-top: 0;
+}
+
+.satellite-toggle-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
+  gap: 4px;
+  width: auto;
+  min-width: 90px;
   height: 30px;
   background: white;
-  border-radius: 50%;
+  border: none;
+  border-radius: 4px;
   box-shadow: 0 1px 5px rgba(0,0,0,0.4);
   cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 0 8px;
+  color: #333;
 }
 
-.create-outline-btn:hover {
+.satellite-toggle-btn:hover {
   background: #f4f4f4;
-  transform: scale(1.1);
+}
+
+.satellite-toggle-btn:active {
+  background: #e9e9e9;
 }
 
 /* Filter button styles */
@@ -173,34 +230,12 @@
   text-transform: uppercase;
 }
 
-/* FIX: Update control container for multiple buttons - NORMAL ORDER to put filter ABOVE create */
+/* FIX: Update control container for multiple buttons */
 .leaflet-control-container .leaflet-top.leaflet-right {
   display: flex;
-  flex-direction: column; /* Normal order - filter above create */
+  flex-direction: column;
   align-items: flex-end;
   gap: 10px;
-}
-
-/* Ensure the filter control comes before create control in the DOM order */
-.leaflet-control-container .leaflet-top.leaflet-right .leaflet-control:nth-child(1) {
-  order: 1; /* Filter button */
-}
-
-.leaflet-control-container .leaflet-top.leaflet-right .leaflet-control:nth-child(2) {
-  order: 2; /* Create button */
-}
-
-/* Ensure Leaflet markers display correctly */
-.leaflet-marker-icon {
-  border: none !important;
-  background: transparent !important;
-}
-
-/* Make markers more interactive */
-.leaflet-marker-icon:hover {
-  transform: scale(1.2);
-  transition: transform 0.2s ease;
-  z-index: 1000;
 }
 
 /* Popup overlay */
@@ -215,6 +250,19 @@
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+/* Custom popup overlay positioning */
+.popup-overlay-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  width: 90%;
+  max-width: 400px;
+  max-height: 80vh;
+  overflow: auto;
 }
 
 /* Internet status notification */
@@ -252,6 +300,7 @@
   }
   
   /* Adjust map controls for mobile */
+  .satellite-toggle-btn,
   .filter-toggle-btn {
     min-width: 80px;
     font-size: 11px;
@@ -261,5 +310,11 @@
   .filter-panel {
     min-width: 180px;
     padding: 12px;
+  }
+
+  /* Adjust popup for mobile */
+  .popup-overlay-container {
+    width: 95%;
+    max-width: 350px;
   }
 }

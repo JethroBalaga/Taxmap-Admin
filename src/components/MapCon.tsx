@@ -7,6 +7,7 @@ import MapMarkerPopup from './MapMarkerPopup';
 import { supabase } from '../utils/supaBaseClient';
 
 const TILE_LAYER_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+const OPENSTREETMAP_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 const manoloFortichBounds = L.latLngBounds(
   L.latLng(8.25, 124.75),
   L.latLng(8.45, 124.95)
@@ -41,6 +42,53 @@ interface MapConProps {
 const safeIncludes = (value: any, query: string): boolean => {
   if (value == null) return false;
   return String(value).toLowerCase().includes(query.toLowerCase());
+};
+
+// Satellite Toggle Control Component
+const SatelliteToggleControl = ({ 
+  isSatelliteView, 
+  onToggle 
+}: { 
+  isSatelliteView: boolean;
+  onToggle: () => void;
+}) => {
+  const map = useMap();
+  const controlRef = useRef<any>(null);
+
+  useEffect(() => {
+    const CustomControl = L.Control.extend({
+      options: { position: 'topleft' },
+      onAdd: function () {
+        const container = L.DomUtil.create('div', 'leaflet-control satellite-toggle-container');
+        const button = L.DomUtil.create('button', 'satellite-toggle-btn', container);
+        button.type = 'button';
+        button.title = isSatelliteView ? 'Switch to Standard Map' : 'Switch to Satellite View';
+        button.innerHTML = `
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <path fill="currentColor" d="${isSatelliteView ? 
+              'M12,2C8.13,2,5,5.13,5,9c0,5.25,7,13,7,13s7-7.75,7-13C19,5.13,15.87,2,12,2z M12,11.5c-1.38,0-2.5-1.12-2.5-2.5s1.12-2.5,2.5-2.5s2.5,1.12,2.5,2.5S13.38,11.5,12,11.5z' :
+              'M12,2C8.13,2,5,5.13,5,9c0,5.25,7,13,7,13s7-7.75,7-13C19,5.13,15.87,2,12,2z M12,11.5c-1.38,0-2.5-1.12-2.5-2.5s1.12-2.5,2.5-2.5s2.5,1.12,2.5,2.5S13.38,11.5,12,11.5z'
+            }"/>
+          </svg>
+          <span>${isSatelliteView ? 'Map' : 'Satellite'}</span>
+        `;
+        
+        L.DomEvent.on(button, 'click', (e) => {
+          L.DomEvent.stop(e);
+          onToggle();
+        });
+        
+        return container;
+      }
+    });
+
+    controlRef.current = new CustomControl();
+    controlRef.current.addTo(map);
+    
+    return () => controlRef.current?.remove();
+  }, [map, isSatelliteView, onToggle]);
+
+  return null;
 };
 
 // Filter Control Component
@@ -236,11 +284,13 @@ const FilterControl = ({
 const MapLogic = ({ 
   onMarkerClick,
   searchQuery = '',
-  currentFilter = 'all'
+  currentFilter = 'all',
+  isSatelliteView = false
 }: { 
   onMarkerClick: (tagId: string) => void;
   searchQuery?: string;
   currentFilter?: string;
+  isSatelliteView?: boolean;
 }) => {
   const map = useMap();
   const [allowZoomOut, setAllowZoomOut] = useState(false);
@@ -532,12 +582,14 @@ const MapLogic = ({
 };
 
 // Main Map Component
+// Main Map Component
 const MapCon: React.FC<MapConProps> = ({ searchQuery = '', isAdmin = false }) => {
   const [isMounted, setIsMounted] = useState(false);
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
   const [showPopup, setShowPopup] = useState(false);
   const [currentFilter, setCurrentFilter] = useState<string>('all');
   const [photoTags, setPhotoTags] = useState<PhotoTag[]>([]);
+  const [isSatelliteView, setIsSatelliteView] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -559,25 +611,18 @@ const MapCon: React.FC<MapConProps> = ({ searchQuery = '', isAdmin = false }) =>
     console.log(`Filter changed to: ${filter}`);
   };
 
-  return (
-    <div style={{ height: '100vh', width: '100%', overflow: 'hidden', position: 'relative' }}>
-      <style>{`
-        /* Ensure Leaflet markers display correctly */
-        .leaflet-marker-icon {
-          border: none !important;
-          background: transparent !important;
-        }
-        
-        /* Custom popup styles */
-        .leaflet-popup-content-wrapper {
-          border-radius: 8px;
-        }
-        
-        .leaflet-popup-content {
-          margin: 8px 12px;
-        }
-      `}</style>
+  const handleToggleSatellite = () => {
+    setIsSatelliteView(!isSatelliteView);
+  };
 
+  // CORRECTED LINE - Fixed typo from STERLLITE_URL to SATELLITE_URL
+  const currentTileUrl = isSatelliteView ? TILE_LAYER_URL : OPENSTREETMAP_URL;
+  const currentAttribution = isSatelliteView 
+    ? 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics'
+    : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
+  return (
+    <div className="map-content" style={{ height: '100vh', width: '100%', overflow: 'hidden', position: 'relative' }}>
       {isMounted && (
         <MapContainer
           center={[8.35985, 124.869077]}
@@ -589,40 +634,35 @@ const MapCon: React.FC<MapConProps> = ({ searchQuery = '', isAdmin = false }) =>
           maxBoundsViscosity={1.0}
         >
           <TileLayer
-            url={TILE_LAYER_URL}
-            attribution='Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics'
+            url={currentTileUrl}
+            attribution={currentAttribution}
           />
           
           <MapLogic 
             onMarkerClick={handleMarkerClick} 
             searchQuery={searchQuery}
             currentFilter={currentFilter}
+            isSatelliteView={isSatelliteView}
           />
 
-          {/* Filter Control - Show for admin users */}
+          {/* Satellite Toggle Control */}
+          <SatelliteToggleControl 
+            isSatelliteView={isSatelliteView}
+            onToggle={handleToggleSatellite}
+          />
+
+          {/* Filter Control */}
           <FilterControl 
             onFilterChange={handleFilterChange}
             currentFilter={currentFilter}
             photoTags={photoTags}
           />
-
-          {/* No Create Button - Admin is view-only */}
         </MapContainer>
       )}
 
       {/* Custom Popup Overlay */}
       {showPopup && selectedTagId && (
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          zIndex: 1000,
-          width: '90%',
-          maxWidth: '400px',
-          maxHeight: '80vh',
-          overflow: 'auto'
-        }}>
+        <div className="popup-overlay-container">
           <MapMarkerPopup 
             photoTagId={selectedTagId} 
             onClose={handleClosePopup} 
