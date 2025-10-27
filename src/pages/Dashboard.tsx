@@ -17,13 +17,20 @@ import {
   IonButtons,
   IonMenuButton,
   IonButton,
-  IonIcon
+  IonIcon,
+  IonSegment,
+  IonSegmentButton,
+  IonLabel
 } from '@ionic/react';
 import { arrowBack } from 'ionicons/icons';
-import { Pie } from 'react-chartjs-2';
+import { Pie, Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   ArcElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
   Tooltip,
   Legend,
   ChartOptions
@@ -31,7 +38,15 @@ import {
 import { supabase } from '../utils/supaBaseClient';
 import '../CSS/Dashboard.css';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+ChartJS.register(
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Tooltip,
+  Legend
+);
 
 interface DashboardStats {
   totalForms: number;
@@ -52,6 +67,20 @@ interface ClassificationData {
   percentage: number;
 }
 
+interface ActivityData {
+  date: string;
+  loginCount: number;
+  formViewCount: number;
+  formSubmitCount: number;
+}
+
+interface FormSubmissionData {
+  date: string;
+  landCount: number;
+  buildingCount: number;
+  machineryCount: number;
+}
+
 const Dashboard: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats>({
     totalForms: 0,
@@ -64,6 +93,12 @@ const Dashboard: React.FC = () => {
   const [selectedView, setSelectedView] = useState<'overview' | 'kinds' | 'land' | 'building' | 'machinery'>('overview');
   const [isLoading, setIsLoading] = useState(true);
   const [isChartLoading, setIsChartLoading] = useState(false);
+  
+  // New state for line charts
+  const [timeRange, setTimeRange] = useState<'7days' | '30days'>('7days');
+  const [activityData, setActivityData] = useState<ActivityData[]>([]);
+  const [formSubmissionData, setFormSubmissionData] = useState<FormSubmissionData[]>([]);
+  const [isLineChartLoading, setIsLineChartLoading] = useState(false);
 
   // Fetch overall statistics
   const fetchStats = async () => {
@@ -183,6 +218,95 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  // Generate date labels based on time range
+  const generateDateLabels = (days: number): string[] => {
+    const labels = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      labels.push(date.toISOString().split('T')[0]);
+    }
+    return labels;
+  };
+
+  // Fetch user activity data for line chart
+  const fetchUserActivity = async () => {
+    try {
+      setIsLineChartLoading(true);
+      const days = timeRange === '7days' ? 7 : 30;
+      const dateLabels = generateDateLabels(days);
+
+      // Get login activity
+      const { data: loginData, error: loginError } = await supabase
+        .from('user_activity_logs')
+        .select('timestamp, activity_type')
+        .gte('timestamp', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
+        .in('activity_type', ['LOGIN', 'FORM_VIEW', 'FORM_SUBMIT']);
+
+      if (loginError) throw loginError;
+
+      // Process activity data
+      const processedActivity: ActivityData[] = dateLabels.map(date => {
+        const dateActivities = loginData?.filter(activity => 
+          activity.timestamp.split('T')[0] === date
+        ) || [];
+
+        return {
+          date,
+          loginCount: dateActivities.filter(a => a.activity_type === 'LOGIN').length,
+          formViewCount: dateActivities.filter(a => a.activity_type === 'FORM_VIEW').length,
+          formSubmitCount: dateActivities.filter(a => a.activity_type === 'FORM_SUBMIT').length
+        };
+      });
+
+      setActivityData(processedActivity);
+
+    } catch (error) {
+      console.error('Error fetching user activity:', error);
+    } finally {
+      setIsLineChartLoading(false);
+    }
+  };
+
+  // Fetch form submission data for line chart
+  const fetchFormSubmissions = async () => {
+    try {
+      setIsLineChartLoading(true);
+      const days = timeRange === '7days' ? 7 : 30;
+      const dateLabels = generateDateLabels(days);
+
+      // Get form submissions
+      const { data: formData, error: formError } = await supabase
+        .from('formtbl')
+        .select('created_at, kind_id')
+        .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
+        .in('kind_id', [1, 2, 3]);
+
+      if (formError) throw formError;
+
+      // Process form submission data
+      const processedFormData: FormSubmissionData[] = dateLabels.map(date => {
+        const dateForms = formData?.filter(form => 
+          form.created_at.split('T')[0] === date
+        ) || [];
+
+        return {
+          date,
+          landCount: dateForms.filter(f => f.kind_id === 1).length,
+          buildingCount: dateForms.filter(f => f.kind_id === 2).length,
+          machineryCount: dateForms.filter(f => f.kind_id === 3).length
+        };
+      });
+
+      setFormSubmissionData(processedFormData);
+
+    } catch (error) {
+      console.error('Error fetching form submissions:', error);
+    } finally {
+      setIsLineChartLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchStats();
   }, []);
@@ -198,6 +322,16 @@ const Dashboard: React.FC = () => {
       fetchClassificationDistribution(3);
     }
   }, [selectedView]);
+
+  useEffect(() => {
+    const loadLineChartData = async () => {
+      await Promise.all([fetchUserActivity(), fetchFormSubmissions()]);
+    };
+
+    if (selectedView === 'overview') {
+      loadLineChartData();
+    }
+  }, [timeRange, selectedView]);
 
   const getKindName = (kindId: number): string => {
     switch (kindId) {
@@ -251,7 +385,85 @@ const Dashboard: React.FC = () => {
     ],
   };
 
-  const chartOptions: ChartOptions<'pie'> = {
+  // User Activity Chart Data
+  const activityChartData = {
+    labels: activityData.map(item => {
+      const date = new Date(item.date);
+      return timeRange === '7days' 
+        ? date.toLocaleDateString('en-US', { weekday: 'short' })
+        : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }),
+    datasets: [
+      {
+        label: 'Logins',
+        data: activityData.map(item => item.loginCount),
+        borderColor: '#3880ff',
+        backgroundColor: 'rgba(56, 128, 255, 0.1)',
+        borderWidth: 3,
+        tension: 0.4,
+        fill: true,
+      },
+      {
+        label: 'Form Views',
+        data: activityData.map(item => item.formViewCount),
+        borderColor: '#ffce00',
+        backgroundColor: 'rgba(255, 206, 0, 0.1)',
+        borderWidth: 3,
+        tension: 0.4,
+        fill: true,
+      },
+      {
+        label: 'Form Submissions',
+        data: activityData.map(item => item.formSubmitCount),
+        borderColor: '#10dc60',
+        backgroundColor: 'rgba(16, 220, 96, 0.1)',
+        borderWidth: 3,
+        tension: 0.4,
+        fill: true,
+      }
+    ],
+  };
+
+  // Form Submission Chart Data
+  const formSubmissionChartData = {
+    labels: formSubmissionData.map(item => {
+      const date = new Date(item.date);
+      return timeRange === '7days' 
+        ? date.toLocaleDateString('en-US', { weekday: 'short' })
+        : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }),
+    datasets: [
+      {
+        label: 'Land Forms',
+        data: formSubmissionData.map(item => item.landCount),
+        borderColor: '#10dc60',
+        backgroundColor: 'rgba(16, 220, 96, 0.1)',
+        borderWidth: 3,
+        tension: 0.4,
+        fill: true,
+      },
+      {
+        label: 'Building Forms',
+        data: formSubmissionData.map(item => item.buildingCount),
+        borderColor: '#3880ff',
+        backgroundColor: 'rgba(56, 128, 255, 0.1)',
+        borderWidth: 3,
+        tension: 0.4,
+        fill: true,
+      },
+      {
+        label: 'Machinery Forms',
+        data: formSubmissionData.map(item => item.machineryCount),
+        borderColor: '#ffce00',
+        backgroundColor: 'rgba(255, 206, 0, 0.1)',
+        borderWidth: 3,
+        tension: 0.4,
+        fill: true,
+      }
+    ],
+  };
+
+  const pieChartOptions: ChartOptions<'pie'> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -276,6 +488,42 @@ const Dashboard: React.FC = () => {
     },
   };
 
+  const lineChartOptions: ChartOptions<'line'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+        labels: {
+          usePointStyle: true,
+          padding: 20,
+        },
+      },
+      tooltip: {
+        mode: 'index',
+        intersect: false,
+      },
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false,
+        },
+      },
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 1,
+        },
+      },
+    },
+    interaction: {
+      mode: 'nearest',
+      axis: 'x',
+      intersect: false,
+    },
+  };
+
   const StatCard: React.FC<{
     title: string;
     value: number;
@@ -296,6 +544,11 @@ const Dashboard: React.FC = () => {
       </IonCardContent>
     </IonCard>
   );
+
+  // Calculate totals for line chart summary
+  const totalLogins = activityData.reduce((sum, item) => sum + item.loginCount, 0);
+  const totalFormViews = activityData.reduce((sum, item) => sum + item.formViewCount, 0);
+  const totalFormSubmissions = activityData.reduce((sum, item) => sum + item.formSubmitCount, 0);
 
   return (
     <IonPage>
@@ -323,6 +576,20 @@ const Dashboard: React.FC = () => {
       <IonContent>
         {selectedView === 'overview' && (
           <div className="dashboard-container">
+            {/* Time Range Selector for Line Charts */}
+            <IonCard>
+              <IonCardContent>
+                <IonSegment value={timeRange} onIonChange={e => setTimeRange(e.detail.value as any)}>
+                  <IonSegmentButton value="7days">
+                    <IonLabel>7 Days</IonLabel>
+                  </IonSegmentButton>
+                  <IonSegmentButton value="30days">
+                    <IonLabel>30 Days</IonLabel>
+                  </IonSegmentButton>
+                </IonSegment>
+              </IonCardContent>
+            </IonCard>
+
             <IonGrid>
               <IonRow>
                 <IonCol size="12">
@@ -339,6 +606,7 @@ const Dashboard: React.FC = () => {
                 </IonRow>
               ) : (
                 <>
+                  {/* Stat Cards */}
                   <IonRow>
                     <IonCol size="6" size-md="3">
                       <StatCard
@@ -374,6 +642,52 @@ const Dashboard: React.FC = () => {
                     </IonCol>
                   </IonRow>
 
+                  {/* Line Charts Section */}
+                  <IonRow>
+                    <IonCol size="12">
+                      <IonCard>
+                        <IonCardHeader>
+                          <IonCardTitle>User Activity Over Time</IonCardTitle>
+                        </IonCardHeader>
+                        <IonCardContent>
+                          {isLineChartLoading ? (
+                            <div className="chart-loading">
+                              <IonSpinner />
+                              <IonText>Loading activity data...</IonText>
+                            </div>
+                          ) : (
+                            <div className="chart-container">
+                              <Line data={activityChartData} options={lineChartOptions} />
+                            </div>
+                          )}
+                        </IonCardContent>
+                      </IonCard>
+                    </IonCol>
+                  </IonRow>
+
+                  <IonRow>
+                    <IonCol size="12">
+                      <IonCard>
+                        <IonCardHeader>
+                          <IonCardTitle>Form Submission Rate Over Time</IonCardTitle>
+                        </IonCardHeader>
+                        <IonCardContent>
+                          {isLineChartLoading ? (
+                            <div className="chart-loading">
+                              <IonSpinner />
+                              <IonText>Loading form data...</IonText>
+                            </div>
+                          ) : (
+                            <div className="chart-container">
+                              <Line data={formSubmissionChartData} options={lineChartOptions} />
+                            </div>
+                          )}
+                        </IonCardContent>
+                      </IonCard>
+                    </IonCol>
+                  </IonRow>
+
+                  {/* Quick Summary */}
                   <IonRow>
                     <IonCol size="12">
                       <IonCard>
@@ -396,20 +710,20 @@ const Dashboard: React.FC = () => {
                               <IonCol size="12" size-md="4">
                                 <div className="summary-item">
                                   <IonText color="success">
-                                    <h3>{stats.totalLand}</h3>
+                                    <h3>{totalLogins}</h3>
                                   </IonText>
                                   <IonText color="medium">
-                                    <p>Land Properties</p>
+                                    <p>User Logins ({timeRange})</p>
                                   </IonText>
                                 </div>
                               </IonCol>
                               <IonCol size="12" size-md="4">
                                 <div className="summary-item">
                                   <IonText color="warning">
-                                    <h3>{stats.totalBuilding + stats.totalMachinery}</h3>
+                                    <h3>{totalFormSubmissions}</h3>
                                   </IonText>
                                   <IonText color="medium">
-                                    <p>Structures & Equipment</p>
+                                    <p>Forms Submitted ({timeRange})</p>
                                   </IonText>
                                 </div>
                               </IonCol>
@@ -425,7 +739,7 @@ const Dashboard: React.FC = () => {
           </div>
         )}
 
-        {/* Charts Section */}
+        {/* Pie Charts Section */}
         {(selectedView === 'kinds' || selectedView === 'land' || selectedView === 'building' || selectedView === 'machinery') && (
           <div className="charts-container">
             <IonGrid>
@@ -459,11 +773,11 @@ const Dashboard: React.FC = () => {
                       ) : (
                         <div className="chart-container">
                           {selectedView === 'kinds' && kindData.length > 0 && (
-                            <Pie data={kindsChartData} options={chartOptions} />
+                            <Pie data={kindsChartData} options={pieChartOptions} />
                           )}
                           {(selectedView === 'land' || selectedView === 'building' || selectedView === 'machinery') && 
                            classificationData.length > 0 && (
-                            <Pie data={classificationsChartData} options={chartOptions} />
+                            <Pie data={classificationsChartData} options={pieChartOptions} />
                           )}
                           {(selectedView === 'kinds' && kindData.length === 0) && (
                             <div className="no-data">
