@@ -22,7 +22,7 @@ import '../CSS/Setup.css';
 
 const Logs: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedTable, setSelectedTable] = useState<string>('Classification');
+    const [selectedTable, setSelectedTable] = useState<string>('Admin Activity');
     const [logsData, setLogsData] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [showToast, setShowToast] = useState(false);
@@ -30,7 +30,11 @@ const Logs: React.FC = () => {
     const [isError, setIsError] = useState(false);
     const searchRef = useRef<HTMLIonSearchbarElement>(null);
 
+    // ✅ Reordered so admin/user/form logs are at the top
     const tableOptions = [
+        'Admin Activity',
+        'User Activity',
+        'Form Logs',
         'Classification',
         'Subclasses',
         'Subclass Rates',
@@ -44,21 +48,28 @@ const Logs: React.FC = () => {
         'Building Code',
         'Building Component',
         'Building Subcomponent',
-        'Admin Activity',
-        'Equipment', // ✅ Added new option
-        'Land Adjustment' // ✅ Added new option
+        'Equipment',
+        'Land Adjustment'
     ];
 
-    // Fetch logs based on selected table
     const fetchLogs = async () => {
         if (!selectedTable) return;
-
         setIsLoading(true);
+
         try {
             let tableName = '';
 
-            // ✅ Map table selection to actual database table names
+            // ✅ Updated mapping with new cases
             switch (selectedTable) {
+                case 'Admin Activity':
+                    tableName = 'admin_activity_logs';
+                    break;
+                case 'User Activity':
+                    tableName = 'user_activity_logs';
+                    break;
+                case 'Form Logs':
+                    tableName = 'formtbl_logs';
+                    break;
                 case 'Classification':
                     tableName = 'classtbl_logs';
                     break;
@@ -98,26 +109,21 @@ const Logs: React.FC = () => {
                 case 'Building Subcomponent':
                     tableName = 'building_subcomponenttbl_logs';
                     break;
-                case 'Admin Activity':
-                    tableName = 'user_activity_logs';
-                    break;
-                case 'Equipment': // ✅ New case
+                case 'Equipment':
                     tableName = 'equipment_logs';
                     break;
-                case 'Land Adjustment': // ✅ New case
+                case 'Land Adjustment':
                     tableName = 'landadjustmenttbl_logs';
                     break;
                 default:
                     tableName = '';
             }
 
-            // ✅ Prevent running query if tableName is empty
             if (!tableName) {
                 setLogsData([]);
                 return;
             }
 
-            // ✅ Fetch logs from Supabase
             const { data, error } = await supabase
                 .from(tableName)
                 .select('*')
@@ -136,27 +142,18 @@ const Logs: React.FC = () => {
         }
     };
 
-    // Refresh when component mounts and when selectedTable changes
     useEffect(() => {
         fetchLogs();
     }, [selectedTable]);
 
-    // Force refresh when window loads (handles browser back button)
     useEffect(() => {
         const handlePageShow = (event: PageTransitionEvent) => {
-            if (event.persisted) {
-                fetchLogs();
-            }
+            if (event.persisted) fetchLogs();
         };
-
         window.addEventListener('pageshow', handlePageShow);
-
-        return () => {
-            window.removeEventListener('pageshow', handlePageShow);
-        };
+        return () => window.removeEventListener('pageshow', handlePageShow);
     }, [selectedTable]);
 
-    // Pull to refresh function
     const handleRefresh = (event: any) => {
         fetchLogs().then(() => {
             event.detail.complete();
@@ -165,7 +162,6 @@ const Logs: React.FC = () => {
         });
     };
 
-    // Filter data based on search term
     const filteredData = logsData.filter(item =>
         !searchTerm.trim() ||
         JSON.stringify(item).toLowerCase().includes(searchTerm.toLowerCase())
@@ -180,7 +176,6 @@ const Logs: React.FC = () => {
             </IonHeader>
 
             <IonContent fullscreen>
-                {/* ✅ Pull to refresh */}
                 <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
                     <IonRefresherContent></IonRefresherContent>
                 </IonRefresher>
