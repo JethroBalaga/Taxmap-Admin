@@ -16,7 +16,7 @@ const manoloFortichBounds = L.latLngBounds(
 const DEFAULT_ZOOM = 14;
 const MIN_ZOOM_LOCKED = 14;
 const MIN_ZOOM_UNLOCKED = 12;
-const MAX_ZOOM = 18;
+const MAX_ZOOM = 22;
 
 // Import marker icons for filter panel
 import buildingMarkerIconUrl from '../Images/Building.png';
@@ -287,26 +287,88 @@ const FilterControl = ({
   return null;
 };
 
-// Component to set up the map logic and markers
+// Component to set up the map logic and markers - UPDATED TO MATCH STAFF VERSION
 const MapLogic = ({ 
   onMarkerClick,
   searchQuery = '',
   currentFilter = 'all',
   isSatelliteView = false,
-  onPhotoTagsLoaded
+  onPhotoTagsLoaded,
+  onToggleSatellite
 }: { 
   onMarkerClick: (tagId: string) => void;
   searchQuery?: string;
   currentFilter?: string;
   isSatelliteView?: boolean;
   onPhotoTagsLoaded?: (tags: PropertyDetails[]) => void;
+  onToggleSatellite: () => void;
 }) => {
   const map = useMap();
+  const tileLayerRef = useRef<any>(null);
   const [allowZoomOut, setAllowZoomOut] = useState(false);
   const [photoTags, setPhotoTags] = useState<PropertyDetails[]>([]);
   const [filteredPhotoTags, setFilteredPhotoTags] = useState<PropertyDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [markerIcons, setMarkerIcons] = useState<{[tagId: string]: L.Icon}>({});
+
+  // TILE LAYER SETUP - EXACTLY LIKE STAFF VERSION
+  useEffect(() => {
+    // Remove existing tile layer
+    if (tileLayerRef.current) {
+      map.removeLayer(tileLayerRef.current);
+    }
+
+    // Add Tile Layer - EXACT CONFIGURATION LIKE STAFF VERSION
+    const currentTileUrl = isSatelliteView ? SATELLITE_URL : OPENSTREETMAP_URL;
+    
+    const tileLayer = L.tileLayer(currentTileUrl, {
+      attribution: isSatelliteView 
+        ? 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics'
+        : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      noWrap: true, // EXACTLY LIKE STAFF VERSION
+      minZoom: MIN_ZOOM_LOCKED,
+      maxZoom: MAX_ZOOM,
+      maxNativeZoom: 18 // EXACTLY LIKE STAFF VERSION - THIS IS THE KEY!
+    });
+
+    tileLayer.addTo(map);
+    tileLayerRef.current = tileLayer;
+
+    // Initial map view and restriction
+    map.setView([8.35985, 124.869077], DEFAULT_ZOOM);
+    map.setMaxBounds(manoloFortichBounds);
+
+    const enforceRestrictions = () => {
+      const currentZoom = map.getZoom();
+
+      if (currentZoom > DEFAULT_ZOOM) {
+        setAllowZoomOut(true);
+      }
+
+      if (!allowZoomOut && currentZoom < DEFAULT_ZOOM) {
+        map.setZoom(DEFAULT_ZOOM);
+      } else if (allowZoomOut && currentZoom < MIN_ZOOM_UNLOCKED) {
+        map.setZoom(MIN_ZOOM_UNLOCKED);
+      }
+
+      if (!manoloFortichBounds.contains(map.getCenter())) {
+        map.panInsideBounds(manoloFortichBounds, { animate: false });
+      }
+    };
+
+    map.on('zoomend', enforceRestrictions);
+    map.on('move', enforceRestrictions);
+
+    setTimeout(() => map.invalidateSize(), 100);
+
+    return () => {
+      map.off('zoomend', enforceRestrictions);
+      map.off('move', enforceRestrictions);
+      if (tileLayer) {
+        tileLayer.remove();
+      }
+    };
+  }, [map, allowZoomOut, isSatelliteView]);
 
   useEffect(() => {
     // Fetch photo tags from database using the view
@@ -358,7 +420,7 @@ const MapLogic = ({
     fetchPhotoTags();
   }, [onPhotoTagsLoaded]);
 
-  // Filter and search functionality - FIXED VERSION
+  // Filter and search functionality
   useEffect(() => {
     const filterAndSearchTags = () => {
       console.log('Starting filter and search...');
@@ -378,13 +440,10 @@ const MapLogic = ({
       for (const tag of photoTags) {
         try {
           let matchesFilter = true;
-          let matchesSearch = !searchQuery.trim(); // If no search query, matches search
+          let matchesSearch = !searchQuery.trim();
 
-          // Apply filter logic
           if (currentFilter !== 'all') {
             matchesFilter = false;
-            
-            // Convert kind_id to string for comparison and handle both string and number types
             const kindId = String(tag.kind_id).trim();
             
             switch (currentFilter) {
@@ -405,7 +464,6 @@ const MapLogic = ({
             }
           }
 
-          // Apply search logic
           if (searchQuery.trim()) {
             matchesSearch = 
               safeIncludes(tag.tag_id, query) ||
@@ -438,48 +496,14 @@ const MapLogic = ({
     }
   }, [photoTags, searchQuery, currentFilter]);
 
-  // ZOOM HANDLING LOGIC
-  useEffect(() => {
-    // Initial map view and restriction
-    map.setView([8.35985, 124.869077], DEFAULT_ZOOM);
-    map.setMaxBounds(manoloFortichBounds);
-
-    const enforceRestrictions = () => {
-      const currentZoom = map.getZoom();
-
-      // Allow zooming out only if user has zoomed in first
-      if (currentZoom > DEFAULT_ZOOM) {
-        setAllowZoomOut(true);
-      }
-
-      // Prevent zooming out beyond restrictions
-      if (!allowZoomOut && currentZoom < DEFAULT_ZOOM) {
-        map.setZoom(DEFAULT_ZOOM);
-      } else if (allowZoomOut && currentZoom < MIN_ZOOM_UNLOCKED) {
-        map.setZoom(MIN_ZOOM_UNLOCKED);
-      }
-
-      // Keep map within bounds
-      if (!manoloFortichBounds.contains(map.getCenter())) {
-        map.panInsideBounds(manoloFortichBounds, { animate: false });
-      }
-    };
-
-    // Set up event listeners for zoom and move
-    map.on('zoomend', enforceRestrictions);
-    map.on('move', enforceRestrictions);
-
-    // Fix map sizing issues
-    setTimeout(() => map.invalidateSize(), 100);
-
-    return () => {
-      map.off('zoomend', enforceRestrictions);
-      map.off('move', enforceRestrictions);
-    };
-  }, [map, allowZoomOut]);
-
   return (
     <>
+      {/* Satellite Toggle Control INSIDE MapLogic like staff version */}
+      <SatelliteToggleControl 
+        isSatelliteView={isSatelliteView}
+        onToggle={onToggleSatellite}
+      />
+      
       {!loading && filteredPhotoTags.map((tag) => (
         <Marker
           key={tag.tag_id}
@@ -529,16 +553,10 @@ const MapCon: React.FC<MapConProps> = ({ searchQuery = '', isAdmin = false }) =>
     setIsSatelliteView(!isSatelliteView);
   };
 
-  // Use useCallback to memoize the callback function
   const handlePhotoTagsLoaded = useCallback((tags: PropertyDetails[]) => {
     console.log('Received photo tags in parent:', tags.length);
     setPhotoTags(tags);
   }, []);
-
-  const currentTileUrl = isSatelliteView ? SATELLITE_URL : OPENSTREETMAP_URL;
-  const currentAttribution = isSatelliteView 
-    ? 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics'
-    : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
   return (
     <div className="map-content" style={{ height: '100vh', width: '100%', overflow: 'hidden', position: 'relative' }}>
@@ -552,10 +570,7 @@ const MapCon: React.FC<MapConProps> = ({ searchQuery = '', isAdmin = false }) =>
           maxBounds={manoloFortichBounds}
           maxBoundsViscosity={1.0}
         >
-          <TileLayer
-            url={currentTileUrl}
-            attribution={currentAttribution}
-          />
+          {/* Remove the base TileLayer - MapLogic handles it dynamically */}
           
           <MapLogic 
             onMarkerClick={handleMarkerClick} 
@@ -563,12 +578,7 @@ const MapCon: React.FC<MapConProps> = ({ searchQuery = '', isAdmin = false }) =>
             currentFilter={currentFilter}
             isSatelliteView={isSatelliteView}
             onPhotoTagsLoaded={handlePhotoTagsLoaded}
-          />
-
-          {/* Satellite Toggle Control */}
-          <SatelliteToggleControl 
-            isSatelliteView={isSatelliteView}
-            onToggle={handleToggleSatellite}
+            onToggleSatellite={handleToggleSatellite}
           />
 
           {/* Filter Control */}
@@ -583,7 +593,6 @@ const MapCon: React.FC<MapConProps> = ({ searchQuery = '', isAdmin = false }) =>
       {/* Custom Popup Overlay */}
       {showPopup && selectedTagId && (
         <>
-          {/* Overlay background */}
           <div 
             className="popup-overlay" 
             onClick={handleClosePopup}
@@ -597,7 +606,6 @@ const MapCon: React.FC<MapConProps> = ({ searchQuery = '', isAdmin = false }) =>
               zIndex: 999
             }}
           />
-          {/* Popup content */}
           <div style={{
             position: 'absolute',
             top: '50%',
