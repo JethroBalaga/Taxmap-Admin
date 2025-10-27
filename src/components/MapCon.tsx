@@ -23,14 +23,23 @@ import buildingMarkerIconUrl from '../Images/Building.png';
 import equipmentMarkerIconUrl from '../Images/Equipment.png';
 import landMarkerIconUrl from '../Images/Land.png';
 
-interface PhotoTag {
+interface PropertyDetails {
   tag_id: string;
   latitude: number;
   longitude: number;
   date_taken: string;
   created_at: string;
-  accuracy?: number;
-  altitude?: number;
+  photo?: string;
+  form_id?: string;
+  kind_id?: string;
+  class_id?: string;
+  area?: number;
+  status?: string;
+  declarant_id?: number;
+  district_id?: number;
+  declarant_firstname?: string;
+  declarant_lastname?: string;
+  district_name?: string;
 }
 
 interface MapConProps {
@@ -99,7 +108,7 @@ const FilterControl = ({
 }: { 
   onFilterChange: (filter: string) => void;
   currentFilter: string;
-  photoTags: PhotoTag[];
+  photoTags: PropertyDetails[];
 }) => {
   const map = useMap();
   const controlRef = useRef<any>(null);
@@ -132,40 +141,20 @@ const FilterControl = ({
 
       for (const tag of photoTags) {
         try {
-          // First get value_info to get form_id for each tag
-          const { data: valueInfoData, error: valueError } = await supabase
-            .from('value_info')
-            .select('form_id')
-            .eq('tag_id', tag.tag_id)
-            .single();
-
-          if (valueError) {
-            continue;
-          }
-
-          if (valueInfoData) {
-            // Then get form data to get kind_id
-            const { data: formData, error: formError } = await supabase
-              .from('formtbl')
-              .select('kind_id')
-              .eq('form_id', valueInfoData.form_id)
-              .single();
-
-            if (formData) {
-              const kindStr = String(formData.kind_id).trim();
-              
-              // Count based on kind_id values: 1=land, 2=building, 3=machinery
-              switch (kindStr) {
-                case '1':
-                  counts.land++;
-                  break;
-                case '2':
-                  counts.building++;
-                  break;
-                case '3':
-                  counts.equipment++;
-                  break;
-              }
+          if (tag.kind_id) {
+            const kindStr = String(tag.kind_id).trim();
+            
+            // Count based on kind_id values: 1=land, 2=building, 3=machinery
+            switch (kindStr) {
+              case '1':
+                counts.land++;
+                break;
+              case '2':
+                counts.building++;
+                break;
+              case '3':
+                counts.equipment++;
+                break;
             }
           }
         } catch (error) {
@@ -300,35 +289,35 @@ const MapLogic = ({
   searchQuery?: string;
   currentFilter?: string;
   isSatelliteView?: boolean;
-  onPhotoTagsLoaded?: (tags: PhotoTag[]) => void;
+  onPhotoTagsLoaded?: (tags: PropertyDetails[]) => void;
 }) => {
   const map = useMap();
   const [allowZoomOut, setAllowZoomOut] = useState(false);
-  const [photoTags, setPhotoTags] = useState<PhotoTag[]>([]);
-  const [filteredPhotoTags, setFilteredPhotoTags] = useState<PhotoTag[]>([]);
+  const [photoTags, setPhotoTags] = useState<PropertyDetails[]>([]);
+  const [filteredPhotoTags, setFilteredPhotoTags] = useState<PropertyDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [markerIcons, setMarkerIcons] = useState<{[tagId: string]: L.Icon}>({});
 
   useEffect(() => {
-    // Fetch photo tags from database
+    // Fetch photo tags from database using the view
     const fetchPhotoTags = async () => {
       try {
         setLoading(true);
-        console.log('Starting to fetch photo tags from tagtbl...');
+        console.log('Starting to fetch photo tags using property_details_view...');
 
-        // Fetch with bounds
+        // Fetch with bounds using the view
         const { data, error } = await supabase
-          .from('tagtbl')
-          .select('tag_id, latitude, longitude, date_taken, created_at')
+          .from('property_details_view')
+          .select('*')
           .gte('latitude', manoloFortichBounds.getSouthWest().lat)
           .lte('latitude', manoloFortichBounds.getNorthEast().lat)
           .gte('longitude', manoloFortichBounds.getSouthWest().lng)
           .lte('longitude', manoloFortichBounds.getNorthEast().lng);
 
         if (error) {
-          console.error('Error fetching bounded photo tags:', error);
+          console.error('Error fetching photo tags from view:', error);
         } else if (data) {
-          console.log('Fetched photo tags:', data.length);
+          console.log('Fetched photo tags from view:', data.length);
           
           setPhotoTags(data);
           setFilteredPhotoTags(data);
@@ -338,8 +327,16 @@ const MapLogic = ({
             onPhotoTagsLoaded(data);
           }
           
-          // Fetch kind information for each tag to determine icons
-          await fetchKindInfoForTags(data);
+          // Set marker icons
+          const icons: {[tagId: string]: L.Icon} = {};
+          data.forEach(tag => {
+            if (tag.kind_id) {
+              icons[tag.tag_id] = getMarkerIconByKind(tag.kind_id);
+            } else {
+              icons[tag.tag_id] = getMarkerIconByKind('1'); // Default to land
+            }
+          });
+          setMarkerIcons(icons);
         }
       } catch (error) {
         console.error('Error loading photo tags:', error);
@@ -348,79 +345,13 @@ const MapLogic = ({
       }
     };
 
-    // Fetch kind information for tags
-    const fetchKindInfoForTags = async (tags: PhotoTag[]) => {
-      try {
-        const icons: {[tagId: string]: L.Icon} = {};
-        const tagIds = tags.map(tag => tag.tag_id);
-        
-        if (tagIds.length === 0) {
-          return;
-        }
-        
-        // First get value_info to get form_id for each tag
-        const { data: valueInfoData, error } = await supabase
-          .from('value_info')
-          .select('tag_id, form_id')
-          .in('tag_id', tagIds);
-
-        if (error) {
-          // Set default icons for all tags
-          tags.forEach(tag => {
-            icons[tag.tag_id] = getMarkerIconByKind('1');
-          });
-          setMarkerIcons(icons);
-          return;
-        }
-
-        if (valueInfoData && valueInfoData.length > 0) {
-          // Get unique form_ids
-          const formIds = [...new Set(valueInfoData.map(item => item.form_id))];
-          
-          // Then get kind_id for each form
-          const { data: formData, error: formError } = await supabase
-            .from('formtbl')
-            .select('form_id, kind_id')
-            .in('form_id', formIds);
-
-          if (formData) {
-            // Create a mapping of form_id to kind_id
-            const formKindMap: {[formId: string]: string} = {};
-            formData.forEach(form => {
-              formKindMap[form.form_id] = form.kind_id;
-            });
-
-            // Now assign icons based on tag_id -> form_id -> kind_id
-            valueInfoData.forEach(item => {
-              const kindId = formKindMap[item.form_id];
-              if (kindId) {
-                icons[item.tag_id] = getMarkerIconByKind(kindId);
-              } else {
-                icons[item.tag_id] = getMarkerIconByKind('1');
-              }
-            });
-          }
-        }
-        
-        // Handle any tags that didn't get an icon from the query
-        tags.forEach(tag => {
-          if (!icons[tag.tag_id]) {
-            icons[tag.tag_id] = getMarkerIconByKind('1');
-          }
-        });
-        
-        setMarkerIcons(icons);
-      } catch (error) {
-        console.error('Error in fetchKindInfoForTags:', error);
-      }
-    };
-
     fetchPhotoTags();
-  }, []); // Remove onPhotoTagsLoaded from dependencies
+  }, [onPhotoTagsLoaded]);
 
   // Filter and search functionality
   useEffect(() => {
-    const filterAndSearchTags = async () => {
+    const filterAndSearchTags = () => {
+      console.log('Starting filter and search with view data...');
       if (!searchQuery.trim() && currentFilter === 'all') {
         setFilteredPhotoTags(photoTags);
         return;
@@ -433,69 +364,32 @@ const MapLogic = ({
         try {
           // Apply filter first
           if (currentFilter !== 'all') {
-            const { data: valueInfoData } = await supabase
-              .from('value_info')
-              .select('form_id')
-              .eq('tag_id', tag.tag_id)
-              .single();
+            const matchesFilter = 
+              (currentFilter === 'land' && tag.kind_id === '1') ||
+              (currentFilter === 'building' && tag.kind_id === '2') ||
+              (currentFilter === 'equipment' && tag.kind_id === '3');
 
-            if (valueInfoData) {
-              const { data: formData } = await supabase
-                .from('formtbl')
-                .select('kind_id')
-                .eq('form_id', valueInfoData.form_id)
-                .single();
-
-              if (formData) {
-                const kindStr = String(formData.kind_id).trim();
-                const matchesFilter = 
-                  (currentFilter === 'land' && kindStr === '1') ||
-                  (currentFilter === 'building' && kindStr === '2') ||
-                  (currentFilter === 'equipment' && kindStr === '3');
-
-                if (!matchesFilter) {
-                  continue;
-                }
-              }
+            if (!matchesFilter) {
+              continue;
             }
           }
 
-          // Apply search using safeIncludes helper
+          // Apply search using safeIncludes helper - ALL PROPERTY FIELDS
           if (searchQuery.trim()) {
-            let matchesSearch = false;
-            
-            // Search in tag metadata with safe null checks
-            matchesSearch = 
+            const matchesSearch = 
               safeIncludes(tag.tag_id, query) ||
               safeIncludes(tag.latitude, query) ||
               safeIncludes(tag.longitude, query) ||
               safeIncludes(tag.date_taken, query) ||
-              safeIncludes(tag.created_at, query);
-
-            // Search in form data if needed
-            if (!matchesSearch) {
-              const { data: valueInfoData } = await supabase
-                .from('value_info')
-                .select('form_id')
-                .eq('tag_id', tag.tag_id)
-                .single();
-
-              if (valueInfoData) {
-                const { data: formData } = await supabase
-                  .from('formtbl')
-                  .select('*')
-                  .eq('form_id', valueInfoData.form_id)
-                  .single();
-
-                if (formData) {
-                  matchesSearch = 
-                    safeIncludes(formData.form_id, query) ||
-                    safeIncludes(formData.kind_id, query) ||
-                    safeIncludes(formData.class_id, query) ||
-                    safeIncludes(formData.area, query);
-                }
-              }
-            }
+              safeIncludes(tag.created_at, query) ||
+              safeIncludes(tag.form_id, query) ||
+              safeIncludes(tag.kind_id, query) ||
+              safeIncludes(tag.class_id, query) ||
+              safeIncludes(tag.area, query) ||
+              safeIncludes(tag.status, query) ||
+              safeIncludes(tag.declarant_firstname, query) ||
+              safeIncludes(tag.declarant_lastname, query) ||
+              safeIncludes(tag.district_name, query);
 
             if (!matchesSearch) {
               continue;
@@ -504,10 +398,11 @@ const MapLogic = ({
 
           filtered.push(tag);
         } catch (error) {
-          // Silent catch for individual tag errors
+          console.log(`Error filtering tag ${tag.tag_id}:`, error);
         }
       }
 
+      console.log(`Filtered results: ${filtered.length} tags`);
       setFilteredPhotoTags(filtered);
     };
 
@@ -580,6 +475,18 @@ const MapLogic = ({
               <small>Lng: {tag.longitude.toFixed(6)}</small>
               <br />
               <small>Tag ID: {tag.tag_id?.substring(0, 8)}...</small>
+              {tag.declarant_firstname && tag.declarant_lastname && (
+                <>
+                  <br />
+                  <small>Declarant: {tag.declarant_firstname} {tag.declarant_lastname}</small>
+                </>
+              )}
+              {tag.district_name && (
+                <>
+                  <br />
+                  <small>District: {tag.district_name}</small>
+                </>
+              )}
             </div>
           </Popup>
         </Marker>
@@ -594,7 +501,7 @@ const MapCon: React.FC<MapConProps> = ({ searchQuery = '', isAdmin = false }) =>
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
   const [showPopup, setShowPopup] = useState(false);
   const [currentFilter, setCurrentFilter] = useState<string>('all');
-  const [photoTags, setPhotoTags] = useState<PhotoTag[]>([]);
+  const [photoTags, setPhotoTags] = useState<PropertyDetails[]>([]);
   const [isSatelliteView, setIsSatelliteView] = useState(false);
 
   useEffect(() => {
@@ -621,7 +528,7 @@ const MapCon: React.FC<MapConProps> = ({ searchQuery = '', isAdmin = false }) =>
   };
 
   // Use useCallback to memoize the callback function
-  const handlePhotoTagsLoaded = useCallback((tags: PhotoTag[]) => {
+  const handlePhotoTagsLoaded = useCallback((tags: PropertyDetails[]) => {
     console.log('Received photo tags in parent:', tags.length);
     setPhotoTags(tags);
   }, []);
