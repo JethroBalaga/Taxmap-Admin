@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { MapContainer, TileLayer, useMap, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { getMarkerIconByKind } from '../utils/markericons';
@@ -51,54 +51,6 @@ interface MapConProps {
 const safeIncludes = (value: any, query: string): boolean => {
   if (value == null) return false;
   return String(value).toLowerCase().includes(query.toLowerCase());
-};
-
-// Get status class for popup styling
-const getStatusClass = (status: string | undefined): string => {
-  switch (status) {
-    case 'New': return 'status-new';
-    case 'Inspected': return 'status-inspected';
-    case 'Pending': return 'status-pending';
-    default: return 'status-pending';
-  }
-};
-
-// Get status display text
-const getStatusText = (status: string | undefined): string => {
-  switch (status) {
-    case 'New': return 'New - Needs Inspection';
-    case 'Inspected': return 'Inspected';
-    case 'Pending': return 'Pending Review';
-    default: return 'Unknown Status';
-  }
-};
-
-// Create custom icon with status badge for new properties
-// Create custom icon with status badge for new properties
-const createCustomIcon = (property: PropertyDetails) => {
-  const isNew = property.status === 'New';
-  const baseIcon = getMarkerIconByKind(property.kind_id || '1');
-  
-  if (!isNew) {
-    return baseIcon;
-  }
-
-  // For new properties, create a custom icon with badge
-  return L.divIcon({
-    html: `
-      <div class="custom-marker-container">
-        <img src="${baseIcon.options.iconUrl}" 
-             class="marker-base-icon" 
-             alt="Property marker" />
-        <div class="status-badge">!</div>
-        <div class="marker-tooltip">New Property - Needs Inspection</div>
-      </div>
-    `,
-    className: 'custom-marker-wrapper has-status',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34]
-  });
 };
 
 // Satellite Toggle Control Component
@@ -165,10 +117,11 @@ const FilterControl = ({
     all: 0,
     land: 0,
     building: 0,
-    equipment: 0
+    equipment: 0,
+    new: 0
   });
 
-  // Count markers by type
+  // Count markers by type and status
   useEffect(() => {
     const loadCounts = async () => {
       console.log('Starting to count markers for filter...');
@@ -178,7 +131,8 @@ const FilterControl = ({
         all: photoTags.length,
         land: 0,
         building: 0,
-        equipment: 0
+        equipment: 0,
+        new: 0
       };
 
       if (photoTags.length === 0) {
@@ -189,10 +143,14 @@ const FilterControl = ({
 
       for (const tag of photoTags) {
         try {
+          // Count by status
+          if (tag.status && tag.status.toLowerCase() === 'new') {
+            counts.new++;
+          }
+
+          // Count by kind_id
           if (tag.kind_id) {
             const kindStr = String(tag.kind_id).trim();
-            
-            // Count based on kind_id values: 1=land, 2=building, 3=machinery
             switch (kindStr) {
               case '1':
                 counts.land++;
@@ -251,6 +209,10 @@ const FilterControl = ({
               <button class="filter-option ${currentFilter === 'all' ? 'active' : ''}" data-filter="all">
                 <span class="filter-label">All Markers</span>
                 <span class="filter-badge">${markerCounts.all}</span>
+              </button>
+              <button class="filter-option ${currentFilter === 'new' ? 'active' : ''}" data-filter="new">
+                <span class="filter-label">Status: New</span>
+                <span class="filter-badge">${markerCounts.new}</span>
               </button>
             </div>
             <div class="filter-section">
@@ -331,67 +293,81 @@ const MapLogic = ({
   searchQuery = '',
   currentFilter = 'all',
   isSatelliteView = false,
-  onPhotoTagsLoaded,
-  refreshTrigger // Add refresh trigger prop
+  onPhotoTagsLoaded
 }: { 
   onMarkerClick: (tagId: string) => void;
   searchQuery?: string;
   currentFilter?: string;
   isSatelliteView?: boolean;
   onPhotoTagsLoaded?: (tags: PropertyDetails[]) => void;
-  refreshTrigger?: number; // Add this to force refresh
 }) => {
   const map = useMap();
   const [allowZoomOut, setAllowZoomOut] = useState(false);
   const [photoTags, setPhotoTags] = useState<PropertyDetails[]>([]);
   const [filteredPhotoTags, setFilteredPhotoTags] = useState<PropertyDetails[]>([]);
   const [loading, setLoading] = useState(true);
+  const [markerIcons, setMarkerIcons] = useState<{[tagId: string]: L.Icon}>({});
 
-  // Fetch photo tags - this will re-run when refreshTrigger changes
-  const fetchPhotoTags = useCallback(async () => {
-    try {
-      setLoading(true);
-      console.log('Refreshing photo tags using property_details_view...');
+  useEffect(() => {
+    // Fetch photo tags from database using the view
+    const fetchPhotoTags = async () => {
+      try {
+        setLoading(true);
+        console.log('Starting to fetch photo tags using property_details_view...');
 
-      // Fetch with bounds using the view
-      const { data, error } = await supabase
-        .from('property_details_view')
-        .select('*')
-        .gte('latitude', manoloFortichBounds.getSouthWest().lat)
-        .lte('latitude', manoloFortichBounds.getNorthEast().lat)
-        .gte('longitude', manoloFortichBounds.getSouthWest().lng)
-        .lte('longitude', manoloFortichBounds.getNorthEast().lng);
+        // Fetch with bounds using the view
+        const { data, error } = await supabase
+          .from('property_details_view')
+          .select('*')
+          .gte('latitude', manoloFortichBounds.getSouthWest().lat)
+          .lte('latitude', manoloFortichBounds.getNorthEast().lat)
+          .gte('longitude', manoloFortichBounds.getSouthWest().lng)
+          .lte('longitude', manoloFortichBounds.getNorthEast().lng);
 
-      if (error) {
-        console.error('Error fetching photo tags from view:', error);
-      } else if (data) {
-        console.log('Refreshed photo tags from view:', data.length);
-        
-        setPhotoTags(data);
-        setFilteredPhotoTags(data);
-        
-        // Pass the photo tags back to parent component for filter counts
-        if (onPhotoTagsLoaded) {
-          onPhotoTagsLoaded(data);
+        if (error) {
+          console.error('Error fetching photo tags from view:', error);
+        } else if (data) {
+          console.log('Fetched photo tags from view:', data.length);
+          
+          setPhotoTags(data);
+          setFilteredPhotoTags(data);
+          
+          // Pass the photo tags back to parent component for filter counts
+          if (onPhotoTagsLoaded) {
+            onPhotoTagsLoaded(data);
+          }
+          
+          // Set marker icons
+          const icons: {[tagId: string]: L.Icon} = {};
+          data.forEach(tag => {
+            if (tag.kind_id) {
+              icons[tag.tag_id] = getMarkerIconByKind(tag.kind_id);
+            } else {
+              icons[tag.tag_id] = getMarkerIconByKind('1'); // Default to land
+            }
+          });
+          setMarkerIcons(icons);
         }
+      } catch (error) {
+        console.error('Error loading photo tags:', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error loading photo tags:', error);
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    fetchPhotoTags();
   }, [onPhotoTagsLoaded]);
 
-  // Initial load and refresh when trigger changes
-  useEffect(() => {
-    fetchPhotoTags();
-  }, [fetchPhotoTags, refreshTrigger]); // Add refreshTrigger to dependencies
-
-  // Filter and search functionality
+  // Filter and search functionality - FIXED VERSION
   useEffect(() => {
     const filterAndSearchTags = () => {
-      console.log('Starting filter and search with view data...');
+      console.log('Starting filter and search...');
+      console.log('Current filter:', currentFilter);
+      console.log('Search query:', searchQuery);
+      console.log('Total tags to filter:', photoTags.length);
+
       if (!searchQuery.trim() && currentFilter === 'all') {
+        console.log('No filter or search - showing all tags');
         setFilteredPhotoTags(photoTags);
         return;
       }
@@ -401,26 +377,38 @@ const MapLogic = ({
 
       for (const tag of photoTags) {
         try {
-          // Apply filter first
-          if (currentFilter !== 'all') {
-            const matchesFilter = 
-              (currentFilter === 'land' && tag.kind_id === '1') ||
-              (currentFilter === 'building' && tag.kind_id === '2') ||
-              (currentFilter === 'equipment' && tag.kind_id === '3');
+          let matchesFilter = true;
+          let matchesSearch = !searchQuery.trim(); // If no search query, matches search
 
-            if (!matchesFilter) {
-              continue;
+          // Apply filter logic
+          if (currentFilter !== 'all') {
+            matchesFilter = false;
+            
+            // Convert kind_id to string for comparison and handle both string and number types
+            const kindId = String(tag.kind_id).trim();
+            
+            switch (currentFilter) {
+              case 'land':
+                matchesFilter = kindId === '1';
+                break;
+              case 'building':
+                matchesFilter = kindId === '2';
+                break;
+              case 'equipment':
+                matchesFilter = kindId === '3';
+                break;
+              case 'new':
+                matchesFilter = tag.status?.toLowerCase() === 'new';
+                break;
+              default:
+                matchesFilter = true;
             }
           }
 
-          // Apply search using safeIncludes helper - ALL PROPERTY FIELDS
+          // Apply search logic
           if (searchQuery.trim()) {
-            const matchesSearch = 
+            matchesSearch = 
               safeIncludes(tag.tag_id, query) ||
-              safeIncludes(tag.latitude, query) ||
-              safeIncludes(tag.longitude, query) ||
-              safeIncludes(tag.date_taken, query) ||
-              safeIncludes(tag.created_at, query) ||
               safeIncludes(tag.form_id, query) ||
               safeIncludes(tag.kind_id, query) ||
               safeIncludes(tag.class_id, query) ||
@@ -428,14 +416,14 @@ const MapLogic = ({
               safeIncludes(tag.status, query) ||
               safeIncludes(tag.declarant_firstname, query) ||
               safeIncludes(tag.declarant_lastname, query) ||
-              safeIncludes(tag.district_name, query);
-
-            if (!matchesSearch) {
-              continue;
-            }
+              safeIncludes(tag.district_name, query) ||
+              safeIncludes(tag.latitude, query) ||
+              safeIncludes(tag.longitude, query);
           }
 
-          filtered.push(tag);
+          if (matchesFilter && matchesSearch) {
+            filtered.push(tag);
+          }
         } catch (error) {
           console.log(`Error filtering tag ${tag.tag_id}:`, error);
         }
@@ -496,38 +484,13 @@ const MapLogic = ({
         <Marker
           key={tag.tag_id}
           position={[tag.latitude, tag.longitude]}
-          icon={createCustomIcon(tag)}
+          icon={markerIcons[tag.tag_id] || getMarkerIconByKind('1')}
           eventHandlers={{
             click: () => {
               onMarkerClick(tag.tag_id);
             }
           }}
-        >
-          <Popup>
-            <div className="property-popup">
-              <div className="popup-header">
-                <span className="popup-title">Property Details</span>
-                {tag.status === 'New' && <span className="new-badge">NEW</span>}
-              </div>
-              <div className="popup-details">
-                <p><strong>Form ID:</strong> {tag.form_id || 'N/A'}</p>
-                <p><strong>Declarant:</strong> {tag.declarant_firstname || 'N/A'} {tag.declarant_lastname || ''}</p>
-                <p><strong>District:</strong> {tag.district_name || 'N/A'}</p>
-                <p>
-                  <strong>Status:</strong> 
-                  <span className={`status-indicator ${getStatusClass(tag.status)}`}></span>
-                  {getStatusText(tag.status)}
-                </p>
-                <p><strong>Type:</strong> {tag.kind_id || 'N/A'} - {tag.class_id || 'N/A'}</p>
-                {tag.area && <p><strong>Area:</strong> {tag.area} sqm</p>}
-                {tag.date_taken && (
-                  <p><strong>Date Taken:</strong> {new Date(tag.date_taken).toLocaleDateString()}</p>
-                )}
-                <p><strong>Coordinates:</strong> {tag.latitude.toFixed(6)}, {tag.longitude.toFixed(6)}</p>
-              </div>
-            </div>
-          </Popup>
-        </Marker>
+        />
       ))}
     </>
   );
@@ -541,21 +504,11 @@ const MapCon: React.FC<MapConProps> = ({ searchQuery = '', isAdmin = false }) =>
   const [currentFilter, setCurrentFilter] = useState<string>('all');
   const [photoTags, setPhotoTags] = useState<PropertyDetails[]>([]);
   const [isSatelliteView, setIsSatelliteView] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0); // Add refresh trigger state
 
   useEffect(() => {
     setIsMounted(true);
-    
-    // Refresh data when component mounts (when navigating to map)
-    setRefreshTrigger(prev => prev + 1);
-    
     return () => setIsMounted(false);
   }, []);
-
-  // Refresh when search query changes
-  useEffect(() => {
-    setRefreshTrigger(prev => prev + 1);
-  }, [searchQuery]);
 
   const handleMarkerClick = (tagId: string) => {
     setSelectedTagId(tagId);
@@ -568,6 +521,7 @@ const MapCon: React.FC<MapConProps> = ({ searchQuery = '', isAdmin = false }) =>
   };
 
   const handleFilterChange = (filter: string) => {
+    console.log('Changing filter to:', filter);
     setCurrentFilter(filter);
   };
 
@@ -609,7 +563,6 @@ const MapCon: React.FC<MapConProps> = ({ searchQuery = '', isAdmin = false }) =>
             currentFilter={currentFilter}
             isSatelliteView={isSatelliteView}
             onPhotoTagsLoaded={handlePhotoTagsLoaded}
-            refreshTrigger={refreshTrigger} // Pass refresh trigger
           />
 
           {/* Satellite Toggle Control */}
