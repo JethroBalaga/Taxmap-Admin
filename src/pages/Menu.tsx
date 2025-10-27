@@ -21,7 +21,8 @@ import {
   logOutOutline,
   mapOutline,
   peopleOutline,
-  terminalOutline
+  terminalOutline,
+  analyticsOutline
 } from 'ionicons/icons';
 
 import { Redirect, Route } from 'react-router';
@@ -36,11 +37,13 @@ import Equipment from './Home.tabs/Equipment';
 import MachineryTable from './Forms.tabs/MachineryTable';
 import AgriculturalLand from './Forms.tabs/AgriculturalLand';
 import NonAgriculturalLand from './Forms.tabs/NonAgriculturalLand';
+import Dashboard from './Dashboard';
 
 const Menu: React.FC = () => {
   const navigation = useIonRouter();
 
   const path = [
+    { name: 'Dashboard', url: '/menu/dashboard', icon: analyticsOutline },
     { name: 'Home', url: '/menu/home', icon: homeOutline },
     { name: 'Map', url: '/menu/map', icon: mapOutline },
     { name: 'People', url: '/menu/people', icon: peopleOutline },
@@ -98,6 +101,7 @@ const Menu: React.FC = () => {
             expand="full"
             color="danger"
             onClick={handleLogout}
+            style={{ marginTop: '16px' }}
           >
             <IonIcon icon={logOutOutline} slot="start" />
             Logout
@@ -115,8 +119,8 @@ const Menu: React.FC = () => {
           </IonToolbar>
         </IonHeader>
         
-        {/* Move IonRouterOutlet to be direct child of IonPage, not inside IonContent */}
         <IonRouterOutlet>
+          <Route exact path="/menu/dashboard" component={Dashboard} />
           <Route path="/menu/home" component={Home} />
           <Route exact path="/menu/map" component={Map} />
           <Route path="/menu/people" component={People} />
@@ -128,7 +132,7 @@ const Menu: React.FC = () => {
           <Route path="/menu/nonagriculturalland/:formId" component={NonAgriculturalLand} />
           
           <Route exact path="/menu">
-            <Redirect to="/menu/home" />
+            <Redirect to="/menu/dashboard" />
           </Route>
         </IonRouterOutlet>
       </IonPage>
