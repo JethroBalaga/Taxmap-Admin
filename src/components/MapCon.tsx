@@ -53,6 +53,54 @@ const safeIncludes = (value: any, query: string): boolean => {
   return String(value).toLowerCase().includes(query.toLowerCase());
 };
 
+// Get status class for popup styling
+const getStatusClass = (status: string | undefined): string => {
+  switch (status) {
+    case 'New': return 'status-new';
+    case 'Inspected': return 'status-inspected';
+    case 'Pending': return 'status-pending';
+    default: return 'status-pending';
+  }
+};
+
+// Get status display text
+const getStatusText = (status: string | undefined): string => {
+  switch (status) {
+    case 'New': return 'New - Needs Inspection';
+    case 'Inspected': return 'Inspected';
+    case 'Pending': return 'Pending Review';
+    default: return 'Unknown Status';
+  }
+};
+
+// Create custom icon with status badge for new properties
+// Create custom icon with status badge for new properties
+const createCustomIcon = (property: PropertyDetails) => {
+  const isNew = property.status === 'New';
+  const baseIcon = getMarkerIconByKind(property.kind_id || '1');
+  
+  if (!isNew) {
+    return baseIcon;
+  }
+
+  // For new properties, create a custom icon with badge
+  return L.divIcon({
+    html: `
+      <div class="custom-marker-container">
+        <img src="${baseIcon.options.iconUrl}" 
+             class="marker-base-icon" 
+             alt="Property marker" />
+        <div class="status-badge">!</div>
+        <div class="marker-tooltip">New Property - Needs Inspection</div>
+      </div>
+    `,
+    className: 'custom-marker-wrapper has-status',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34]
+  });
+};
+
 // Satellite Toggle Control Component
 const SatelliteToggleControl = ({ 
   isSatelliteView, 
@@ -283,70 +331,61 @@ const MapLogic = ({
   searchQuery = '',
   currentFilter = 'all',
   isSatelliteView = false,
-  onPhotoTagsLoaded
+  onPhotoTagsLoaded,
+  refreshTrigger // Add refresh trigger prop
 }: { 
   onMarkerClick: (tagId: string) => void;
   searchQuery?: string;
   currentFilter?: string;
   isSatelliteView?: boolean;
   onPhotoTagsLoaded?: (tags: PropertyDetails[]) => void;
+  refreshTrigger?: number; // Add this to force refresh
 }) => {
   const map = useMap();
   const [allowZoomOut, setAllowZoomOut] = useState(false);
   const [photoTags, setPhotoTags] = useState<PropertyDetails[]>([]);
   const [filteredPhotoTags, setFilteredPhotoTags] = useState<PropertyDetails[]>([]);
   const [loading, setLoading] = useState(true);
-  const [markerIcons, setMarkerIcons] = useState<{[tagId: string]: L.Icon}>({});
 
-  useEffect(() => {
-    // Fetch photo tags from database using the view
-    const fetchPhotoTags = async () => {
-      try {
-        setLoading(true);
-        console.log('Starting to fetch photo tags using property_details_view...');
+  // Fetch photo tags - this will re-run when refreshTrigger changes
+  const fetchPhotoTags = useCallback(async () => {
+    try {
+      setLoading(true);
+      console.log('Refreshing photo tags using property_details_view...');
 
-        // Fetch with bounds using the view
-        const { data, error } = await supabase
-          .from('property_details_view')
-          .select('*')
-          .gte('latitude', manoloFortichBounds.getSouthWest().lat)
-          .lte('latitude', manoloFortichBounds.getNorthEast().lat)
-          .gte('longitude', manoloFortichBounds.getSouthWest().lng)
-          .lte('longitude', manoloFortichBounds.getNorthEast().lng);
+      // Fetch with bounds using the view
+      const { data, error } = await supabase
+        .from('property_details_view')
+        .select('*')
+        .gte('latitude', manoloFortichBounds.getSouthWest().lat)
+        .lte('latitude', manoloFortichBounds.getNorthEast().lat)
+        .gte('longitude', manoloFortichBounds.getSouthWest().lng)
+        .lte('longitude', manoloFortichBounds.getNorthEast().lng);
 
-        if (error) {
-          console.error('Error fetching photo tags from view:', error);
-        } else if (data) {
-          console.log('Fetched photo tags from view:', data.length);
-          
-          setPhotoTags(data);
-          setFilteredPhotoTags(data);
-          
-          // Pass the photo tags back to parent component for filter counts
-          if (onPhotoTagsLoaded) {
-            onPhotoTagsLoaded(data);
-          }
-          
-          // Set marker icons
-          const icons: {[tagId: string]: L.Icon} = {};
-          data.forEach(tag => {
-            if (tag.kind_id) {
-              icons[tag.tag_id] = getMarkerIconByKind(tag.kind_id);
-            } else {
-              icons[tag.tag_id] = getMarkerIconByKind('1'); // Default to land
-            }
-          });
-          setMarkerIcons(icons);
+      if (error) {
+        console.error('Error fetching photo tags from view:', error);
+      } else if (data) {
+        console.log('Refreshed photo tags from view:', data.length);
+        
+        setPhotoTags(data);
+        setFilteredPhotoTags(data);
+        
+        // Pass the photo tags back to parent component for filter counts
+        if (onPhotoTagsLoaded) {
+          onPhotoTagsLoaded(data);
         }
-      } catch (error) {
-        console.error('Error loading photo tags:', error);
-      } finally {
-        setLoading(false);
       }
-    };
-
-    fetchPhotoTags();
+    } catch (error) {
+      console.error('Error loading photo tags:', error);
+    } finally {
+      setLoading(false);
+    }
   }, [onPhotoTagsLoaded]);
+
+  // Initial load and refresh when trigger changes
+  useEffect(() => {
+    fetchPhotoTags();
+  }, [fetchPhotoTags, refreshTrigger]); // Add refreshTrigger to dependencies
 
   // Filter and search functionality
   useEffect(() => {
@@ -457,7 +496,7 @@ const MapLogic = ({
         <Marker
           key={tag.tag_id}
           position={[tag.latitude, tag.longitude]}
-          icon={markerIcons[tag.tag_id] || getMarkerIconByKind('1')}
+          icon={createCustomIcon(tag)}
           eventHandlers={{
             click: () => {
               onMarkerClick(tag.tag_id);
@@ -465,28 +504,27 @@ const MapLogic = ({
           }}
         >
           <Popup>
-            <div style={{ textAlign: 'center', padding: '5px' }}>
-              <strong>Property Location</strong>
-              <br />
-              <small>Click for details</small>
-              <br />
-              <small>Lat: {tag.latitude.toFixed(6)}</small>
-              <br />
-              <small>Lng: {tag.longitude.toFixed(6)}</small>
-              <br />
-              <small>Tag ID: {tag.tag_id?.substring(0, 8)}...</small>
-              {tag.declarant_firstname && tag.declarant_lastname && (
-                <>
-                  <br />
-                  <small>Declarant: {tag.declarant_firstname} {tag.declarant_lastname}</small>
-                </>
-              )}
-              {tag.district_name && (
-                <>
-                  <br />
-                  <small>District: {tag.district_name}</small>
-                </>
-              )}
+            <div className="property-popup">
+              <div className="popup-header">
+                <span className="popup-title">Property Details</span>
+                {tag.status === 'New' && <span className="new-badge">NEW</span>}
+              </div>
+              <div className="popup-details">
+                <p><strong>Form ID:</strong> {tag.form_id || 'N/A'}</p>
+                <p><strong>Declarant:</strong> {tag.declarant_firstname || 'N/A'} {tag.declarant_lastname || ''}</p>
+                <p><strong>District:</strong> {tag.district_name || 'N/A'}</p>
+                <p>
+                  <strong>Status:</strong> 
+                  <span className={`status-indicator ${getStatusClass(tag.status)}`}></span>
+                  {getStatusText(tag.status)}
+                </p>
+                <p><strong>Type:</strong> {tag.kind_id || 'N/A'} - {tag.class_id || 'N/A'}</p>
+                {tag.area && <p><strong>Area:</strong> {tag.area} sqm</p>}
+                {tag.date_taken && (
+                  <p><strong>Date Taken:</strong> {new Date(tag.date_taken).toLocaleDateString()}</p>
+                )}
+                <p><strong>Coordinates:</strong> {tag.latitude.toFixed(6)}, {tag.longitude.toFixed(6)}</p>
+              </div>
             </div>
           </Popup>
         </Marker>
@@ -503,11 +541,21 @@ const MapCon: React.FC<MapConProps> = ({ searchQuery = '', isAdmin = false }) =>
   const [currentFilter, setCurrentFilter] = useState<string>('all');
   const [photoTags, setPhotoTags] = useState<PropertyDetails[]>([]);
   const [isSatelliteView, setIsSatelliteView] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0); // Add refresh trigger state
 
   useEffect(() => {
     setIsMounted(true);
+    
+    // Refresh data when component mounts (when navigating to map)
+    setRefreshTrigger(prev => prev + 1);
+    
     return () => setIsMounted(false);
   }, []);
+
+  // Refresh when search query changes
+  useEffect(() => {
+    setRefreshTrigger(prev => prev + 1);
+  }, [searchQuery]);
 
   const handleMarkerClick = (tagId: string) => {
     setSelectedTagId(tagId);
@@ -561,6 +609,7 @@ const MapCon: React.FC<MapConProps> = ({ searchQuery = '', isAdmin = false }) =>
             currentFilter={currentFilter}
             isSatelliteView={isSatelliteView}
             onPhotoTagsLoaded={handlePhotoTagsLoaded}
+            refreshTrigger={refreshTrigger} // Pass refresh trigger
           />
 
           {/* Satellite Toggle Control */}

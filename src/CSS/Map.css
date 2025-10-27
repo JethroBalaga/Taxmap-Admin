@@ -14,8 +14,50 @@
   --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   --placeholder-color: #666;
   padding: 8px 16px;
-  width: 30%; /* Reduced from 50% to 30% */
+  width: 30%; /* Reduced width */
   margin: 0 auto; /* Center it */
+}
+
+/* Search container styling - matching Forms.tsx layout style */
+.search-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  width: 100%;
+}
+
+.search-container ion-searchbar {
+  width: 700px;
+  flex-shrink: 0;
+  --background: #ffffff;
+  --border-radius: 8px;
+  --box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Icon group styling - tight spacing */
+.icon-group {
+  display: flex;
+  gap: 4px; /* Tight spacing like Forms component */
+  padding: 0 10px;
+}
+
+/* Blue accent icon for clear button */
+.icon-blue {
+  color: #00a2ff !important;
+  --ion-color-base: #00d9ff !important;
+  --ion-color-contrast: #000000 !important;
+  font-size: 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 5px;
+  border-radius: 50%;
+}
+
+.icon-blue:hover {
+  opacity: 0.8;
+  transform: scale(1.1);
+  background-color: rgba(0, 210, 255, 0.1);
 }
 
 /* Remove the old search bar container styles */
@@ -292,11 +334,227 @@
   display: none;
 }
 
+/* New Status Popover Styles */
+.new-status-popover {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ff4444;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  z-index: 1001;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  animation: pulse 2s infinite;
+  cursor: pointer;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 5px rgba(255, 68, 68, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 68, 68, 0);
+  }
+}
+
+/* Custom marker wrapper for new status */
+.marker-with-popover {
+  position: relative;
+  display: inline-block;
+}
+
+/* Tooltip for new status */
+.new-status-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  margin-bottom: 8px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1002;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.new-status-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #333;
+}
+
+.marker-with-popover:hover .new-status-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Custom marker styles */
+.custom-marker-container {
+  position: relative;
+}
+
+.custom-marker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.marker-icon {
+  font-size: 24px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.status-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ff4444;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.new-marker {
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+/* Enhanced popup content for new properties */
+.property-popup {
+  min-width: 200px;
+}
+
+.new-badge {
+  display: inline-block;
+  background: #ff4444;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: bold;
+  margin-left: 8px;
+  animation: pulse 2s infinite;
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.popup-title {
+  font-weight: bold;
+  color: #333;
+}
+
+.popup-details {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.popup-details p {
+  margin: 4px 0;
+}
+
+/* Status indicator styles for map markers */
+.status-indicator {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  z-index: 1000;
+}
+
+.status-new {
+  background: #ff4444;
+  animation: statusPulse 1.5s infinite;
+}
+
+.status-inspected {
+  background: #52c41a;
+}
+
+.status-pending {
+  background: #faad14;
+}
+
+@keyframes statusPulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 /* Responsive design for smaller screens */
 @media (max-width: 768px) {
   .map-searchbar {
     padding: 6px 12px;
     width: 80%; /* Wider on mobile for better usability */
+  }
+  
+  .search-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+  
+  .search-container ion-searchbar {
+    width: 100%;
+  }
+  
+  .icon-group {
+    justify-content: center;
+    gap: 25px;
   }
   
   /* Adjust map controls for mobile */
@@ -316,5 +574,18 @@
   .popup-overlay-container {
     width: 95%;
     max-width: 350px;
+  }
+
+  /* Adjust status indicators for mobile */
+  .status-badge,
+  .new-status-popover {
+    width: 16px;
+    height: 16px;
+    font-size: 8px;
+  }
+
+  .status-indicator {
+    width: 10px;
+    height: 10px;
   }
 }
