@@ -14,7 +14,7 @@ import {
   IonButton,
   IonToast
 } from '@ionic/react';
-import { informationCircleOutline } from 'ionicons/icons';
+import { informationCircleOutline, mapOutline } from 'ionicons/icons';
 import DynamicTable from '../components/Globalcomponents/DynamicTable';
 import { supabase } from '../utils/supaBaseClient';
 import '../CSS/Setup.css';
@@ -165,6 +165,16 @@ const Forms: React.FC = () => {
     }
   };
 
+  // Navigate to map with form_id in search
+  const handleMapClick = () => {
+    if (!selectedRow) return;
+    
+    // Navigate to map and pass the form_id as search query
+    history.push('/menu/map', { 
+      searchQuery: selectedRow.form_id 
+    });
+  };
+
   return (
     <IonPage>
       <IonHeader>
@@ -191,10 +201,25 @@ const Forms: React.FC = () => {
               />
 
               <div className="icon-group">
+                {/* Map Button */}
+                <IonButton
+                  fill="clear"
+                  onClick={handleMapClick}
+                  disabled={!selectedRow}
+                  title="View on Map"
+                >
+                  <IonIcon
+                    icon={mapOutline}
+                    className={`icon-blue ${!selectedRow ? 'icon-disabled' : ''}`}
+                  />
+                </IonButton>
+
+                {/* Info Button */}
                 <IonButton
                   fill="clear"
                   onClick={handleInfoClick}
                   disabled={!selectedRow}
+                  title="View Details"
                 >
                   <IonIcon
                     icon={informationCircleOutline}
