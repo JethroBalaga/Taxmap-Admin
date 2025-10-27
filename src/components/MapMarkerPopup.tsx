@@ -21,10 +21,28 @@ interface MapMarkerPopupProps {
   onClose: () => void;
 }
 
+interface PropertyDetails {
+  tag_id: string;
+  latitude: number;
+  longitude: number;
+  date_taken: string;
+  created_at: string;
+  photo?: string;
+  form_id?: string;
+  kind_id?: string;
+  class_id?: string;
+  area?: number;
+  status?: string;
+  declarant_id?: number;
+  district_id?: number;
+  declarant_firstname?: string;
+  declarant_lastname?: string;
+  district_name?: string;
+}
+
 const MapMarkerPopup: React.FC<MapMarkerPopupProps> = ({ photoTagId, onClose }) => {
   const [photoData, setPhotoData] = React.useState<string | null>(null);
-  const [formData, setFormData] = React.useState<any>(null);
-  const [photoTag, setPhotoTag] = React.useState<any>(null);
+  const [propertyDetails, setPropertyDetails] = React.useState<PropertyDetails | null>(null);
   const [loading, setLoading] = React.useState(true);
   const history = useHistory();
 
@@ -33,47 +51,30 @@ const MapMarkerPopup: React.FC<MapMarkerPopupProps> = ({ photoTagId, onClose }) 
       try {
         setLoading(true);
         
-        // Fetch photo tag data from database including the photo field
-        const { data: tagData, error: tagError } = await supabase
-          .from('tagtbl')
+        // Single query using the view - much simpler!
+        const { data: propertyData, error: propertyError } = await supabase
+          .from('property_details_view')
           .select('*')
           .eq('tag_id', photoTagId)
           .single();
 
-        if (tagError) {
-          console.error('Error fetching photo tag:', tagError);
+        if (propertyError) {
+          console.error('Error fetching property details:', propertyError);
           setLoading(false);
           return;
         }
 
-        if (!tagData) {
+        if (!propertyData) {
           setLoading(false);
           return;
         }
 
-        setPhotoTag(tagData);
-
-        // Fetch associated value info and form data
-        const { data: valueInfoData, error: valueInfoError } = await supabase
-          .from('value_info')
-          .select(`
-            *,
-            formtbl (*)
-          `)
-          .eq('tag_id', photoTagId)
-          .single();
-
-        if (valueInfoError) {
-          console.error('Error fetching value info:', valueInfoError);
-        } else if (valueInfoData && valueInfoData.formtbl) {
-          setFormData(valueInfoData.formtbl);
-        }
+        setPropertyDetails(propertyData);
 
         // Fetch photo from S3 bucket
-        if (tagData.photo) {
+        if (propertyData.photo) {
           try {
-            // Construct the correct path: {tag_id}/{filename}
-            const photoPath = `${photoTagId}/${tagData.photo}`;
+            const photoPath = `${photoTagId}/${propertyData.photo}`;
             
             const { data: signedUrlData, error: signedUrlError } = await supabase
               .storage
@@ -82,17 +83,16 @@ const MapMarkerPopup: React.FC<MapMarkerPopupProps> = ({ photoTagId, onClose }) 
 
             if (signedUrlError) {
               console.error('Error generating signed URL:', signedUrlError);
-              // Try alternative path structures
-              await tryAlternativePhotoPaths(tagData, photoTagId);
+              await tryAlternativePhotoPaths(propertyData, photoTagId);
             } else if (signedUrlData) {
               setPhotoData(signedUrlData.signedUrl);
             }
           } catch (photoError) {
             console.warn('Error loading photo:', photoError);
-            await tryAlternativePhotoPaths(tagData, photoTagId);
+            await tryAlternativePhotoPaths(propertyData, photoTagId);
           }
         } else {
-          console.warn('No photo filename found in tagtbl for tag_id:', photoTagId);
+          console.warn('No photo filename found for tag_id:', photoTagId);
         }
 
       } catch (error) {
@@ -103,15 +103,17 @@ const MapMarkerPopup: React.FC<MapMarkerPopupProps> = ({ photoTagId, onClose }) 
     };
 
     // Helper function to try different photo path structures
-    const tryAlternativePhotoPaths = async (tagData: any, tagId: string) => {
+    const tryAlternativePhotoPaths = async (propertyData: PropertyDetails, tagId: string) => {
+      if (!propertyData.photo) return;
+      
       const alternativePaths = [
-        `${tagId}/${tagData.photo}`, // Primary expected path
+        `${tagId}/${propertyData.photo}`,
         `${tagId}/photo.jpg`,
         `${tagId}/image.jpg`,
-        `${tagId}/${tagData.photo}.jpg`,
+        `${tagId}/${propertyData.photo}.jpg`,
         `${tagId}/photo.png`,
         `${tagId}/image.png`,
-        tagData.photo // Try without folder (root level)
+        propertyData.photo
       ];
 
       for (const path of alternativePaths) {
@@ -147,12 +149,11 @@ const MapMarkerPopup: React.FC<MapMarkerPopupProps> = ({ photoTagId, onClose }) 
   };
 
   const handleViewForm = () => {
-    if (formData && formData.form_id) {
-      // Navigate to Forms page and pass the form_id as state
+    if (propertyDetails && propertyDetails.form_id) {
       history.push('/menu/forms', { 
-        selectedFormId: formData.form_id 
+        selectedFormId: propertyDetails.form_id 
       });
-      onClose(); // Close the popup after navigation
+      onClose();
     }
   };
 
@@ -171,7 +172,7 @@ const MapMarkerPopup: React.FC<MapMarkerPopupProps> = ({ photoTagId, onClose }) 
     );
   }
 
-  if (!photoTag) {
+  if (!propertyDetails) {
     return (
       <div className="map-marker-popup-container">
         <IonCard className="map-marker-popup-card">
@@ -184,6 +185,8 @@ const MapMarkerPopup: React.FC<MapMarkerPopupProps> = ({ photoTagId, onClose }) 
       </div>
     );
   }
+
+  const hasFormData = propertyDetails.form_id;
 
   return (
     <div className="map-marker-popup-container">
@@ -218,36 +221,51 @@ const MapMarkerPopup: React.FC<MapMarkerPopupProps> = ({ photoTagId, onClose }) 
             </div>
           )}
 
-          {/* Form Data */}
-          {formData ? (
+          {/* Property Data */}
+          {hasFormData ? (
             <div className="popup-form-data">
               <IonText>
                 <p className="popup-data-item">
-                  <strong>Form ID:</strong> {formData.form_id?.substring(0, 8)}...
+                  <strong>Form ID:</strong> {propertyDetails.form_id?.substring(0, 8)}...
                 </p>
-                {formData.kind_id && (
+                
+                {/* Declarant Information */}
+                {propertyDetails.declarant_firstname && propertyDetails.declarant_lastname && (
                   <p className="popup-data-item">
-                    <strong>Kind ID:</strong> {formData.kind_id}
+                    <strong>Declarant:</strong> {propertyDetails.declarant_firstname} {propertyDetails.declarant_lastname}
                   </p>
                 )}
-                {formData.class_id && (
+                
+                {/* District Information */}
+                {propertyDetails.district_name && (
                   <p className="popup-data-item">
-                    <strong>Class ID:</strong> {formData.class_id}
+                    <strong>District:</strong> {propertyDetails.district_name}
                   </p>
                 )}
-                {formData.area && (
+                
+                {propertyDetails.kind_id && (
                   <p className="popup-data-item">
-                    <strong>Area:</strong> {formData.area} m²
+                    <strong>Kind ID:</strong> {propertyDetails.kind_id}
                   </p>
                 )}
-                {formData.status && (
+                {propertyDetails.class_id && (
                   <p className="popup-data-item">
-                    <strong>Status:</strong> {formData.status}
+                    <strong>Class ID:</strong> {propertyDetails.class_id}
+                  </p>
+                )}
+                {propertyDetails.area && (
+                  <p className="popup-data-item">
+                    <strong>Area:</strong> {propertyDetails.area} m²
+                  </p>
+                )}
+                {propertyDetails.status && (
+                  <p className="popup-data-item">
+                    <strong>Status:</strong> {propertyDetails.status}
                   </p>
                 )}
               </IonText>
 
-              {/* View Form Button - Only show if form data exists */}
+              {/* View Form Button */}
               <IonButton
                 expand="block"
                 fill="solid"
@@ -273,21 +291,11 @@ const MapMarkerPopup: React.FC<MapMarkerPopupProps> = ({ photoTagId, onClose }) 
           <div className="popup-meta-data">
             <IonText>
               <p className="popup-data-item meta">
-                <strong>Date Taken:</strong> {formatDate(photoTag.date_taken || photoTag.created_at)}
+                <strong>Date Taken:</strong> {formatDate(propertyDetails.date_taken || propertyDetails.created_at)}
               </p>
               <p className="popup-data-item meta">
-                <strong>Location:</strong> {photoTag.latitude.toFixed(6)}, {photoTag.longitude.toFixed(6)}
+                <strong>Location:</strong> {propertyDetails.latitude.toFixed(6)}, {propertyDetails.longitude.toFixed(6)}
               </p>
-              {photoTag.accuracy && (
-                <p className="popup-data-item meta">
-                  <strong>Accuracy:</strong> ±{photoTag.accuracy.toFixed(1)}m
-                </p>
-              )}
-              {photoTag.altitude && (
-                <p className="popup-data-item meta">
-                  <strong>Altitude:</strong> {photoTag.altitude.toFixed(1)}m
-                </p>
-              )}
             </IonText>
           </div>
         </IonCardContent>
