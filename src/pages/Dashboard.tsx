@@ -36,7 +36,34 @@ import {
   Legend,
   ChartOptions
 } from 'chart.js';
-import { supabase } from '../utils/supaBaseClient';
+
+import { 
+  DashboardStats, 
+  KindData, 
+  ClassificationData, 
+  AdminActivityData, 
+  UserActivityData, 
+  FormSubmissionData, 
+  FormReviewData,
+  ViewType,
+  TimeRangeType
+} from '../utils/Dashboard.types';
+import { 
+  fetchStats, 
+  fetchKindDistribution, 
+  fetchClassificationDistribution,
+  fetchAdminActivity,
+  fetchUserActivity,
+  fetchFormSubmissions,
+  fetchFormReviewStats,
+  getKindName,
+  getKindColor,
+  getClassificationColor,
+  getStatValue,
+  STAT_CARDS,
+  FORM_TYPE_CARDS,
+  TIME_RANGES
+} from '../utils/Dashboard.utils';
 import '../CSS/Dashboard.css';
 
 ChartJS.register(
@@ -48,83 +75,6 @@ ChartJS.register(
   Tooltip,
   Legend
 );
-
-// Interfaces
-interface DashboardStats {
-  totalForms: number;
-  totalLand: number;
-  totalBuilding: number;
-  totalMachinery: number;
-  totalUsers: number;
-  activeUsers: number;
-}
-
-interface KindData {
-  kind_id: number;
-  count: number;
-  percentage: number;
-}
-
-interface ClassificationData {
-  class_id: string;
-  count: number;
-  percentage: number;
-}
-
-interface AdminActivityData {
-  date: string;
-  loginCount: number;
-  systemActionCount: number;
-}
-
-interface UserActivityData {
-  date: string;
-  loginCount: number;
-}
-
-interface FormSubmissionData {
-  date: string;
-  totalCount: number;
-  landCount: number;
-  buildingCount: number;
-  machineryCount: number;
-}
-
-interface FormReviewData {
-  date: string;
-  reviewCount: number;
-}
-
-// Constants
-const KIND_IDS = [1, 2, 3] as const;
-const TIME_RANGES = ['7days', '30days'] as const;
-
-const STAT_CARDS = [
-  { key: 'totalForms' as const, title: 'Total Forms', color: '#7044ff', view: 'kinds' as const },
-  { key: 'totalUsers' as const, title: 'Total Users', color: '#3880ff' },
-  { key: 'activeUsers' as const, title: 'Active Users', color: '#10dc60' },
-  { key: 'formSubmissions' as const, title: 'Form Submissions', color: '#ff4961' }
-] as const;
-
-const FORM_TYPE_CARDS = [
-  { key: 'totalLand' as const, title: 'Land Forms', color: '#2dd36f', view: 'land' as const },
-  { key: 'totalBuilding' as const, title: 'Building Forms', color: '#5260ff', view: 'building' as const },
-  { key: 'totalMachinery' as const, title: 'Machinery Forms', color: '#ffc409', view: 'machinery' as const }
-] as const;
-
-const KIND_CONFIG = [
-  { id: 1, name: 'Land', color: '#2dd36f' },
-  { id: 2, name: 'Building', color: '#5260ff' },
-  { id: 3, name: 'Machinery', color: '#ffc409' }
-] as const;
-
-const CHART_COLORS = [
-  '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3',
-  '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43', '#a29bfe', '#fd79a8'
-] as const;
-
-type ViewType = 'overview' | 'kinds' | 'land' | 'building' | 'machinery';
-type TimeRangeType = '7days' | '30days';
 
 const Dashboard: React.FC = () => {
   // State
@@ -144,309 +94,14 @@ const Dashboard: React.FC = () => {
   const [isLineChartLoading, setIsLineChartLoading] = useState(false);
   const [error, setError] = useState<string>('');
 
-  // Helper functions
-  const generateDateLabels = (days: number): string[] => {
-    return Array.from({ length: days }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (days - 1 - i));
-      return date.toISOString().split('T')[0];
-    });
-  };
-
-  const getKindName = (kindId: number): string => {
-    const kind = KIND_CONFIG.find(kind => kind.id === kindId);
-    return kind?.name || 'Unknown';
-  };
-
-  const getKindColor = (kindId: number): string => {
-    const kind = KIND_CONFIG.find(kind => kind.id === kindId);
-    return kind?.color || '#6c757d';
-  };
-
-  const getClassificationColor = (index: number): string => 
-    CHART_COLORS[index % CHART_COLORS.length];
-
-  // Data fetching functions
-  const fetchStats = async () => {
-    try {
-      setIsLoading(true);
-      setError('');
-
-      // Get total forms count
-      const { count: totalForms, error: formsError } = await supabase
-        .from('formtbl').select('*', { count: 'exact', head: true });
-      if (formsError) throw formsError;
-
-      // Get counts by kind
-      const { data: kindCounts, error: kindError } = await supabase
-        .from('formtbl').select('kind_id').in('kind_id', KIND_IDS);
-      if (kindError) throw kindError;
-
-      const kindStats = KIND_IDS.map(id => ({
-        id,
-        count: kindCounts?.filter(item => item.kind_id === id).length || 0
-      }));
-
-      // Get user statistics
-      let totalUsers = 0, activeUsers = 0;
-      try {
-        const { count: usersCount } = await supabase
-          .from('users').select('*', { count: 'exact', head: true });
-        totalUsers = usersCount || 0;
-
-        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-        const { count: activeUsersCount } = await supabase
-          .from('user_activity_logs')
-          .select('user_id', { count: 'exact', head: true })
-          .gte('timestamp', thirtyDaysAgo).eq('activity_type', 'LOGIN');
-        activeUsers = activeUsersCount || 0;
-      } catch (error) {
-        console.log('User statistics not available');
-      }
-
-      setStats({
-        totalForms: totalForms || 0,
-        totalLand: kindStats[0].count,
-        totalBuilding: kindStats[1].count,
-        totalMachinery: kindStats[2].count,
-        totalUsers,
-        activeUsers
-      });
-
-    } catch (error: any) {
-      console.error('Error fetching admin stats:', error);
-      setError(error.message || 'Failed to load admin dashboard data');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchKindDistribution = async () => {
-    try {
-      setIsChartLoading(true);
-      const { data, error } = await supabase
-        .from('formtbl').select('kind_id').in('kind_id', KIND_IDS);
-      if (error) throw error;
-
-      const kindCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0 };
-      data?.forEach(item => { 
-        if (item.kind_id in kindCounts) {
-          kindCounts[item.kind_id]++;
-        }
-      });
-
-      const total = data?.length || 0;
-      const processedData = KIND_IDS.map(id => ({
-        kind_id: id,
-        count: kindCounts[id] || 0,
-        percentage: total > 0 ? ((kindCounts[id] || 0) / total) * 100 : 0
-      }));
-
-      setKindData(processedData);
-    } catch (error) {
-      console.error('Error fetching kind distribution:', error);
-    } finally {
-      setIsChartLoading(false);
-    }
-  };
-
-  const fetchClassificationDistribution = async (kindId: number) => {
-    try {
-      setIsChartLoading(true);
-      const { data, error } = await supabase
-        .from('formtbl').select('class_id').eq('kind_id', kindId);
-      if (error) throw error;
-
-      const classCounts: { [key: string]: number } = {};
-      data?.forEach(item => { 
-        classCounts[item.class_id] = (classCounts[item.class_id] || 0) + 1 
-      });
-
-      const total = data?.length || 0;
-      const processedData = Object.entries(classCounts).map(([class_id, count]) => ({
-        class_id,
-        count,
-        percentage: total > 0 ? (count / total) * 100 : 0
-      }));
-
-      setClassificationData(processedData);
-    } catch (error) {
-      console.error('Error fetching classification distribution:', error);
-      // Fallback to mock data
-      const mockData = ['A', 'B', 'C', 'D', 'E'].map((class_id, i) => ({
-        class_id,
-        count: Math.floor(Math.random() * 20) + 5,
-        percentage: [40, 25, 15, 10, 5][i]
-      }));
-      setClassificationData(mockData);
-    } finally {
-      setIsChartLoading(false);
-    }
-  };
-
-  const fetchAdminActivity = async () => {
-    try {
-      setIsLineChartLoading(true);
-      const days = timeRange === '7days' ? 7 : 30;
-      const dateLabels = generateDateLabels(days);
-
-      try {
-        const { data: adminData } = await supabase
-          .from('admin_activity_logs')
-          .select('timestamp, activity_type')
-          .gte('timestamp', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
-          .in('activity_type', ['LOGIN', 'SYSTEM_ACTION']);
-
-        const processedData = dateLabels.map(date => {
-          const dateActivities = adminData?.filter(activity => 
-            activity.timestamp.split('T')[0] === date
-          ) || [];
-          return {
-            date,
-            loginCount: dateActivities.filter(a => a.activity_type === 'LOGIN').length,
-            systemActionCount: dateActivities.filter(a => a.activity_type === 'SYSTEM_ACTION').length,
-          };
-        });
-        setAdminActivityData(processedData);
-      } catch {
-        // Fallback to mock data
-        const mockData = dateLabels.map(date => ({
-          date,
-          loginCount: Math.floor(Math.random() * 5) + 1,
-          systemActionCount: Math.floor(Math.random() * 2),
-        }));
-        setAdminActivityData(mockData);
-      }
-    } catch (error) {
-      console.error('Error fetching admin activity:', error);
-    } finally {
-      setIsLineChartLoading(false);
-    }
-  };
-
-  const fetchUserActivity = async () => {
-    try {
-      setIsLineChartLoading(true);
-      const days = timeRange === '7days' ? 7 : 30;
-      const dateLabels = generateDateLabels(days);
-
-      try {
-        const { data: userData } = await supabase
-          .from('user_activity_logs')
-          .select('timestamp, activity_type')
-          .gte('timestamp', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
-          .eq('activity_type', 'LOGIN');
-
-        const processedData = dateLabels.map(date => {
-          const dateActivities = userData?.filter(activity => 
-            activity.timestamp.split('T')[0] === date
-          ) || [];
-          return { date, loginCount: dateActivities.length };
-        });
-        setUserActivityData(processedData);
-      } catch {
-        const mockData = dateLabels.map(date => ({
-          date, loginCount: Math.floor(Math.random() * 15) + 5
-        }));
-        setUserActivityData(mockData);
-      }
-    } catch (error) {
-      console.error('Error fetching user activity:', error);
-    } finally {
-      setIsLineChartLoading(false);
-    }
-  };
-
-  const fetchFormSubmissions = async () => {
-    try {
-      setIsLineChartLoading(true);
-      const days = timeRange === '7days' ? 7 : 30;
-      const dateLabels = generateDateLabels(days);
-
-      try {
-        const { data: formData } = await supabase
-          .from('formtbl')
-          .select('created_at, kind_id')
-          .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
-          .in('kind_id', KIND_IDS);
-
-        const processedData = dateLabels.map(date => {
-          const dateForms = formData?.filter(form => form.created_at.split('T')[0] === date) || [];
-          const landCount = dateForms.filter(f => f.kind_id === 1).length;
-          const buildingCount = dateForms.filter(f => f.kind_id === 2).length;
-          const machineryCount = dateForms.filter(f => f.kind_id === 3).length;
-          return {
-            date,
-            totalCount: landCount + buildingCount + machineryCount,
-            landCount,
-            buildingCount,
-            machineryCount
-          };
-        });
-        setFormSubmissionData(processedData);
-      } catch {
-        const baseSubmissions = timeRange === '7days' ? 3 : 10;
-        const mockData = dateLabels.map((date, index) => {
-          const progression = Math.floor(index * 0.8) + 1;
-          const totalCount = baseSubmissions + progression;
-          const landCount = Math.max(1, Math.floor(totalCount * 0.5));
-          const buildingCount = Math.max(1, Math.floor(totalCount * 0.3));
-          const machineryCount = Math.max(1, Math.floor(totalCount * 0.2));
-          return {
-            date,
-            totalCount: landCount + buildingCount + machineryCount,
-            landCount,
-            buildingCount,
-            machineryCount
-          };
-        });
-        setFormSubmissionData(mockData);
-      }
-    } catch (error) {
-      console.error('Error fetching form submissions:', error);
-    } finally {
-      setIsLineChartLoading(false);
-    }
-  };
-
-  const fetchFormReviewStats = async () => {
-    try {
-      const days = timeRange === '7days' ? 7 : 30;
-      const dateLabels = generateDateLabels(days);
-
-      try {
-        const { data: reviewedForms } = await supabase
-          .from('formtbl')
-          .select('created_at, status')
-          .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
-          .eq('status', 'Inspected');
-
-        const processedData = dateLabels.map(date => {
-          const dateReviews = reviewedForms?.filter(form => 
-            form.created_at.split('T')[0] === date
-          ) || [];
-          return { date, reviewCount: dateReviews.length };
-        });
-        setFormReviewData(processedData);
-      } catch {
-        const mockData = dateLabels.map(date => ({
-          date, reviewCount: Math.floor(Math.random() * 8) + 2
-        }));
-        setFormReviewData(mockData);
-      }
-    } catch (error) {
-      console.error('Error fetching form review stats:', error);
-    }
-  };
-
   // Effects
   useEffect(() => { 
-    fetchStats(); 
+    fetchStats(setStats, setIsLoading, setError);
   }, []);
   
   useEffect(() => {
     if (selectedView === 'kinds') {
-      fetchKindDistribution();
+      fetchKindDistribution(setKindData, setIsChartLoading);
     } else if (selectedView !== 'overview') {
       const kindMap: Record<string, number> = {
         'land': 1,
@@ -455,7 +110,7 @@ const Dashboard: React.FC = () => {
       };
       const kindId = kindMap[selectedView];
       if (kindId) {
-        fetchClassificationDistribution(kindId);
+        fetchClassificationDistribution(kindId, setClassificationData, setIsChartLoading);
       }
     }
   }, [selectedView]);
@@ -465,10 +120,10 @@ const Dashboard: React.FC = () => {
       const loadAllData = async () => {
         setIsLineChartLoading(true);
         await Promise.all([
-          fetchAdminActivity(), 
-          fetchUserActivity(), 
-          fetchFormSubmissions(),
-          fetchFormReviewStats()
+          fetchAdminActivity(timeRange, setAdminActivityData),
+          fetchUserActivity(timeRange, setUserActivityData),
+          fetchFormSubmissions(timeRange, setFormSubmissionData),
+          fetchFormReviewStats(timeRange, setFormReviewData)
         ]);
         setIsLineChartLoading(false);
       };
@@ -725,13 +380,13 @@ const Dashboard: React.FC = () => {
                 <>
                   {/* Stat Cards */}
                   <IonRow>
-                    {STAT_CARDS.map((card) => (
+                    {STAT_CARDS.map((card: any) => (
                       <IonCol key={card.key} size="6" size-md="3">
                         <StatCard
                           title={card.title}
-                          value={card.key === 'formSubmissions' ? totalFormSubmissions : stats[card.key]}
+                          value={getStatValue(stats, card.key, totalFormSubmissions)}
                           color={card.color}
-                          onClick={'view' in card ? () => setSelectedView(card.view) : undefined}
+                          onClick={card.view ? () => setSelectedView(card.view) : undefined}
                         />
                       </IonCol>
                     ))}
@@ -739,11 +394,11 @@ const Dashboard: React.FC = () => {
 
                   {/* Form Type Cards */}
                   <IonRow>
-                    {FORM_TYPE_CARDS.map(card => (
+                    {FORM_TYPE_CARDS.map((card: any) => (
                       <IonCol key={card.key} size="4">
                         <StatCard
                           title={card.title}
-                          value={stats[card.key]}
+                          value={getStatValue(stats, card.key, totalFormSubmissions)}
                           color={card.color}
                           onClick={() => setSelectedView(card.view)}
                         />
