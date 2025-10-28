@@ -73,7 +73,6 @@ interface ClassificationData {
 interface AdminActivityData {
   date: string;
   loginCount: number;
-  userManagementCount: number;
   systemActionCount: number;
 }
 
@@ -303,7 +302,7 @@ const Dashboard: React.FC = () => {
           .from('admin_activity_logs')
           .select('timestamp, activity_type')
           .gte('timestamp', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
-          .in('activity_type', ['LOGIN', 'USER_MANAGEMENT', 'SYSTEM_ACTION']);
+          .in('activity_type', ['LOGIN', 'SYSTEM_ACTION']);
 
         if (!adminError && adminData) {
           // Process real admin activity data
@@ -315,7 +314,6 @@ const Dashboard: React.FC = () => {
             return {
               date,
               loginCount: dateActivities.filter(a => a.activity_type === 'LOGIN').length,
-              userManagementCount: dateActivities.filter(a => a.activity_type === 'USER_MANAGEMENT').length,
               systemActionCount: dateActivities.filter(a => a.activity_type === 'SYSTEM_ACTION').length,
             };
           });
@@ -331,7 +329,6 @@ const Dashboard: React.FC = () => {
       const mockAdminData: AdminActivityData[] = dateLabels.map(date => ({
         date,
         loginCount: Math.floor(Math.random() * 5) + 1,
-        userManagementCount: Math.floor(Math.random() * 3),
         systemActionCount: Math.floor(Math.random() * 2),
       }));
 
@@ -560,9 +557,9 @@ const Dashboard: React.FC = () => {
 
   const getKindColor = (kindId: number): string => {
     switch (kindId) {
-      case 1: return '#10dc60';
-      case 2: return '#3880ff';
-      case 3: return '#ffce00';
+      case 1: return '#2dd36f';
+      case 2: return '#5260ff';
+      case 3: return '#ffc409';
       default: return '#6c757d';
     }
   };
@@ -620,8 +617,8 @@ const Dashboard: React.FC = () => {
         fill: true,
       },
       {
-        label: 'User Management',
-        data: adminActivityData.map(item => item.userManagementCount),
+        label: 'System Actions',
+        data: adminActivityData.map(item => item.systemActionCount),
         borderColor: '#ff4961',
         backgroundColor: 'rgba(255, 73, 97, 0.1)',
         borderWidth: 2,
@@ -673,8 +670,8 @@ const Dashboard: React.FC = () => {
       {
         label: 'Total Submissions',
         data: formSubmissionData.map(item => item.totalCount),
-        borderColor: '#10dc60',
-        backgroundColor: 'rgba(16, 220, 96, 0.1)',
+        borderColor: '#7044ff',
+        backgroundColor: 'rgba(112, 68, 255, 0.1)',
         borderWidth: 3,
         tension: 0.4,
         fill: true,
@@ -682,8 +679,8 @@ const Dashboard: React.FC = () => {
       {
         label: 'Land Forms',
         data: formSubmissionData.map(item => item.landCount),
-        borderColor: '#10dc60',
-        backgroundColor: 'rgba(16, 220, 96, 0.2)',
+        borderColor: '#2dd36f',
+        backgroundColor: 'rgba(45, 211, 111, 0.2)',
         borderWidth: 2,
         tension: 0.4,
         fill: false,
@@ -691,8 +688,8 @@ const Dashboard: React.FC = () => {
       {
         label: 'Building Forms',
         data: formSubmissionData.map(item => item.buildingCount),
-        borderColor: '#3880ff',
-        backgroundColor: 'rgba(56, 128, 255, 0.2)',
+        borderColor: '#5260ff',
+        backgroundColor: 'rgba(82, 96, 255, 0.2)',
         borderWidth: 2,
         tension: 0.4,
         fill: false,
@@ -700,8 +697,8 @@ const Dashboard: React.FC = () => {
       {
         label: 'Machinery Forms',
         data: formSubmissionData.map(item => item.machineryCount),
-        borderColor: '#ffce00',
-        backgroundColor: 'rgba(255, 206, 0, 0.2)',
+        borderColor: '#ffc409',
+        backgroundColor: 'rgba(255, 196, 9, 0.2)',
         borderWidth: 2,
         tension: 0.4,
         fill: false,
@@ -761,6 +758,7 @@ const Dashboard: React.FC = () => {
 
   // Calculate totals for summary
   const totalAdminLogins = adminActivityData.reduce((sum, item) => sum + item.loginCount, 0);
+  const totalSystemActions = adminActivityData.reduce((sum, item) => sum + item.systemActionCount, 0);
   const totalFormReviews = formReviewData.reduce((sum, item) => sum + item.reviewCount, 0);
   const totalUserLogins = userActivityData.reduce((sum, item) => sum + item.loginCount, 0);
   const totalFormSubmissions = formSubmissionData.reduce((sum, item) => sum + item.totalCount, 0);
@@ -839,7 +837,7 @@ const Dashboard: React.FC = () => {
                       <StatCard
                         title="Total Forms"
                         value={stats.totalForms}
-                        color="#3880ff"
+                        color="#7044ff"
                         onClick={() => setSelectedView('kinds')}
                       />
                     </IonCol>
@@ -847,7 +845,7 @@ const Dashboard: React.FC = () => {
                       <StatCard
                         title="Total Users"
                         value={stats.totalUsers}
-                        color="#7044ff"
+                        color="#3880ff"
                       />
                     </IonCol>
                     <IonCol size="6" size-md="3">
@@ -861,7 +859,7 @@ const Dashboard: React.FC = () => {
                       <StatCard
                         title="Form Submissions"
                         value={totalFormSubmissions}
-                        color="#ffce00"
+                        color="#ff4961"
                       />
                     </IonCol>
                   </IonRow>
@@ -872,7 +870,7 @@ const Dashboard: React.FC = () => {
                       <StatCard
                         title="Land Forms"
                         value={stats.totalLand}
-                        color="#10dc60"
+                        color="#2dd36f"
                         onClick={() => setSelectedView('land')}
                       />
                     </IonCol>
@@ -880,7 +878,7 @@ const Dashboard: React.FC = () => {
                       <StatCard
                         title="Building Forms"
                         value={stats.totalBuilding}
-                        color="#3880ff"
+                        color="#5260ff"
                         onClick={() => setSelectedView('building')}
                       />
                     </IonCol>
@@ -888,7 +886,7 @@ const Dashboard: React.FC = () => {
                       <StatCard
                         title="Machinery Forms"
                         value={stats.totalMachinery}
-                        color="#ffce00"
+                        color="#ffc409"
                         onClick={() => setSelectedView('machinery')}
                       />
                     </IonCol>
