@@ -49,6 +49,7 @@ ChartJS.register(
   Legend
 );
 
+// Interfaces
 interface DashboardStats {
   totalForms: number;
   totalLand: number;
@@ -94,22 +95,48 @@ interface FormReviewData {
   reviewCount: number;
 }
 
+// Constants
+const KIND_IDS = [1, 2, 3] as const;
+const TIME_RANGES = ['7days', '30days'] as const;
+
+const STAT_CARDS = [
+  { key: 'totalForms' as const, title: 'Total Forms', color: '#7044ff', view: 'kinds' as const },
+  { key: 'totalUsers' as const, title: 'Total Users', color: '#3880ff' },
+  { key: 'activeUsers' as const, title: 'Active Users', color: '#10dc60' },
+  { key: 'formSubmissions' as const, title: 'Form Submissions', color: '#ff4961' }
+] as const;
+
+const FORM_TYPE_CARDS = [
+  { key: 'totalLand' as const, title: 'Land Forms', color: '#2dd36f', view: 'land' as const },
+  { key: 'totalBuilding' as const, title: 'Building Forms', color: '#5260ff', view: 'building' as const },
+  { key: 'totalMachinery' as const, title: 'Machinery Forms', color: '#ffc409', view: 'machinery' as const }
+] as const;
+
+const KIND_CONFIG = [
+  { id: 1, name: 'Land', color: '#2dd36f' },
+  { id: 2, name: 'Building', color: '#5260ff' },
+  { id: 3, name: 'Machinery', color: '#ffc409' }
+] as const;
+
+const CHART_COLORS = [
+  '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3',
+  '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43', '#a29bfe', '#fd79a8'
+] as const;
+
+type ViewType = 'overview' | 'kinds' | 'land' | 'building' | 'machinery';
+type TimeRangeType = '7days' | '30days';
+
 const Dashboard: React.FC = () => {
+  // State
   const [stats, setStats] = useState<DashboardStats>({
-    totalForms: 0,
-    totalLand: 0,
-    totalBuilding: 0,
-    totalMachinery: 0,
-    totalUsers: 0,
-    activeUsers: 0
+    totalForms: 0, totalLand: 0, totalBuilding: 0, totalMachinery: 0, totalUsers: 0, activeUsers: 0
   });
   const [kindData, setKindData] = useState<KindData[]>([]);
   const [classificationData, setClassificationData] = useState<ClassificationData[]>([]);
-  const [selectedView, setSelectedView] = useState<'overview' | 'kinds' | 'land' | 'building' | 'machinery'>('overview');
+  const [selectedView, setSelectedView] = useState<ViewType>('overview');
   const [isLoading, setIsLoading] = useState(true);
   const [isChartLoading, setIsChartLoading] = useState(false);
-  
-  const [timeRange, setTimeRange] = useState<'7days' | '30days'>('7days');
+  const [timeRange, setTimeRange] = useState<TimeRangeType>('7days');
   const [adminActivityData, setAdminActivityData] = useState<AdminActivityData[]>([]);
   const [userActivityData, setUserActivityData] = useState<UserActivityData[]>([]);
   const [formSubmissionData, setFormSubmissionData] = useState<FormSubmissionData[]>([]);
@@ -117,68 +144,73 @@ const Dashboard: React.FC = () => {
   const [isLineChartLoading, setIsLineChartLoading] = useState(false);
   const [error, setError] = useState<string>('');
 
-  // Fetch admin statistics
+  // Helper functions
+  const generateDateLabels = (days: number): string[] => {
+    return Array.from({ length: days }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (days - 1 - i));
+      return date.toISOString().split('T')[0];
+    });
+  };
+
+  const getKindName = (kindId: number): string => {
+    const kind = KIND_CONFIG.find(kind => kind.id === kindId);
+    return kind?.name || 'Unknown';
+  };
+
+  const getKindColor = (kindId: number): string => {
+    const kind = KIND_CONFIG.find(kind => kind.id === kindId);
+    return kind?.color || '#6c757d';
+  };
+
+  const getClassificationColor = (index: number): string => 
+    CHART_COLORS[index % CHART_COLORS.length];
+
+  // Data fetching functions
   const fetchStats = async () => {
     try {
       setIsLoading(true);
       setError('');
-      
-      console.log('Fetching admin dashboard stats...');
 
       // Get total forms count
       const { count: totalForms, error: formsError } = await supabase
-        .from('formtbl')
-        .select('*', { count: 'exact', head: true });
-
+        .from('formtbl').select('*', { count: 'exact', head: true });
       if (formsError) throw formsError;
 
       // Get counts by kind
       const { data: kindCounts, error: kindError } = await supabase
-        .from('formtbl')
-        .select('kind_id')
-        .in('kind_id', [1, 2, 3]);
-
+        .from('formtbl').select('kind_id').in('kind_id', KIND_IDS);
       if (kindError) throw kindError;
 
-      const landCount = kindCounts?.filter(item => item.kind_id === 1).length || 0;
-      const buildingCount = kindCounts?.filter(item => item.kind_id === 2).length || 0;
-      const machineryCount = kindCounts?.filter(item => item.kind_id === 3).length || 0;
+      const kindStats = KIND_IDS.map(id => ({
+        id,
+        count: kindCounts?.filter(item => item.kind_id === id).length || 0
+      }));
 
       // Get user statistics
-      let totalUsers = 0;
-      let activeUsers = 0;
+      let totalUsers = 0, activeUsers = 0;
       try {
-        // Get total users count
-        const { count: usersCount, error: usersError } = await supabase
-          .from('users')
-          .select('*', { count: 'exact', head: true });
+        const { count: usersCount } = await supabase
+          .from('users').select('*', { count: 'exact', head: true });
+        totalUsers = usersCount || 0;
 
-        if (!usersError) {
-          totalUsers = usersCount || 0;
-        }
-
-        // Get active users (users with activity in last 30 days)
         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-        const { count: activeUsersCount, error: activeError } = await supabase
+        const { count: activeUsersCount } = await supabase
           .from('user_activity_logs')
           .select('user_id', { count: 'exact', head: true })
-          .gte('timestamp', thirtyDaysAgo)
-          .eq('activity_type', 'LOGIN');
-
-        if (!activeError) {
-          activeUsers = activeUsersCount || 0;
-        }
+          .gte('timestamp', thirtyDaysAgo).eq('activity_type', 'LOGIN');
+        activeUsers = activeUsersCount || 0;
       } catch (error) {
         console.log('User statistics not available');
       }
 
       setStats({
         totalForms: totalForms || 0,
-        totalLand: landCount,
-        totalBuilding: buildingCount,
-        totalMachinery: machineryCount,
-        totalUsers: totalUsers,
-        activeUsers: activeUsers
+        totalLand: kindStats[0].count,
+        totalBuilding: kindStats[1].count,
+        totalMachinery: kindStats[2].count,
+        totalUsers,
+        activeUsers
       });
 
     } catch (error: any) {
@@ -189,45 +221,28 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Fetch kind distribution for pie chart
   const fetchKindDistribution = async () => {
     try {
       setIsChartLoading(true);
-      
       const { data, error } = await supabase
-        .from('formtbl')
-        .select('kind_id')
-        .in('kind_id', [1, 2, 3]);
-
+        .from('formtbl').select('kind_id').in('kind_id', KIND_IDS);
       if (error) throw error;
 
-      const kindCounts: { [key: number]: number } = { 1: 0, 2: 0, 3: 0 };
-      
-      data?.forEach(item => {
-        kindCounts[item.kind_id] = (kindCounts[item.kind_id] || 0) + 1;
+      const kindCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0 };
+      data?.forEach(item => { 
+        if (item.kind_id in kindCounts) {
+          kindCounts[item.kind_id]++;
+        }
       });
 
       const total = data?.length || 0;
-      const kindData: KindData[] = [
-        {
-          kind_id: 1,
-          count: kindCounts[1],
-          percentage: total > 0 ? (kindCounts[1] / total) * 100 : 0
-        },
-        {
-          kind_id: 2,
-          count: kindCounts[2],
-          percentage: total > 0 ? (kindCounts[2] / total) * 100 : 0
-        },
-        {
-          kind_id: 3,
-          count: kindCounts[3],
-          percentage: total > 0 ? (kindCounts[3] / total) * 100 : 0
-        }
-      ];
+      const processedData = KIND_IDS.map(id => ({
+        kind_id: id,
+        count: kindCounts[id] || 0,
+        percentage: total > 0 ? ((kindCounts[id] || 0) / total) * 100 : 0
+      }));
 
-      setKindData(kindData);
-
+      setKindData(processedData);
     } catch (error) {
       console.error('Error fetching kind distribution:', error);
     } finally {
@@ -235,105 +250,73 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Fetch classification distribution for a specific kind
   const fetchClassificationDistribution = async (kindId: number) => {
     try {
       setIsChartLoading(true);
-      
       const { data, error } = await supabase
-        .from('formtbl')
-        .select('class_id')
-        .eq('kind_id', kindId);
-
+        .from('formtbl').select('class_id').eq('kind_id', kindId);
       if (error) throw error;
 
       const classCounts: { [key: string]: number } = {};
-      
-      data?.forEach(item => {
-        classCounts[item.class_id] = (classCounts[item.class_id] || 0) + 1;
+      data?.forEach(item => { 
+        classCounts[item.class_id] = (classCounts[item.class_id] || 0) + 1 
       });
 
       const total = data?.length || 0;
-      const classificationData: ClassificationData[] = Object.entries(classCounts).map(([class_id, count]) => ({
+      const processedData = Object.entries(classCounts).map(([class_id, count]) => ({
         class_id,
         count,
         percentage: total > 0 ? (count / total) * 100 : 0
       }));
 
-      setClassificationData(classificationData);
-
+      setClassificationData(processedData);
     } catch (error) {
       console.error('Error fetching classification distribution:', error);
-      // Fallback to mock classification data
-      const mockClassificationData: ClassificationData[] = [
-        { class_id: 'A', count: Math.floor(Math.random() * 20) + 10, percentage: 40 },
-        { class_id: 'B', count: Math.floor(Math.random() * 15) + 5, percentage: 25 },
-        { class_id: 'C', count: Math.floor(Math.random() * 10) + 3, percentage: 15 },
-        { class_id: 'D', count: Math.floor(Math.random() * 8) + 2, percentage: 10 },
-        { class_id: 'E', count: Math.floor(Math.random() * 5) + 1, percentage: 5 }
-      ];
-      setClassificationData(mockClassificationData);
+      // Fallback to mock data
+      const mockData = ['A', 'B', 'C', 'D', 'E'].map((class_id, i) => ({
+        class_id,
+        count: Math.floor(Math.random() * 20) + 5,
+        percentage: [40, 25, 15, 10, 5][i]
+      }));
+      setClassificationData(mockData);
     } finally {
       setIsChartLoading(false);
     }
   };
 
-  // Generate date labels
-  const generateDateLabels = (days: number): string[] => {
-    const labels = [];
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      labels.push(date.toISOString().split('T')[0]);
-    }
-    return labels;
-  };
-
-  // Fetch admin activity data
   const fetchAdminActivity = async () => {
     try {
       setIsLineChartLoading(true);
       const days = timeRange === '7days' ? 7 : 30;
       const dateLabels = generateDateLabels(days);
 
-      // Try to get real admin activity data
       try {
-        const { data: adminData, error: adminError } = await supabase
+        const { data: adminData } = await supabase
           .from('admin_activity_logs')
           .select('timestamp, activity_type')
           .gte('timestamp', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
           .in('activity_type', ['LOGIN', 'SYSTEM_ACTION']);
 
-        if (!adminError && adminData) {
-          // Process real admin activity data
-          const processedAdminActivity: AdminActivityData[] = dateLabels.map(date => {
-            const dateActivities = adminData?.filter(activity => 
-              activity.timestamp.split('T')[0] === date
-            ) || [];
-
-            return {
-              date,
-              loginCount: dateActivities.filter(a => a.activity_type === 'LOGIN').length,
-              systemActionCount: dateActivities.filter(a => a.activity_type === 'SYSTEM_ACTION').length,
-            };
-          });
-
-          setAdminActivityData(processedAdminActivity);
-          return;
-        }
-      } catch (error) {
-        console.log('Admin activity logs not available, using mock data');
+        const processedData = dateLabels.map(date => {
+          const dateActivities = adminData?.filter(activity => 
+            activity.timestamp.split('T')[0] === date
+          ) || [];
+          return {
+            date,
+            loginCount: dateActivities.filter(a => a.activity_type === 'LOGIN').length,
+            systemActionCount: dateActivities.filter(a => a.activity_type === 'SYSTEM_ACTION').length,
+          };
+        });
+        setAdminActivityData(processedData);
+      } catch {
+        // Fallback to mock data
+        const mockData = dateLabels.map(date => ({
+          date,
+          loginCount: Math.floor(Math.random() * 5) + 1,
+          systemActionCount: Math.floor(Math.random() * 2),
+        }));
+        setAdminActivityData(mockData);
       }
-
-      // Fallback to mock data
-      const mockAdminData: AdminActivityData[] = dateLabels.map(date => ({
-        date,
-        loginCount: Math.floor(Math.random() * 5) + 1,
-        systemActionCount: Math.floor(Math.random() * 2),
-      }));
-
-      setAdminActivityData(mockAdminData);
-
     } catch (error) {
       console.error('Error fetching admin activity:', error);
     } finally {
@@ -341,49 +324,32 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Fetch user activity data (only logins)
   const fetchUserActivity = async () => {
     try {
       setIsLineChartLoading(true);
       const days = timeRange === '7days' ? 7 : 30;
       const dateLabels = generateDateLabels(days);
 
-      // Try to get real user activity data
       try {
-        const { data: userData, error: userError } = await supabase
+        const { data: userData } = await supabase
           .from('user_activity_logs')
           .select('timestamp, activity_type')
           .gte('timestamp', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
           .eq('activity_type', 'LOGIN');
 
-        if (!userError && userData) {
-          // Process real user activity data
-          const processedUserActivity: UserActivityData[] = dateLabels.map(date => {
-            const dateActivities = userData?.filter(activity => 
-              activity.timestamp.split('T')[0] === date
-            ) || [];
-
-            return {
-              date,
-              loginCount: dateActivities.length
-            };
-          });
-
-          setUserActivityData(processedUserActivity);
-          return;
-        }
-      } catch (error) {
-        console.log('User activity logs not available, using mock data');
+        const processedData = dateLabels.map(date => {
+          const dateActivities = userData?.filter(activity => 
+            activity.timestamp.split('T')[0] === date
+          ) || [];
+          return { date, loginCount: dateActivities.length };
+        });
+        setUserActivityData(processedData);
+      } catch {
+        const mockData = dateLabels.map(date => ({
+          date, loginCount: Math.floor(Math.random() * 15) + 5
+        }));
+        setUserActivityData(mockData);
       }
-
-      // Fallback to mock data
-      const mockUserData: UserActivityData[] = dateLabels.map(date => ({
-        date,
-        loginCount: Math.floor(Math.random() * 15) + 5
-      }));
-
-      setUserActivityData(mockUserData);
-
     } catch (error) {
       console.error('Error fetching user activity:', error);
     } finally {
@@ -391,72 +357,51 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Fetch form submission data
   const fetchFormSubmissions = async () => {
     try {
       setIsLineChartLoading(true);
       const days = timeRange === '7days' ? 7 : 30;
       const dateLabels = generateDateLabels(days);
 
-      // Try to get real form submission data
       try {
-        const { data: formData, error: formError } = await supabase
+        const { data: formData } = await supabase
           .from('formtbl')
           .select('created_at, kind_id')
           .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
-          .in('kind_id', [1, 2, 3]);
+          .in('kind_id', KIND_IDS);
 
-        if (!formError && formData) {
-          // Process real form data
-          const processedFormData: FormSubmissionData[] = dateLabels.map(date => {
-            const dateForms = formData?.filter(form => 
-              form.created_at.split('T')[0] === date
-            ) || [];
-
-            const landCount = dateForms.filter(f => f.kind_id === 1).length;
-            const buildingCount = dateForms.filter(f => f.kind_id === 2).length;
-            const machineryCount = dateForms.filter(f => f.kind_id === 3).length;
-            const totalCount = landCount + buildingCount + machineryCount;
-
-            return {
-              date,
-              totalCount,
-              landCount,
-              buildingCount,
-              machineryCount
-            };
-          });
-
-          setFormSubmissionData(processedFormData);
-          return;
-        }
-      } catch (error) {
-        console.log('Form submission data not available, using mock data');
+        const processedData = dateLabels.map(date => {
+          const dateForms = formData?.filter(form => form.created_at.split('T')[0] === date) || [];
+          const landCount = dateForms.filter(f => f.kind_id === 1).length;
+          const buildingCount = dateForms.filter(f => f.kind_id === 2).length;
+          const machineryCount = dateForms.filter(f => f.kind_id === 3).length;
+          return {
+            date,
+            totalCount: landCount + buildingCount + machineryCount,
+            landCount,
+            buildingCount,
+            machineryCount
+          };
+        });
+        setFormSubmissionData(processedData);
+      } catch {
+        const baseSubmissions = timeRange === '7days' ? 3 : 10;
+        const mockData = dateLabels.map((date, index) => {
+          const progression = Math.floor(index * 0.8) + 1;
+          const totalCount = baseSubmissions + progression;
+          const landCount = Math.max(1, Math.floor(totalCount * 0.5));
+          const buildingCount = Math.max(1, Math.floor(totalCount * 0.3));
+          const machineryCount = Math.max(1, Math.floor(totalCount * 0.2));
+          return {
+            date,
+            totalCount: landCount + buildingCount + machineryCount,
+            landCount,
+            buildingCount,
+            machineryCount
+          };
+        });
+        setFormSubmissionData(mockData);
       }
-
-      // Fallback to mock data that makes logical sense
-      const baseSubmissions = timeRange === '7days' ? 3 : 10;
-      const mockFormData: FormSubmissionData[] = dateLabels.map((date, index) => {
-        // Create a logical progression - submissions increase over time
-        const progression = Math.floor(index * 0.8) + 1;
-        const totalCount = baseSubmissions + progression;
-        
-        // Ensure we have valid numbers (not NaN)
-        const landCount = Math.max(1, Math.floor(totalCount * 0.5)); // 50% land, min 1
-        const buildingCount = Math.max(1, Math.floor(totalCount * 0.3)); // 30% building, min 1
-        const machineryCount = Math.max(1, Math.floor(totalCount * 0.2)); // 20% machinery, min 1
-
-        return {
-          date,
-          totalCount: landCount + buildingCount + machineryCount, // Recalculate to ensure consistency
-          landCount,
-          buildingCount,
-          machineryCount
-        };
-      });
-
-      setFormSubmissionData(mockFormData);
-
     } catch (error) {
       console.error('Error fetching form submissions:', error);
     } finally {
@@ -464,72 +409,57 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Fetch form review statistics based on status = 'Inspected'
   const fetchFormReviewStats = async () => {
     try {
       const days = timeRange === '7days' ? 7 : 30;
       const dateLabels = generateDateLabels(days);
 
-      // Try to get real form review data
       try {
-        const { data: reviewedForms, error: reviewError } = await supabase
+        const { data: reviewedForms } = await supabase
           .from('formtbl')
           .select('created_at, status')
           .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
           .eq('status', 'Inspected');
 
-        if (!reviewError && reviewedForms) {
-          // Process form review data by date
-          const processedFormReviewData: FormReviewData[] = dateLabels.map(date => {
-            const dateReviews = reviewedForms?.filter(form => 
-              form.created_at.split('T')[0] === date
-            ) || [];
-
-            return {
-              date,
-              reviewCount: dateReviews.length
-            };
-          });
-
-          setFormReviewData(processedFormReviewData);
-          return;
-        }
-      } catch (error) {
-        console.log('Form review data not available, using mock data');
+        const processedData = dateLabels.map(date => {
+          const dateReviews = reviewedForms?.filter(form => 
+            form.created_at.split('T')[0] === date
+          ) || [];
+          return { date, reviewCount: dateReviews.length };
+        });
+        setFormReviewData(processedData);
+      } catch {
+        const mockData = dateLabels.map(date => ({
+          date, reviewCount: Math.floor(Math.random() * 8) + 2
+        }));
+        setFormReviewData(mockData);
       }
-
-      // Fallback to mock data
-      const mockFormReviewData: FormReviewData[] = dateLabels.map(date => ({
-        date,
-        reviewCount: Math.floor(Math.random() * 8) + 2
-      }));
-
-      setFormReviewData(mockFormReviewData);
-
     } catch (error) {
       console.error('Error fetching form review stats:', error);
     }
   };
 
-  // Load data on component mount
-  useEffect(() => {
-    fetchStats();
+  // Effects
+  useEffect(() => { 
+    fetchStats(); 
   }, []);
-
-  // Load chart data when view changes
+  
   useEffect(() => {
     if (selectedView === 'kinds') {
       fetchKindDistribution();
-    } else if (selectedView === 'land') {
-      fetchClassificationDistribution(1);
-    } else if (selectedView === 'building') {
-      fetchClassificationDistribution(2);
-    } else if (selectedView === 'machinery') {
-      fetchClassificationDistribution(3);
+    } else if (selectedView !== 'overview') {
+      const kindMap: Record<string, number> = {
+        'land': 1,
+        'building': 2, 
+        'machinery': 3
+      };
+      const kindId = kindMap[selectedView];
+      if (kindId) {
+        fetchClassificationDistribution(kindId);
+      }
     }
   }, [selectedView]);
 
-  // Load line chart data when time range changes
   useEffect(() => {
     if (selectedView === 'overview') {
       const loadAllData = async () => {
@@ -546,66 +476,36 @@ const Dashboard: React.FC = () => {
     }
   }, [timeRange, selectedView]);
 
-  const getKindName = (kindId: number): string => {
-    switch (kindId) {
-      case 1: return 'Land';
-      case 2: return 'Building';
-      case 3: return 'Machinery';
-      default: return 'Unknown';
-    }
-  };
-
-  const getKindColor = (kindId: number): string => {
-    switch (kindId) {
-      case 1: return '#2dd36f';
-      case 2: return '#5260ff';
-      case 3: return '#ffc409';
-      default: return '#6c757d';
-    }
-  };
-
-  const getClassificationColor = (index: number): string => {
-    const colors = [
-      '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3',
-      '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43', '#a29bfe', '#fd79a8'
-    ];
-    return colors[index % colors.length];
-  };
-
-  // Chart data for kinds distribution
+  // Chart data configurations
   const kindsChartData = {
     labels: kindData.map(item => `${getKindName(item.kind_id)} (${item.count})`),
-    datasets: [
-      {
-        data: kindData.map(item => item.count),
-        backgroundColor: kindData.map(item => getKindColor(item.kind_id)),
-        borderColor: '#ffffff',
-        borderWidth: 2,
-      },
-    ],
+    datasets: [{
+      data: kindData.map(item => item.count),
+      backgroundColor: kindData.map(item => getKindColor(item.kind_id)),
+      borderColor: '#ffffff',
+      borderWidth: 2,
+    }],
   };
 
-  // Chart data for classifications distribution
   const classificationsChartData = {
     labels: classificationData.map(item => `${item.class_id} (${item.count})`),
-    datasets: [
-      {
-        data: classificationData.map(item => item.count),
-        backgroundColor: classificationData.map((_, index) => getClassificationColor(index)),
-        borderColor: '#ffffff',
-        borderWidth: 2,
-      },
-    ],
+    datasets: [{
+      data: classificationData.map(item => item.count),
+      backgroundColor: classificationData.map((_, index) => getClassificationColor(index)),
+      borderColor: '#ffffff',
+      borderWidth: 2,
+    }],
   };
 
-  // Admin Activity Chart Data
+  const formatChartLabels = (data: Array<{date: string}>) => data.map(item => {
+    const date = new Date(item.date);
+    return timeRange === '7days' 
+      ? date.toLocaleDateString('en-US', { weekday: 'short' })
+      : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  });
+
   const adminActivityChartData = {
-    labels: adminActivityData.map(item => {
-      const date = new Date(item.date);
-      return timeRange === '7days' 
-        ? date.toLocaleDateString('en-US', { weekday: 'short' })
-        : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    }),
+    labels: formatChartLabels(adminActivityData),
     datasets: [
       {
         label: 'Admin Logins',
@@ -637,35 +537,21 @@ const Dashboard: React.FC = () => {
     ],
   };
 
-  // User Activity Chart Data (Only Logins)
   const userActivityChartData = {
-    labels: userActivityData.map(item => {
-      const date = new Date(item.date);
-      return timeRange === '7days' 
-        ? date.toLocaleDateString('en-US', { weekday: 'short' })
-        : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    }),
-    datasets: [
-      {
-        label: 'User Logins',
-        data: userActivityData.map(item => item.loginCount),
-        borderColor: '#3880ff',
-        backgroundColor: 'rgba(56, 128, 255, 0.1)',
-        borderWidth: 2,
-        tension: 0.4,
-        fill: true,
-      }
-    ],
+    labels: formatChartLabels(userActivityData),
+    datasets: [{
+      label: 'User Logins',
+      data: userActivityData.map(item => item.loginCount),
+      borderColor: '#3880ff',
+      backgroundColor: 'rgba(56, 128, 255, 0.1)',
+      borderWidth: 2,
+      tension: 0.4,
+      fill: true,
+    }],
   };
 
-  // Form Submission Chart Data
   const formSubmissionChartData = {
-    labels: formSubmissionData.map(item => {
-      const date = new Date(item.date);
-      return timeRange === '7days' 
-        ? date.toLocaleDateString('en-US', { weekday: 'short' })
-        : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    }),
+    labels: formatChartLabels(formSubmissionData),
     datasets: [
       {
         label: 'Total Submissions',
@@ -706,35 +592,23 @@ const Dashboard: React.FC = () => {
     ],
   };
 
+  // Chart options
   const pieChartOptions: ChartOptions<'pie'> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        position: 'bottom',
-        labels: {
-          padding: 20,
-          usePointStyle: true,
-        },
-      },
+      legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } },
     },
   };
 
   const lineChartOptions: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top' as const,
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-      },
-    },
+    plugins: { legend: { position: 'top' as const } },
+    scales: { y: { beginAtZero: true } },
   };
 
+  // Components
   const StatCard: React.FC<{
     title: string;
     value: number;
@@ -756,12 +630,45 @@ const Dashboard: React.FC = () => {
     </IonCard>
   );
 
-  // Calculate totals for summary
+  // Calculations
   const totalAdminLogins = adminActivityData.reduce((sum, item) => sum + item.loginCount, 0);
-  const totalSystemActions = adminActivityData.reduce((sum, item) => sum + item.systemActionCount, 0);
   const totalFormReviews = formReviewData.reduce((sum, item) => sum + item.reviewCount, 0);
   const totalUserLogins = userActivityData.reduce((sum, item) => sum + item.loginCount, 0);
   const totalFormSubmissions = formSubmissionData.reduce((sum, item) => sum + item.totalCount, 0);
+
+  const summaryItems = [
+    { value: totalUserLogins, label: 'User Logins', color: 'primary' as const },
+    { value: totalFormSubmissions, label: 'Forms Submitted', color: 'success' as const },
+    { value: totalAdminLogins, label: 'Admin Logins', color: 'warning' as const },
+    { value: totalFormReviews, label: 'Form Reviews', color: 'secondary' as const }
+  ];
+
+  const chartConfigs = [
+    { title: 'User Logins Over Time', data: userActivityChartData },
+    { title: 'Form Submissions Over Time', data: formSubmissionChartData },
+    { title: 'Admin Activity Over Time', data: adminActivityChartData }
+  ];
+
+  const getPageTitle = () => {
+    switch (selectedView) {
+      case 'overview': return 'Admin Dashboard';
+      case 'kinds': return 'Forms by Kind';
+      case 'land': return 'Land Classifications';
+      case 'building': return 'Building Classifications';
+      case 'machinery': return 'Machinery Classifications';
+      default: return 'Admin Dashboard';
+    }
+  };
+
+  const getChartTitle = () => {
+    switch (selectedView) {
+      case 'kinds': return 'Forms Distribution by Kind';
+      case 'land': return 'Land Classification Distribution';
+      case 'building': return 'Building Classification Distribution';
+      case 'machinery': return 'Machinery Classification Distribution';
+      default: return '';
+    }
+  };
 
   return (
     <IonPage>
@@ -776,38 +683,25 @@ const Dashboard: React.FC = () => {
               </IonButton>
             )}
           </IonButtons>
-          <IonTitle>
-            {selectedView === 'overview' && 'Admin Dashboard'}
-            {selectedView === 'kinds' && 'Forms by Kind'}
-            {selectedView === 'land' && 'Land Classifications'}
-            {selectedView === 'building' && 'Building Classifications'}
-            {selectedView === 'machinery' && 'Machinery Classifications'}
-          </IonTitle>
+          <IonTitle>{getPageTitle()}</IonTitle>
         </IonToolbar>
       </IonHeader>
 
       <IonContent>
-        {/* Error Alert */}
-        <IonAlert
-          isOpen={!!error}
-          onDidDismiss={() => setError('')}
-          header={'Error'}
-          message={error}
-          buttons={['OK']}
-        />
+        <IonAlert isOpen={!!error} onDidDismiss={() => setError('')} header={'Error'} message={error} buttons={['OK']} />
 
         {selectedView === 'overview' && (
           <div className="dashboard-container">
-            {/* Time Range Selector */}
             <IonCard>
               <IonCardContent>
-                <IonSegment value={timeRange} onIonChange={e => setTimeRange(e.detail.value as any)}>
-                  <IonSegmentButton value="7days">
-                    <IonLabel>7 Days</IonLabel>
-                  </IonSegmentButton>
-                  <IonSegmentButton value="30days">
-                    <IonLabel>30 Days</IonLabel>
-                  </IonSegmentButton>
+                <IonSegment value={timeRange} onIonChange={e => {
+                  if (e.detail.value) setTimeRange(e.detail.value as TimeRangeType);
+                }}>
+                  {TIME_RANGES.map(range => (
+                    <IonSegmentButton key={range} value={range}>
+                      <IonLabel>{range === '7days' ? '7 Days' : '30 Days'}</IonLabel>
+                    </IonSegmentButton>
+                  ))}
                 </IonSegment>
               </IonCardContent>
             </IonCard>
@@ -816,9 +710,7 @@ const Dashboard: React.FC = () => {
               <IonRow>
                 <IonCol size="12">
                   <h2>Admin Dashboard</h2>
-                  <IonText color="medium">
-                    <p>System overview and user activity analytics</p>
-                  </IonText>
+                  <IonText color="medium"><p>System overview and user activity analytics</p></IonText>
                 </IonCol>
               </IonRow>
 
@@ -831,186 +723,72 @@ const Dashboard: React.FC = () => {
                 </IonRow>
               ) : (
                 <>
-                  {/* System Overview Stat Cards */}
+                  {/* Stat Cards */}
                   <IonRow>
-                    <IonCol size="6" size-md="3">
-                      <StatCard
-                        title="Total Forms"
-                        value={stats.totalForms}
-                        color="#7044ff"
-                        onClick={() => setSelectedView('kinds')}
-                      />
-                    </IonCol>
-                    <IonCol size="6" size-md="3">
-                      <StatCard
-                        title="Total Users"
-                        value={stats.totalUsers}
-                        color="#3880ff"
-                      />
-                    </IonCol>
-                    <IonCol size="6" size-md="3">
-                      <StatCard
-                        title="Active Users"
-                        value={stats.activeUsers}
-                        color="#10dc60"
-                      />
-                    </IonCol>
-                    <IonCol size="6" size-md="3">
-                      <StatCard
-                        title="Form Submissions"
-                        value={totalFormSubmissions}
-                        color="#ff4961"
-                      />
-                    </IonCol>
+                    {STAT_CARDS.map((card) => (
+                      <IonCol key={card.key} size="6" size-md="3">
+                        <StatCard
+                          title={card.title}
+                          value={card.key === 'formSubmissions' ? totalFormSubmissions : stats[card.key]}
+                          color={card.color}
+                          onClick={'view' in card ? () => setSelectedView(card.view) : undefined}
+                        />
+                      </IonCol>
+                    ))}
                   </IonRow>
 
-                  {/* Form Type Breakdown */}
+                  {/* Form Type Cards */}
                   <IonRow>
-                    <IonCol size="4">
-                      <StatCard
-                        title="Land Forms"
-                        value={stats.totalLand}
-                        color="#2dd36f"
-                        onClick={() => setSelectedView('land')}
-                      />
-                    </IonCol>
-                    <IonCol size="4">
-                      <StatCard
-                        title="Building Forms"
-                        value={stats.totalBuilding}
-                        color="#5260ff"
-                        onClick={() => setSelectedView('building')}
-                      />
-                    </IonCol>
-                    <IonCol size="4">
-                      <StatCard
-                        title="Machinery Forms"
-                        value={stats.totalMachinery}
-                        color="#ffc409"
-                        onClick={() => setSelectedView('machinery')}
-                      />
-                    </IonCol>
+                    {FORM_TYPE_CARDS.map(card => (
+                      <IonCol key={card.key} size="4">
+                        <StatCard
+                          title={card.title}
+                          value={stats[card.key]}
+                          color={card.color}
+                          onClick={() => setSelectedView(card.view)}
+                        />
+                      </IonCol>
+                    ))}
                   </IonRow>
 
-                  {/* User Activity Chart (Only Logins) */}
-                  <IonRow>
-                    <IonCol size="12">
-                      <IonCard>
-                        <IonCardHeader>
-                          <IonCardTitle>User Logins Over Time</IonCardTitle>
-                        </IonCardHeader>
-                        <IonCardContent>
-                          {isLineChartLoading ? (
-                            <div className="chart-loading">
-                              <IonSpinner />
-                              <IonText>Loading user login data...</IonText>
-                            </div>
-                          ) : (
-                            <div className="chart-container">
-                              <Line data={userActivityChartData} options={lineChartOptions} />
-                            </div>
-                          )}
-                        </IonCardContent>
-                      </IonCard>
-                    </IonCol>
-                  </IonRow>
-
-                  {/* Form Submission Chart */}
-                  <IonRow>
-                    <IonCol size="12">
-                      <IonCard>
-                        <IonCardHeader>
-                          <IonCardTitle>Form Submissions Over Time</IonCardTitle>
-                        </IonCardHeader>
-                        <IonCardContent>
-                          {isLineChartLoading ? (
-                            <div className="chart-loading">
-                              <IonSpinner />
-                              <IonText>Loading form submission data...</IonText>
-                            </div>
-                          ) : (
-                            <div className="chart-container">
-                              <Line data={formSubmissionChartData} options={lineChartOptions} />
-                            </div>
-                          )}
-                        </IonCardContent>
-                      </IonCard>
-                    </IonCol>
-                  </IonRow>
-
-                  {/* Admin Activity Chart */}
-                  <IonRow>
-                    <IonCol size="12">
-                      <IonCard>
-                        <IonCardHeader>
-                          <IonCardTitle>Admin Activity Over Time</IonCardTitle>
-                        </IonCardHeader>
-                        <IonCardContent>
-                          {isLineChartLoading ? (
-                            <div className="chart-loading">
-                              <IonSpinner />
-                              <IonText>Loading admin activity data...</IonText>
-                            </div>
-                          ) : (
-                            <div className="chart-container">
-                              <Line data={adminActivityChartData} options={lineChartOptions} />
-                            </div>
-                          )}
-                        </IonCardContent>
-                      </IonCard>
-                    </IonCol>
-                  </IonRow>
+                  {/* Charts */}
+                  {chartConfigs.map((chart, index) => (
+                    <IonRow key={index}>
+                      <IonCol size="12">
+                        <IonCard>
+                          <IonCardHeader><IonCardTitle>{chart.title}</IonCardTitle></IonCardHeader>
+                          <IonCardContent>
+                            {isLineChartLoading ? (
+                              <div className="chart-loading">
+                                <IonSpinner /><IonText>Loading chart data...</IonText>
+                              </div>
+                            ) : (
+                              <div className="chart-container">
+                                <Line data={chart.data} options={lineChartOptions} />
+                              </div>
+                            )}
+                          </IonCardContent>
+                        </IonCard>
+                      </IonCol>
+                    </IonRow>
+                  ))}
 
                   {/* Quick Summary */}
                   <IonRow>
                     <IonCol size="12">
                       <IonCard>
-                        <IonCardHeader>
-                          <IonCardTitle>Quick Summary ({timeRange})</IonCardTitle>
-                        </IonCardHeader>
+                        <IonCardHeader><IonCardTitle>Quick Summary ({timeRange})</IonCardTitle></IonCardHeader>
                         <IonCardContent>
                           <IonGrid>
                             <IonRow>
-                              <IonCol size="12" size-md="3">
-                                <div className="summary-item">
-                                  <IonText color="primary">
-                                    <h3>{totalUserLogins}</h3>
-                                  </IonText>
-                                  <IonText color="medium">
-                                    <p>User Logins</p>
-                                  </IonText>
-                                </div>
-                              </IonCol>
-                              <IonCol size="12" size-md="3">
-                                <div className="summary-item">
-                                  <IonText color="success">
-                                    <h3>{totalFormSubmissions}</h3>
-                                  </IonText>
-                                  <IonText color="medium">
-                                    <p>Forms Submitted</p>
-                                  </IonText>
-                                </div>
-                              </IonCol>
-                              <IonCol size="12" size-md="3">
-                                <div className="summary-item">
-                                  <IonText color="warning">
-                                    <h3>{totalAdminLogins}</h3>
-                                  </IonText>
-                                  <IonText color="medium">
-                                    <p>Admin Logins</p>
-                                  </IonText>
-                                </div>
-                              </IonCol>
-                              <IonCol size="12" size-md="3">
-                                <div className="summary-item">
-                                  <IonText color="secondary">
-                                    <h3>{totalFormReviews}</h3>
-                                  </IonText>
-                                  <IonText color="medium">
-                                    <p>Form Reviews</p>
-                                  </IonText>
-                                </div>
-                              </IonCol>
+                              {summaryItems.map((item, index) => (
+                                <IonCol key={index} size="12" size-md="3">
+                                  <div className="summary-item">
+                                    <IonText color={item.color}><h3>{item.value}</h3></IonText>
+                                    <IonText color="medium"><p>{item.label}</p></IonText>
+                                  </div>
+                                </IonCol>
+                              ))}
                             </IonRow>
                           </IonGrid>
                         </IonCardContent>
@@ -1024,7 +802,7 @@ const Dashboard: React.FC = () => {
         )}
 
         {/* Pie Charts Section */}
-        {(selectedView === 'kinds' || selectedView === 'land' || selectedView === 'building' || selectedView === 'machinery') && (
+        {selectedView !== 'overview' && (
           <div className="charts-container">
             <IonGrid>
               <IonRow>
@@ -1032,17 +810,8 @@ const Dashboard: React.FC = () => {
                   <IonCard>
                     <IonCardHeader>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <IonCardTitle>
-                          {selectedView === 'kinds' && 'Forms Distribution by Kind'}
-                          {selectedView === 'land' && 'Land Classification Distribution'}
-                          {selectedView === 'building' && 'Building Classification Distribution'}
-                          {selectedView === 'machinery' && 'Machinery Classification Distribution'}
-                        </IonCardTitle>
-                        <IonButton 
-                          fill="clear" 
-                          onClick={() => setSelectedView('overview')}
-                          color="medium"
-                        >
+                        <IonCardTitle>{getChartTitle()}</IonCardTitle>
+                        <IonButton fill="clear" onClick={() => setSelectedView('overview')} color="medium">
                           <IonIcon slot="start" icon={arrowBack} />
                           Back to Overview
                         </IonButton>
@@ -1051,29 +820,21 @@ const Dashboard: React.FC = () => {
                     <IonCardContent>
                       {isChartLoading ? (
                         <div className="chart-loading">
-                          <IonSpinner />
-                          <IonText>Loading chart data...</IonText>
+                          <IonSpinner /><IonText>Loading chart data...</IonText>
                         </div>
                       ) : (
                         <div className="chart-container">
                           {selectedView === 'kinds' && kindData.length > 0 && (
                             <Pie data={kindsChartData} options={pieChartOptions} />
                           )}
-                          {(selectedView === 'land' || selectedView === 'building' || selectedView === 'machinery') && 
-                           classificationData.length > 0 && (
+                          {selectedView !== 'kinds' && classificationData.length > 0 && (
                             <Pie data={classificationsChartData} options={pieChartOptions} />
                           )}
-                          {(selectedView === 'kinds' && kindData.length === 0) && (
+                          {((selectedView === 'kinds' && kindData.length === 0) || 
+                            (selectedView !== 'kinds' && classificationData.length === 0)) && (
                             <div className="no-data">
                               <IonText color="medium">
-                                <p>No form data available for chart.</p>
-                              </IonText>
-                            </div>
-                          )}
-                          {(selectedView !== 'kinds' && classificationData.length === 0) && (
-                            <div className="no-data">
-                              <IonText color="medium">
-                                <p>No classification data available for {selectedView}.</p>
+                                <p>No data available for chart.</p>
                               </IonText>
                             </div>
                           )}
