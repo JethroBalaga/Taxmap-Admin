@@ -34,7 +34,8 @@ import {
   LineElement,
   Tooltip,
   Legend,
-  ChartOptions
+  ChartOptions,
+  Filler
 } from 'chart.js';
 
 import { 
@@ -73,7 +74,8 @@ ChartJS.register(
   PointElement,
   LineElement,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 );
 
 const Dashboard: React.FC = () => {
