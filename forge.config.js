@@ -5,7 +5,7 @@ export default {
   packagerConfig: {
     asar: true,
     main: 'electron/main.js',
-    icon: './public/favicon.png', // Use PNG directly
+    icon: './public/favicon', // Use PNG directly
     executableName: 'Taxmap-admin'
   },
   rebuildConfig: {},
