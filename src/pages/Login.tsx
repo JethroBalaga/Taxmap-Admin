@@ -18,6 +18,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supaBaseClient';
 import Logo from '../Images/Flag_of_Manolo_Fortich,_Bukidnon.png';
 import backgroundImg from '../Images/Background.jpg';
+import favicon from '../Images/favicon.png'; // Import your favicon (it will be included in build)
 import '../CSS/Login.css';
 
 const AlertBox: React.FC<{ message: string; isOpen: boolean; onClose: () => void }> = ({ message, isOpen, onClose }) => {

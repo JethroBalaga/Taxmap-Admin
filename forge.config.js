@@ -1,30 +1,46 @@
-const { FusesPlugin } = require('@electron-forge/plugin-fuses');
-const { FuseV1Options, FuseVersion } = require('@electron/fuses');
+import { FusesPlugin } from '@electron-forge/plugin-fuses';
+import { FuseV1Options, FuseVersion } from '@electron/fuses';
 
-module.exports = {
+export default {
   packagerConfig: {
     asar: true,
+    main: 'electron/main.js',
+    icon: './public/favicon.png', // Use PNG directly
+    executableName: 'Taxmap-admin'
   },
   rebuildConfig: {},
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
-      config: {},
-      platforms: ['win32']  // Add this line
+      config: {
+        name: "Taxmap-admin",
+        authors: "Your Name or Company",
+        description: "Taxmap Admin Application",
+        exe: "Taxmap-admin.exe"
+      },
+      platforms: ['win32']
     },
     {
       name: '@electron-forge/maker-zip',
-      platforms: ['win32', 'darwin']  // Add win32 here
+      platforms: ['win32', 'darwin']
     },
     {
       name: '@electron-forge/maker-deb',
-      config: {},
-      platforms: ['linux']  // Add this line
+      config: {
+        options: {
+          icon: './public/favicon.png'
+        }
+      },
+      platforms: ['linux']
     },
     {
       name: '@electron-forge/maker-rpm',
-      config: {},
-      platforms: ['linux']  // Add this line
+      config: {
+        options: {
+          icon: './public/favicon.png'
+        }
+      },
+      platforms: ['linux']
     },
   ],
   plugins: [
@@ -32,8 +48,6 @@ module.exports = {
       name: '@electron-forge/plugin-auto-unpack-natives',
       config: {},
     },
-    // Fuses are used to enable/disable various Electron functionality
-    // at package time, before code signing the application
     new FusesPlugin({
       version: FuseVersion.V1,
       [FuseV1Options.RunAsNode]: false,
