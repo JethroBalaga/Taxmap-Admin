@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   IonIcon,
   IonLabel,
@@ -5,10 +6,11 @@ import {
   IonTabBar,
   IonTabButton,
   IonTabs,
+  IonPage,
+  IonContent
 } from '@ionic/react';
-import { IonReactRouter } from '@ionic/react-router';
-import { albumsOutline, bookOutline, trailSignOutline } from 'ionicons/icons';
 import { Route, Redirect, useLocation } from 'react-router';
+import { albumsOutline, bookOutline, trailSignOutline } from 'ionicons/icons';
 import { useEffect } from 'react';
 import Classification from './Home.tabs/Classification';
 import District from './Home.tabs/District';
@@ -40,49 +42,47 @@ const Home: React.FC = () => {
   ]
 
   return (
-    <IonReactRouter>
-      <IonTabs>
-        <IonRouterOutlet>
-          {/* Specific routes first */}
-          <Route exact path="/menu/home/classification" component={Classification} />
-          <Route exact path="/menu/home/district" component={District} />
-          <Route exact path="/menu/home/kind" component={Kind} />
-          <Route exact path="/menu/home/subclass" component={Subclass} />
-          <Route exact path="/menu/home/taxrate" component={Taxrate} />
-          <Route exact path="/menu/home/barangay" component={Barangay} />
-          <Route exact path="/menu/home/assesmentlevel" component={AssessmentLevel} />
-          <Route exact path="/menu/home/subclassrate" component={SubclassRate} />
-          <Route exact path="/menu/home/structure" component={Structure} />
-          <Route exact path="/menu/home/buildingcode" component={BuildingCode} />
-          <Route exact path="/menu/home/actualused" component={ActualUsed} />
-          <Route exact path="/menu/home/buildingcom" component={BuildingCom} />
-          <Route exact path="/menu/home/buildingsubcom" component={BuildingSubCom} />
-          <Route exact path="/menu/home/equipment" component={Equipment} />
-          <Route exact path="/menu/home/landadjustment" component={LandAdjustment} />
+    <IonPage>
+      {/* REMOVED HEADER - tabs will have their own headers */}
+      <IonContent fullscreen>
+        <IonTabs>
+          <IonRouterOutlet>
+            <Route exact path="/menu/home/classification" component={Classification} />
+            <Route exact path="/menu/home/district" component={District} />
+            <Route exact path="/menu/home/kind" component={Kind} />
+            <Route exact path="/menu/home/subclass" component={Subclass} />
+            <Route exact path="/menu/home/taxrate" component={Taxrate} />
+            <Route exact path="/menu/home/barangay" component={Barangay} />
+            <Route exact path="/menu/home/assesmentlevel" component={AssessmentLevel} />
+            <Route exact path="/menu/home/subclassrate" component={SubclassRate} />
+            <Route exact path="/menu/home/structure" component={Structure} />
+            <Route exact path="/menu/home/buildingcode" component={BuildingCode} />
+            <Route exact path="/menu/home/actualused" component={ActualUsed} />
+            <Route exact path="/menu/home/buildingcom" component={BuildingCom} />
+            <Route exact path="/menu/home/buildingsubcom" component={BuildingSubCom} />
+            <Route exact path="/menu/home/equipment" component={Equipment} />
+            <Route exact path="/menu/home/landadjustment" component={LandAdjustment} />
 
-          {/* Base path redirect */}
-          <Route exact path="/menu/home">
-            <Redirect to="/menu/home/classification" />
-          </Route>
+            <Route exact path="/menu/home">
+              <Redirect to="/menu/home/classification" />
+            </Route>
+          </IonRouterOutlet>
 
-          {/* Remove the catch-all route since it's causing infinite redirects */}
-          {/* Or use a more specific catch-all that doesn't interfere with existing routes */}
-        </IonRouterOutlet>
-
-        <IonTabBar slot="bottom">
-          {tabs.map((item, index) => (
-            <IonTabButton 
-              key={index} 
-              tab={item.tab} 
-              href={item.url}
-            >
-              <IonIcon icon={item.icon} />
-              <IonLabel>{item.name}</IonLabel>
-            </IonTabButton>
-          ))}
-        </IonTabBar>
-      </IonTabs>
-    </IonReactRouter>
+          <IonTabBar slot="bottom">
+            {tabs.map((item, index) => (
+              <IonTabButton 
+                key={index} 
+                tab={item.tab} 
+                href={item.url}
+              >
+                <IonIcon icon={item.icon} />
+                <IonLabel>{item.name}</IonLabel>
+              </IonTabButton>
+            ))}
+          </IonTabBar>
+        </IonTabs>
+      </IonContent>
+    </IonPage>
   );
 };
 

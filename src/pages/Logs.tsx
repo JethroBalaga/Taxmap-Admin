@@ -30,7 +30,6 @@ const Logs: React.FC = () => {
     const [isError, setIsError] = useState(false);
     const searchRef = useRef<HTMLIonSearchbarElement>(null);
 
-    // ✅ Reordered so admin/user/form logs are at the top
     const tableOptions = [
         'Admin Activity',
         'User Activity',
@@ -59,7 +58,6 @@ const Logs: React.FC = () => {
         try {
             let tableName = '';
 
-            // ✅ Updated mapping with new cases
             switch (selectedTable) {
                 case 'Admin Activity':
                     tableName = 'admin_activity_logs';
@@ -203,10 +201,9 @@ const Logs: React.FC = () => {
                                 style={{
                                     display: 'inline-block',
                                     width: '20%',
-                                    '--background': '#000000',
-                                    '--color': '#ffffff',
-                                    '--placeholder-color': '#cccccc',
-                                    verticalAlign: 'top'
+                                    verticalAlign: 'top',
+                                    '--color': '#000000',
+                                    '--placeholder-color': '#000000'
                                 }}
                             >
                                 {tableOptions.map((table) => (

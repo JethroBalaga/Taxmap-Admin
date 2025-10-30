@@ -1,9 +1,9 @@
-import React, { useState, useEffect, ComponentType } from 'react';
-import { Route, Redirect, RouteComponentProps } from 'react-router-dom';
-import { IonApp, IonRouterOutlet, setupIonicReact, IonContent } from '@ionic/react';
+import { Redirect, Route } from 'react-router-dom';
+import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react';
 import { IonReactHashRouter } from '@ionic/react-router';
+import { useEffect } from 'react';
 
-/* Core CSS */
+/* Your CSS imports */
 import '@ionic/react/css/core.css';
 import '@ionic/react/css/normalize.css';
 import '@ionic/react/css/structure.css';
@@ -15,71 +15,51 @@ import '@ionic/react/css/text-transformation.css';
 import '@ionic/react/css/flex-utils.css';
 import '@ionic/react/css/display.css';
 import '@ionic/react/css/palettes/dark.system.css';
-
-/* Theme */
 import './theme/variables.css';
+
+import Login from './pages/Login';
+import Menu from './pages/Menu';
+import AdminRegister from './pages/AdminRegistration';
 
 setupIonicReact();
 
 const App: React.FC = () => {
-  const [Login, setLogin] = useState<ComponentType<any> | null>(null);
-  const [Menu, setMenu] = useState<ComponentType<any> | null>(null);
-  const [AdminRegister, setAdminRegister] = useState<ComponentType<any> | null>(null);
-  const [loading, setLoading] = useState(true);
-
+  // Clear invalid tokens on app start
   useEffect(() => {
-    const loadComponents = async () => {
+    const clearInvalidTokens = () => {
       try {
-        const loginModule = await import('./pages/Login');
-        setLogin(() => loginModule.default);
+        // Clear all Supabase auth storage
+        localStorage.removeItem('supabase.auth.token');
+        localStorage.removeItem('sb-*'); // Supabase storage pattern
+        sessionStorage.removeItem('supabase.auth.token');
         
-        const menuModule = await import('./pages/Menu');
-        setMenu(() => menuModule.default);
+        // Also clear any other potential auth storage
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.includes('supabase') || key.includes('auth') || key.includes('token'))) {
+            keysToRemove.push(key);
+          }
+        }
         
-        const adminModule = await import('./pages/AdminRegistration');
-        setAdminRegister(() => adminModule.default);
+        keysToRemove.forEach(key => localStorage.removeItem(key));
         
+        console.log('Cleared invalid auth tokens');
       } catch (error) {
-        console.error('Error loading components:', error);
-      } finally {
-        setLoading(false);
+        console.log('No auth tokens to clear or error clearing:', error);
       }
     };
 
-    loadComponents();
+    clearInvalidTokens();
   }, []);
-
-  if (loading) {
-    return (
-      <IonApp>
-        <IonContent className="ion-padding">
-          <h1>TaxMap Admin</h1>
-          <p>Loading components...</p>
-        </IonContent>
-      </IonApp>
-    );
-  }
-
-  // Create wrapper components to handle the dynamic imports
-  const LoginWrapper: React.FC<RouteComponentProps> = (props) => 
-    Login ? <Login {...props} /> : <div>Loading Login...</div>;
-  
-  const MenuWrapper: React.FC<RouteComponentProps> = (props) => 
-    Menu ? <Menu {...props} /> : <div>Loading Menu...</div>;
-  
-  const AdminRegisterWrapper: React.FC<RouteComponentProps> = (props) => 
-    AdminRegister ? <AdminRegister {...props} /> : <div>Loading Admin Register...</div>;
 
   return (
     <IonApp>
       <IonReactHashRouter>
         <IonRouterOutlet>
-          <Route exact path="/login" component={LoginWrapper} />
-          <Route exact path="/adminregistration" component={AdminRegisterWrapper} />
-          <Route path="/menu" component={MenuWrapper} />
-          <Route exact path="/">
-            <Redirect to="/login" />
-          </Route>
+          <Route exact path="/" component={Login} />
+          <Route exact path="/adminregistration" component={AdminRegister}/>
+          <Route path="/menu" component={Menu} />
         </IonRouterOutlet>
       </IonReactHashRouter>
     </IonApp>

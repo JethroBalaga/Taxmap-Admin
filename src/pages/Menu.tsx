@@ -90,7 +90,11 @@ const Menu: React.FC = () => {
         <IonContent className="ion-padding">
           {path.map((item, index) => (
             <IonMenuToggle key={index}>
-              <IonItem routerLink={item.url} routerDirection="forward">
+              <IonItem 
+                routerLink={item.url} 
+                routerDirection="none"
+                detail={false}
+              >
                 <IonIcon icon={item.icon} slot="start"></IonIcon>
                 {item.name}
               </IonItem>
@@ -110,6 +114,7 @@ const Menu: React.FC = () => {
       </IonMenu>
 
       <IonPage id="main-content">
+        {/* Main Menu Header - Always visible */}
         <IonHeader>
           <IonToolbar>
             <IonButtons slot="start">
@@ -119,22 +124,25 @@ const Menu: React.FC = () => {
           </IonToolbar>
         </IonHeader>
         
-        <IonRouterOutlet>
-          <Route exact path="/menu/dashboard" component={Dashboard} />
-          <Route path="/menu/home" component={Home} />
-          <Route exact path="/menu/map" component={Map} />
-          <Route path="/menu/people" component={People} />
-          <Route exact path="/menu/forms" component={Forms} />
-          <Route exact path="/menu/buildingtable" component={BuildingTable} />
-          <Route exact path="/menu/logs" component={Logs} />
-          <Route path="/menu/machinerytable/:formId" component={MachineryTable} />
-          <Route path="/menu/agriculturalland/:formId" component={AgriculturalLand} />
-          <Route path="/menu/nonagriculturalland/:formId" component={NonAgriculturalLand} />
-          
-          <Route exact path="/menu">
-            <Redirect to="/menu/dashboard" />
-          </Route>
-        </IonRouterOutlet>
+        {/* Content area where pages will render WITH their own headers */}
+        <IonContent>
+          <IonRouterOutlet>
+            <Route exact path="/menu/dashboard" component={Dashboard} />
+            <Route path="/menu/home" component={Home} />
+            <Route exact path="/menu/map" component={Map} />
+            <Route path="/menu/people" component={People} />
+            <Route exact path="/menu/forms" component={Forms} />
+            <Route exact path="/menu/buildingtable" component={BuildingTable} />
+            <Route exact path="/menu/logs" component={Logs} />
+            <Route path="/menu/machinerytable/:formId" component={MachineryTable} />
+            <Route path="/menu/agriculturalland/:formId" component={AgriculturalLand} />
+            <Route path="/menu/nonagriculturalland/:formId" component={NonAgriculturalLand} />
+            
+            <Route exact path="/menu">
+              <Redirect to="/menu/dashboard" />
+            </Route>
+          </IonRouterOutlet>
+        </IonContent>
       </IonPage>
     </>
   );

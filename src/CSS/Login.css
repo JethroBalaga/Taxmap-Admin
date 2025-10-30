@@ -1,4 +1,4 @@
-/* Updated Login.css with yellow focus and white toggle */
+/* Updated Login.css with white text in inputs */
 .login-container {
   display: flex;
   justify-content: center;
@@ -51,14 +51,15 @@
   color: yellow;
 }
 
-/* Updated Input Styles */
+/* Updated Input Styles - WHITE TEXT */
 .login-input {
   width: 100%;
   --background: rgba(255, 255, 255, 0.1);
-  --color: white;
+  --color: white; /* White text color */
   --border-color: rgba(255, 255, 255, 0.3);
   --highlight-color-focused: yellow; /* Yellow focus highlight */
   --border-color-focused: yellow;   /* Yellow border when focused */
+  --placeholder-color: rgba(255, 255, 255, 0.7); /* Lighter placeholder text */
 }
 
 /* White Password Toggle */

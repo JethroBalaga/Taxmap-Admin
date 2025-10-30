@@ -331,15 +331,6 @@ const Dashboard: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonButtons slot="start">
-            <IonMenuButton />
-            {selectedView !== 'overview' && (
-              <IonButton onClick={() => setSelectedView('overview')}>
-                <IonIcon slot="start" icon={arrowBack} />
-                Back
-              </IonButton>
-            )}
-          </IonButtons>
           <IonTitle>{getPageTitle()}</IonTitle>
         </IonToolbar>
       </IonHeader>
