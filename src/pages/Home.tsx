@@ -43,25 +43,24 @@ const Home: React.FC = () => {
 
   return (
     <IonPage>
-      {/* REMOVED HEADER - tabs will have their own headers */}
       <IonContent fullscreen>
         <IonTabs>
           <IonRouterOutlet>
-            <Route exact path="/menu/home/classification" component={Classification} />
-            <Route exact path="/menu/home/district" component={District} />
-            <Route exact path="/menu/home/kind" component={Kind} />
-            <Route exact path="/menu/home/subclass" component={Subclass} />
-            <Route exact path="/menu/home/taxrate" component={Taxrate} />
-            <Route exact path="/menu/home/barangay" component={Barangay} />
-            <Route exact path="/menu/home/assesmentlevel" component={AssessmentLevel} />
-            <Route exact path="/menu/home/subclassrate" component={SubclassRate} />
-            <Route exact path="/menu/home/structure" component={Structure} />
-            <Route exact path="/menu/home/buildingcode" component={BuildingCode} />
-            <Route exact path="/menu/home/actualused" component={ActualUsed} />
-            <Route exact path="/menu/home/buildingcom" component={BuildingCom} />
-            <Route exact path="/menu/home/buildingsubcom" component={BuildingSubCom} />
-            <Route exact path="/menu/home/equipment" component={Equipment} />
-            <Route exact path="/menu/home/landadjustment" component={LandAdjustment} />
+            <Route exact path="/menu/home/classification" render={() => <Classification />} />
+            <Route exact path="/menu/home/district" render={() => <District />} />
+            <Route exact path="/menu/home/kind" render={() => <Kind />} />
+            <Route exact path="/menu/home/subclass" render={() => <Subclass />} />
+            <Route exact path="/menu/home/taxrate" render={() => <Taxrate />} />
+            <Route exact path="/menu/home/barangay" render={() => <Barangay />} />
+            <Route exact path="/menu/home/assesmentlevel" render={() => <AssessmentLevel />} />
+            <Route exact path="/menu/home/subclassrate" render={() => <SubclassRate />} />
+            <Route exact path="/menu/home/structure" render={() => <Structure />} />
+            <Route exact path="/menu/home/buildingcode" render={() => <BuildingCode />} />
+            <Route exact path="/menu/home/actualused" render={() => <ActualUsed />} />
+            <Route exact path="/menu/home/buildingcom" render={() => <BuildingCom />} />
+            <Route exact path="/menu/home/buildingsubcom" render={() => <BuildingSubCom />} />
+            <Route exact path="/menu/home/equipment" render={() => <Equipment />} />
+            <Route exact path="/menu/home/landadjustment" render={() => <LandAdjustment />} />
 
             <Route exact path="/menu/home">
               <Redirect to="/menu/home/classification" />

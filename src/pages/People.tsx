@@ -29,10 +29,10 @@ const People: React.FC = () => {
       <IonContent fullscreen>
         <IonTabs>
           <IonRouterOutlet>
-            <Route exact path="/menu/people/declarant" component={Declarant} />
-            <Route exact path="/menu/people/user" component={User} />
-            <Route exact path="/menu/people/register" component={Register} />
-            <Route exact path="/menu/people/devices" component={DeviceManagement} /> 
+            <Route exact path="/menu/people/declarant" render={() => <Declarant />} />
+            <Route exact path="/menu/people/user" render={() => <User />} />
+            <Route exact path="/menu/people/register" render={() => <Register />} />
+            <Route exact path="/menu/people/devices" render={() => <DeviceManagement />} /> 
             
             <Route exact path="/menu/people">
               <Redirect to="/menu/people/declarant" />
