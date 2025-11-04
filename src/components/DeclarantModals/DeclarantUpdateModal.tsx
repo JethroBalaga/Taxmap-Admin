@@ -16,55 +16,53 @@ import './../../CSS/Modal.css';
 import Button from '../Globalcomponents/Button';
 import { supabase } from './../../utils/supaBaseClient';
 
-interface DeclarantItem {
-  declarant_id: string;
-  firstname: string;
-  lastname: string;
+interface FormItem {
+  form_id: string;
+  declarant: string;
   created_at?: string;
+  status?: string;
+  class_id?: string;
 }
 
 interface DeclarantUpdateModalProps {
   isOpen: boolean;
   onClose: () => void;
   onDeclarantUpdated?: () => void;
-  selectedDeclarant: DeclarantItem | null;
+  selectedForm: FormItem | null; // Changed from selectedDeclarant to selectedForm
 }
 
 const DeclarantUpdateModal: React.FC<DeclarantUpdateModalProps> = ({
   isOpen,
   onClose,
   onDeclarantUpdated = () => {},
-  selectedDeclarant,
+  selectedForm, // Changed from selectedDeclarant
 }) => {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [declarant, setDeclarant] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [isError, setIsError] = useState(false);
 
-  // Populate form fields when selectedDeclarant changes
+  // Populate form field when selectedForm changes
   useEffect(() => {
-    if (selectedDeclarant) {
-      setFirstName(selectedDeclarant.firstname);
-      setLastName(selectedDeclarant.lastname);
+    if (selectedForm) {
+      setDeclarant(selectedForm.declarant);
     }
-  }, [selectedDeclarant]);
+  }, [selectedForm]);
 
   const handleUpdate = async () => {
-    if (!firstName || !lastName || !selectedDeclarant) return;
+    if (!declarant || !selectedForm) return;
 
     setIsLoading(true);
     
     try {
-      // Update declarant using declarant_id from selected row
+      // Update only the declarant field in formtbl
       const { error } = await supabase
-        .from('declaranttbl')
+        .from('formtbl')
         .update({ 
-          firstname: firstName.toUpperCase(),
-          lastname: lastName.toUpperCase()
+          declarant: declarant.toUpperCase()
         })
-        .eq('declarant_id', selectedDeclarant.declarant_id);
+        .eq('form_id', selectedForm.form_id);
 
       if (error) throw error;
 
@@ -82,19 +80,14 @@ const DeclarantUpdateModal: React.FC<DeclarantUpdateModalProps> = ({
     }
   };
 
-  const handleFirstNameChange = (value: string) => {
-    setFirstName(value.toUpperCase());
-  };
-
-  const handleLastNameChange = (value: string) => {
-    setLastName(value.toUpperCase());
+  const handleDeclarantChange = (value: string) => {
+    setDeclarant(value.toUpperCase());
   };
 
   const handleClose = () => {
-    // Reset form fields when closing
-    if (selectedDeclarant) {
-      setFirstName(selectedDeclarant.firstname);
-      setLastName(selectedDeclarant.lastname);
+    // Reset form field when closing
+    if (selectedForm) {
+      setDeclarant(selectedForm.declarant);
     }
     onClose();
   };
@@ -118,28 +111,20 @@ const DeclarantUpdateModal: React.FC<DeclarantUpdateModalProps> = ({
               <IonCol className="form-column">
                 <div className="input-wrapper">
                   <Input
-                    label="FIRST NAME"
-                    value={firstName}
-                    onChange={handleFirstNameChange}
-                    placeholder="ENTER FIRST NAME"
-                    className="modal-input"
-                  />
-                </div>
-                
-                <div className="input-wrapper">
-                  <Input
-                    label="LAST NAME"
-                    value={lastName}
-                    onChange={handleLastNameChange}
-                    placeholder="ENTER LAST NAME"
+                    label="DECLARANT NAME"
+                    value={declarant}
+                    onChange={handleDeclarantChange}
+                    placeholder="ENTER DECLARANT NAME"
                     className="modal-input"
                   />
                 </div>
 
-                {selectedDeclarant && (
+                {selectedForm && (
                   <div className="selected-item-info">
-                    <p>Updating: {selectedDeclarant.firstname} {selectedDeclarant.lastname}</p>
-                    <p>ID: {selectedDeclarant.declarant_id}</p>
+                    <p>Current Declarant: {selectedForm.declarant}</p>
+                    <p>Form ID: {selectedForm.form_id}</p>
+                    {selectedForm.status && <p>Status: {selectedForm.status}</p>}
+                    {selectedForm.class_id && <p>Class: {selectedForm.class_id}</p>}
                   </div>
                 )}
 
@@ -156,12 +141,11 @@ const DeclarantUpdateModal: React.FC<DeclarantUpdateModalProps> = ({
                   <Button 
                     variant="primary"
                     onClick={handleUpdate}
-                    disabled={!firstName || !lastName || isLoading || 
-                             (firstName === selectedDeclarant?.firstname && 
-                              lastName === selectedDeclarant?.lastname)}
+                    disabled={!declarant || isLoading || 
+                             (declarant === selectedForm?.declarant)}
                     className="update-btn"
                   >
-                    {isLoading ? 'UPDATING...' : 'UPDATE'}
+                    {isLoading ? 'UPDATING...' : 'UPDATE DECLARANT'}
                   </Button>
                 </div>
               </IonCol>

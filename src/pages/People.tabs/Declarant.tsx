@@ -14,24 +14,26 @@ import {
     IonAlert,
     IonToast
 } from '@ionic/react';
-import { add, arrowUpCircle, trash } from 'ionicons/icons';
+import { arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 import DeclarantUpdateModal from '../../components/DeclarantModals/DeclarantUpdateModal';
 
-interface DeclarantItem {
-    declarant_id: string; // Changed to string to match the filter logic
-    firstname: string;
-    lastname: string;
+interface FormItem {
+    form_id: string;
+    declarant: string; // Only need declarant field from formtbl
     created_at?: string;
+    // Other fields from formtbl that you might want to display
+    status?: string;
+    class_id?: string;
 }
 
 const Declarant: React.FC = () => {
-    const [declarants, setDeclarants] = useState<DeclarantItem[]>([]);
+    const [forms, setForms] = useState<FormItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedRow, setSelectedRow] = useState<DeclarantItem | null>(null);
+    const [selectedRow, setSelectedRow] = useState<FormItem | null>(null);
     const [showDeleteAlert, setShowDeleteAlert] = useState(false);
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
@@ -47,26 +49,20 @@ const Declarant: React.FC = () => {
         return () => clearTimeout(timer);
     }, []);
 
-    // Fetch data
-    const fetchDeclarants = useCallback(async () => {
+    // Fetch data from formtbl - only declarant related data
+    const fetchForms = useCallback(async () => {
         setIsLoading(true);
         try {
             const { data, error } = await supabase
-                .from('declaranttbl')
-                .select('*')
+                .from('formtbl')
+                .select('form_id, declarant, created_at, status, class_id') // Only select needed fields
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
 
-            // Convert declarant_id to string to ensure consistency
-            const declarantsWithStringId = (data || []).map(item => ({
-                ...item,
-                declarant_id: String(item.declarant_id)
-            }));
-
-            setDeclarants(declarantsWithStringId);
+            setForms(data || []);
         } catch (error) {
-            console.error('Error fetching declarants:', error);
+            console.error('Error fetching forms:', error);
             setToastMessage('Failed to load declarants');
             setIsError(true);
             setShowToast(true);
@@ -76,22 +72,21 @@ const Declarant: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        fetchDeclarants();
-    }, [fetchDeclarants]);
+        fetchForms();
+    }, [fetchForms]);
 
-    // Filter data based on search term - FIXED VERSION
+    // Filter data based on search term - search only declarant names
     const filteredData = useMemo(() => {
-        if (!searchTerm.trim()) return declarants;
+        if (!searchTerm.trim()) return forms;
 
         const term = searchTerm.toLowerCase();
-        return declarants.filter(item =>
-            item.firstname.toLowerCase().includes(term) ||
-            item.lastname.toLowerCase().includes(term) ||
-            item.declarant_id.toLowerCase().includes(term) // Now safe since we converted to string
+        return forms.filter(item =>
+            item.declarant.toLowerCase().includes(term) ||
+            item.form_id.toLowerCase().includes(term)
         );
-    }, [declarants, searchTerm]);
+    }, [forms, searchTerm]);
 
-    const handleRowClick = (rowData: DeclarantItem) => {
+    const handleRowClick = (rowData: FormItem) => {
         setSelectedRow(rowData);
     };
 
@@ -112,19 +107,19 @@ const Declarant: React.FC = () => {
         try {
             setIsLoading(true);
             const { error } = await supabase
-                .from('declaranttbl')
+                .from('formtbl')
                 .delete()
-                .eq('declarant_id', selectedRow.declarant_id);
+                .eq('form_id', selectedRow.form_id);
 
             if (error) throw error;
 
-            await fetchDeclarants();
+            await fetchForms();
             setSelectedRow(null);
-            setToastMessage(`${selectedRow.firstname} ${selectedRow.lastname} deleted successfully!`);
+            setToastMessage(`Form with declarant "${selectedRow.declarant}" deleted successfully!`);
             setShowToast(true);
         } catch (error) {
-            console.error('Error deleting declarant:', error);
-            setToastMessage('Failed to delete declarant');
+            console.error('Error deleting form:', error);
+            setToastMessage('Failed to delete form');
             setIsError(true);
             setShowToast(true);
         } finally {
@@ -138,13 +133,13 @@ const Declarant: React.FC = () => {
             icon: arrowUpCircle,
             onClick: handleUpdateClick,
             disabled: !selectedRow,
-            title: "Edit Declarant"
+            title: "Update Declarant"
         },
         {
             icon: trash,
             onClick: handleDeleteClick,
             disabled: !selectedRow,
-            title: "Delete Declarant"
+            title: "Delete Form"
         }
     ];
 
@@ -152,7 +147,7 @@ const Declarant: React.FC = () => {
         <IonPage>
             <IonHeader>
                 <IonToolbar>
-                    <IonTitle>Declarant</IonTitle>
+                    <IonTitle>Declarants from Forms</IonTitle>
                 </IonToolbar>
             </IonHeader>
 
@@ -185,28 +180,29 @@ const Declarant: React.FC = () => {
                         <IonCol size="12">
                             <DynamicTable
                                 data={filteredData}
-                                title="Declarants"
-                                keyField="declarant_id"
+                                title="Declarants from Forms"
+                                keyField="form_id"
                                 onRowClick={handleRowClick}
-                                selectedRow={selectedRow} 
+                                selectedRow={selectedRow}
                             />
                         </IonCol>
                     </IonRow>
                 </IonGrid>
 
                 <IonLoading isOpen={isLoading} message="Loading..." />
+
                 <DeclarantUpdateModal
                     isOpen={showUpdateModal}
                     onClose={() => setShowUpdateModal(false)}
-                    onDeclarantUpdated={fetchDeclarants}
-                    selectedDeclarant={selectedRow}
+                    onDeclarantUpdated={fetchForms}
+                    selectedForm={selectedRow} // Now it matches the prop name
                 />
 
                 <IonAlert
                     isOpen={showDeleteAlert}
                     onDidDismiss={() => setShowDeleteAlert(false)}
                     header={'Confirm Delete'}
-                    message={`Are you sure you want to delete the declarant <strong>${selectedRow?.firstname} ${selectedRow?.lastname}</strong>?`}
+                    message={`Are you sure you want to delete the form with declarant <strong>${selectedRow?.declarant}</strong>?`}
                     buttons={[
                         {
                             text: 'Cancel',
