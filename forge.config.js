@@ -6,17 +6,17 @@ export default {
     asar: true,
     main: 'electron/main.js',
     icon: './public/favicon', // Use PNG directly
-    executableName: 'Taxmap-admin'
+    executableName: 'Taxmapadmin'
   },
   rebuildConfig: {},
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
       config: {
-        name: "Taxmap-admin",
+        name: "Taxmapadmin",
         authors: "Your Name or Company",
         description: "Taxmap Admin Application",
-        exe: "Taxmap-admin.exe"
+        exe: "Taxmapadmin.exe"
       },
       platforms: ['win32']
     },
