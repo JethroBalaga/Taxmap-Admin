@@ -16,7 +16,6 @@ import {
 } from '@ionic/react';
 import { add, arrowUpCircle, trash } from 'ionicons/icons';
 import './../../CSS/Setup.css';
-import DeclarantCreateModal from '../../components/DeclarantModals/DeclarantCreateModal';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 import DeclarantUpdateModal from '../../components/DeclarantModals/DeclarantUpdateModal';
@@ -29,7 +28,6 @@ interface DeclarantItem {
 }
 
 const Declarant: React.FC = () => {
-    const [showCreateModal, setShowCreateModal] = useState(false);
     const [declarants, setDeclarants] = useState<DeclarantItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -137,12 +135,6 @@ const Declarant: React.FC = () => {
 
     const iconButtons = [
         {
-            icon: add,
-            onClick: () => setShowCreateModal(true),
-            disabled: false,
-            title: "Add Declarant"
-        },
-        {
             icon: arrowUpCircle,
             onClick: handleUpdateClick,
             disabled: !selectedRow,
@@ -203,13 +195,6 @@ const Declarant: React.FC = () => {
                 </IonGrid>
 
                 <IonLoading isOpen={isLoading} message="Loading..." />
-
-                <DeclarantCreateModal
-                    isOpen={showCreateModal}
-                    onClose={() => setShowCreateModal(false)}
-                    onDeclarantCreated={fetchDeclarants}
-                />
-
                 <DeclarantUpdateModal
                     isOpen={showUpdateModal}
                     onClose={() => setShowUpdateModal(false)}
