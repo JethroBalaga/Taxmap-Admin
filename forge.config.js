@@ -1,0 +1,61 @@
+import { FusesPlugin } from '@electron-forge/plugin-fuses';
+import { FuseV1Options, FuseVersion } from '@electron/fuses';
+
+export default {
+  packagerConfig: {
+    asar: true,
+    main: 'electron/main.js',
+    icon: './public/favicon', // Use PNG directly
+    executableName: 'Taxmapadmin'
+  },
+  rebuildConfig: {},
+  makers: [
+    {
+      name: '@electron-forge/maker-squirrel',
+      config: {
+        name: "Taxmapadmin",
+        authors: "Your Name or Company",
+        description: "Taxmap Admin Application",
+        exe: "Taxmapadmin.exe"
+      },
+      platforms: ['win32']
+    },
+    {
+      name: '@electron-forge/maker-zip',
+      platforms: ['win32', 'darwin']
+    },
+    {
+      name: '@electron-forge/maker-deb',
+      config: {
+        options: {
+          icon: './public/favicon.png'
+        }
+      },
+      platforms: ['linux']
+    },
+    {
+      name: '@electron-forge/maker-rpm',
+      config: {
+        options: {
+          icon: './public/favicon.png'
+        }
+      },
+      platforms: ['linux']
+    },
+  ],
+  plugins: [
+    {
+      name: '@electron-forge/plugin-auto-unpack-natives',
+      config: {},
+    },
+    new FusesPlugin({
+      version: FuseVersion.V1,
+      [FuseV1Options.RunAsNode]: false,
+      [FuseV1Options.EnableCookieEncryption]: true,
+      [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false,
+      [FuseV1Options.EnableNodeCliInspectArguments]: false,
+      [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: true,
+      [FuseV1Options.OnlyLoadAppFromAsar]: true,
+    }),
+  ],
+};
