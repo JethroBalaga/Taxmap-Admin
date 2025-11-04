@@ -27,7 +27,7 @@ interface KindItem {
 
 const Kind: React.FC = () => {
   const [kinds, setKinds] = useState<KindItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRow, setSelectedRow] = useState<KindItem | null>(null);
   const [showToast, setShowToast] = useState(false);

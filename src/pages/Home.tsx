@@ -106,41 +106,14 @@ const ElectronHomeTabs: React.FC = () => {
     { name: 'Kind', tab: 'kind', icon: albumsOutline },
   ];
 
-  const additionalTabs = [
-    'subclass', 'taxrate', 'barangay', 'assesmentlevel', 'subclassrate',
-    'structure', 'buildingcode', 'actualused', 'buildingcom', 'buildingsubcom',
-    'equipment', 'landadjustment'
-  ];
-
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Additional tabs as buttons at top */}
-      <div style={{ padding: '10px', display: 'flex', flexWrap: 'wrap', gap: '5px', background: '#f8f9fa' }}>
-        {additionalTabs.map(tab => (
-          <button
-            key={tab}
-            onClick={() => handleTabChange(tab)}
-            style={{
-              padding: '5px 10px',
-              background: activeTab === tab ? '#007bff' : 'white',
-              color: activeTab === tab ? 'white' : 'black',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              fontSize: '12px',
-              cursor: 'pointer'
-            }}
-          >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </button>
-        ))}
-      </div>
-
-      {/* Content area */}
-      <div style={{ flex: 1, paddingBottom: '60px', overflow: 'auto' }}>
+      {/* Content area - takes full space */}
+      <div style={{ flex: 1, overflow: 'auto' }}>
         {renderContent()}
       </div>
 
-      {/* Custom bottom tab bar */}
+      {/* Custom bottom tab bar - ONLY Classification, District, Kind */}
       <div style={{
         position: 'fixed',
         bottom: 0,

@@ -74,7 +74,7 @@ const Classification: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [classifications, setClassifications] = useState<ClassificationItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRow, setSelectedRow] = useState<ClassificationItem | null>(null);
   const [selectedClassification, setSelectedClassification] = useState<ClassificationItem | null>(null);

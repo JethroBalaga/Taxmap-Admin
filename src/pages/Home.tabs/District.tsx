@@ -33,7 +33,7 @@ const District: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [districts, setDistricts] = useState<DistrictItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRow, setSelectedRow] = useState<DistrictItem | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<DistrictItem | null>(null);

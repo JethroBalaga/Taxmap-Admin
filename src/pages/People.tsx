@@ -10,7 +10,7 @@ import {
   IonContent
 } from '@ionic/react';
 import { Route, Redirect, useLocation } from 'react-router';
-import { documentOutline, personCircleOutline, phonePortraitOutline } from 'ionicons/icons';
+import { documentOutline, personCircleOutline, phonePortraitOutline, add } from 'ionicons/icons';
 import Declarant from './People.tabs/Declarant';
 import User from './People.tabs/User';
 import Register from './Register';
@@ -75,22 +75,7 @@ const ElectronPeopleTabs: React.FC = () => {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Register button at top */}
-      <div style={{ padding: '10px', background: '#f8f9fa' }}>
-        <button
-          onClick={() => handleTabChange('register')}
-          style={{
-            padding: '8px 16px',
-            background: activeTab === 'register' ? '#007bff' : 'white',
-            color: activeTab === 'register' ? 'white' : 'black',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          Register
-        </button>
-      </div>
+      {/* REMOVED the Register button from here - it was causing the issue */}
 
       {/* Content area */}
       <div style={{ flex: 1, paddingBottom: '60px', overflow: 'auto' }}>

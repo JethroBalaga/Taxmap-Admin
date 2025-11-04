@@ -15,7 +15,8 @@ import {
   IonToolbar,
   IonTitle,
   IonButtons,
-  IonIcon
+  IonIcon,
+  IonLoading
 } from '@ionic/react';
 import { supabase } from '../utils/supaBaseClient';
 import bcrypt from 'bcryptjs';
@@ -27,7 +28,74 @@ import VerificationModal from '../components/RegistrationCommponents/Verificatio
 import AlertBox from '../components/RegistrationCommponents/AlertBox';
 import backgroundImg from '../Images/Manolo 2.jpg';
 import { useHistory } from 'react-router-dom';
-import { eye, eyeOff, checkmarkCircle, closeCircle } from 'ionicons/icons';
+import { eye, eyeOff, checkmarkCircle, closeCircle, arrowBack } from 'ionicons/icons';
+
+// Electron detection hook
+const useElectron = () => {
+  const [isElectron, setIsElectron] = useState(false);
+
+  useEffect(() => {
+    const electronDetected = (
+      // @ts-ignore
+      window.process?.versions?.electron ||
+      // @ts-ignore
+      window.navigator.userAgent.includes('Electron') ||
+      // @ts-ignore
+      (window.require && window.process && window.process.type) ||
+      window.location.protocol === 'file:'
+    );
+    
+    setIsElectron(!!electronDetected);
+  }, []);
+
+  return isElectron;
+};
+
+// Custom Electron Header
+const ElectronHeader: React.FC<{ 
+  onBack: () => void;
+}> = ({ onBack }) => (
+  <div style={{
+    background: '#3880ff',
+    color: 'white',
+    padding: '12px 16px',
+    borderBottom: '1px solid #2a5fc1',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+  }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <button 
+        onClick={onBack}
+        style={{
+          background: 'rgba(255,255,255,0.2)',
+          color: 'white',
+          border: 'none',
+          padding: '8px 12px',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          fontSize: '14px',
+          fontWeight: '500'
+        }}
+      >
+        <IonIcon 
+          icon={arrowBack} 
+          style={{ fontSize: '16px', color: 'white' }}
+        />
+        Back
+      </button>
+      <h2 style={{ 
+        margin: 0, 
+        fontSize: '18px', 
+        fontWeight: '600',
+        flex: 1 
+      }}>
+        Create User Account
+      </h2>
+    </div>
+  </div>
+);
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -53,7 +121,9 @@ const Register: React.FC = () => {
   const [adminPassword, setAdminPassword] = useState('');
   const [showAdminPassword, setShowAdminPassword] = useState(false);
   const [isPasswordCorrect, setIsPasswordCorrect] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const history = useHistory();
+  const isElectron = useElectron();
 
   // Get current user session
   useEffect(() => {
@@ -241,6 +311,7 @@ const Register: React.FC = () => {
   };
 
   const doRegister = async () => {
+    setIsLoading(true);
     setShowVerificationModal(false);
     try {
       const email = formData.email.trim().toLowerCase();
@@ -282,17 +353,271 @@ const Register: React.FC = () => {
         if (adminError) throw new Error('Failed to create admin: ' + adminError.message);
       }
 
-      // After successful registration, go directly to user.tsx
-      history.push('/menu/people/user?refresh=' + Date.now());
+      // After successful registration, navigate appropriately
+      if (isElectron) {
+        window.location.hash = '/menu/people/user?refresh=' + Date.now();
+      } else {
+        history.push('/menu/people/user?refresh=' + Date.now());
+      }
     } catch (err) {
       if (err instanceof Error) setAlertMessage(err.message);
       else setAlertMessage('An unknown error occurred.');
       setShowAlert(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const handleBackClick = () => {
+    if (isElectron) {
+      window.location.hash = '/menu/people/user';
+    } else {
+      history.push('/menu/people/user');
+    }
+  };
+
+  // For Electron: Use simpler structure but preserve all styling
+  if (isElectron) {
+    return (
+      <div className="registration-container" style={{ 
+        height: '100vh', 
+        display: 'flex', 
+        flexDirection: 'column'
+      }}>
+        <ElectronHeader onBack={handleBackClick} />
+        
+        <div className="registration-content-wrapper" style={{ 
+          flex: 1, 
+          overflow: 'auto',
+          position: 'relative'
+        }}>
+          {/* Background Image */}
+          <div
+            className="registration-background"
+            style={{ 
+              backgroundImage: `url(${backgroundImg})`,
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              zIndex: 0
+            }}
+          />
+
+          {/* Content */}
+          <div className="registration-center-wrapper" style={{
+            position: 'relative',
+            zIndex: 1,
+            minHeight: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}>
+            <IonCard className="registration-card">
+              <IonCardContent className="registration-content">
+                <h1 className="registration-title">Create User Account</h1>
+
+                <RegisterInput
+                  label="Username"
+                  type="text"
+                  placeholder="Enter a unique username"
+                  value={formData.username}
+                  onChange={(value) => handleInputChange('username', value)}
+                  className="registration-input"
+                />
+
+                <RegisterInput
+                  label="First Name"
+                  type="text"
+                  placeholder="Enter first name"
+                  value={formData.firstName}
+                  onChange={(value) => handleInputChange('firstName', value)}
+                  className="registration-input"
+                />
+
+                <RegisterInput
+                  label="Last Name"
+                  type="text"
+                  placeholder="Enter last name"
+                  value={formData.lastName}
+                  onChange={(value) => handleInputChange('lastName', value)}
+                  className="registration-input"
+                />
+
+                <RegisterInput
+                  label="Email"
+                  type="email"
+                  placeholder="youremail@gmail.com"
+                  value={formData.email}
+                  onChange={(value) => handleInputChange('email', value)}
+                  className="registration-input"
+                />
+
+                <RegisterInput
+                  label="Password"
+                  type="password"
+                  placeholder="Enter password"
+                  value={formData.password}
+                  onChange={(value) => handleInputChange('password', value)}
+                  className="registration-input"
+                  showToggle
+                />
+
+                <StrengthMeter
+                  password={formData.password}
+                  strength={passwordStrength}
+                />
+
+                <RegisterInput
+                  label="Confirm Password"
+                  type="password"
+                  placeholder="Confirm password"
+                  value={formData.confirmPassword}
+                  onChange={(value) => handleInputChange('confirmPassword', value)}
+                  className="registration-input"
+                  showToggle
+                />
+
+                <div className="registration-input">
+                  <IonLabel>Account Type</IonLabel>
+                  <IonSelect
+                    value={formData.role}
+                    onIonChange={e => handleInputChange('role', e.detail.value)}
+                    interface="popover"
+                  >
+                    <IonSelectOption value="user">User</IonSelectOption>
+                    <IonSelectOption value="admin">Admin</IonSelectOption>
+                  </IonSelect>
+                </div>
+
+                <RegisterButton
+                  onClick={handleOpenVerificationModal}
+                  className="registration-button"
+                >
+                  Register User
+                </RegisterButton>
+
+                <RegisterButton
+                  onClick={handleBackClick}
+                  className="registration-secondary-button"
+                  fill="clear"
+                >
+                  Back to Users
+                </RegisterButton>
+
+                {/* Admin Password Verification Modal */}
+                <IonModal isOpen={showAdminPasswordModal} onDidDismiss={() => {
+                  setShowAdminPasswordModal(false);
+                  setAdminPassword('');
+                  setIsPasswordCorrect(null);
+                  setShowAdminPassword(false);
+                }}>
+                  <IonHeader>
+                    <IonToolbar>
+                      <IonTitle>Admin Verification Required</IonTitle>
+                      <IonButtons slot="end">
+                        <IonButton onClick={() => setShowAdminPasswordModal(false)}>Close</IonButton>
+                      </IonButtons>
+                    </IonToolbar>
+                  </IonHeader>
+                  <IonContent className="ion-padding">
+                    <div style={{ textAlign: 'center', padding: '20px' }}>
+                      <h2>Admin Verification</h2>
+                      <p>Please enter your admin password to proceed with user registration.</p>
+                      
+                      <IonItem style={{ margin: '20px 0' }}>
+                        <IonLabel position="stacked">Admin Password</IonLabel>
+                        <IonInput
+                          type={showAdminPassword ? "text" : "password"}
+                          value={adminPassword}
+                          onIonInput={(e) => handleAdminPasswordChange(e.detail.value!)}
+                          placeholder="Enter your admin password"
+                        />
+                        <IonButtons slot="end">
+                          <IonButton onClick={() => setShowAdminPassword(!showAdminPassword)}>
+                            <IonIcon icon={showAdminPassword ? eyeOff : eye} />
+                          </IonButton>
+                        </IonButtons>
+                      </IonItem>
+
+                      {/* Password validation indicator */}
+                      {adminPassword && (
+                        <div style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          margin: '10px 0',
+                          color: isPasswordCorrect ? 'green' : 'red'
+                        }}>
+                          <IonIcon 
+                            icon={isPasswordCorrect ? checkmarkCircle : closeCircle} 
+                            style={{ marginRight: '8px' }}
+                          />
+                          <span>
+                            {isPasswordCorrect ? 'Password is correct' : 'Password is incorrect'}
+                          </span>
+                        </div>
+                      )}
+
+                      <IonButton
+                        onClick={handleAdminVerification}
+                        expand="block"
+                        style={{ margin: '10px 0' }}
+                        disabled={!isPasswordCorrect}
+                      >
+                        Verify & Continue
+                      </IonButton>
+
+                      <IonButton
+                        onClick={() => setShowAdminPasswordModal(false)}
+                        expand="block"
+                        fill="outline"
+                      >
+                        Cancel
+                      </IonButton>
+                    </div>
+                  </IonContent>
+                </IonModal>
+
+                <VerificationModal
+                  isOpen={showVerificationModal}
+                  onClose={() => setShowVerificationModal(false)}
+                  onConfirm={doRegister}
+                  formData={formData}
+                />
+
+                <AlertBox
+                  message={alertMessage}
+                  isOpen={showAlert}
+                  onClose={() => setShowAlert(false)}
+                />
+              </IonCardContent>
+            </IonCard>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Original code for browser
   return (
     <IonPage>
+      <IonHeader>
+        <IonToolbar>
+          <IonButtons slot="start">
+            <IonButton onClick={handleBackClick}>
+              <IonIcon icon={arrowBack} />
+            </IonButton>
+          </IonButtons>
+          <IonTitle>Create User Account</IonTitle>
+        </IonToolbar>
+      </IonHeader>
+
       <IonContent className="registration-container">
         <div
           className="registration-background"
@@ -385,7 +710,7 @@ const Register: React.FC = () => {
               </RegisterButton>
 
               <RegisterButton
-                onClick={() => history.push('/menu/people/user')}
+                onClick={handleBackClick}
                 className="registration-secondary-button"
                 fill="clear"
               >
@@ -478,6 +803,8 @@ const Register: React.FC = () => {
                 isOpen={showAlert}
                 onClose={() => setShowAlert(false)}
               />
+
+              <IonLoading isOpen={isLoading} message="Creating account..." />
             </IonCardContent>
           </IonCard>
         </div>
