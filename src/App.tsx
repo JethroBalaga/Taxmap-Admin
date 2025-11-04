@@ -24,25 +24,31 @@ import AdminRegister from './pages/AdminRegistration';
 setupIonicReact();
 
 const App: React.FC = () => {
-  // Clear invalid tokens on app start
   useEffect(() => {
     const clearInvalidTokens = () => {
       try {
-        // Clear all Supabase auth storage
-        localStorage.removeItem('supabase.auth.token');
-        localStorage.removeItem('sb-*'); // Supabase storage pattern
-        sessionStorage.removeItem('supabase.auth.token');
-        
-        // Also clear any other potential auth storage
-        const keysToRemove = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && (key.includes('supabase') || key.includes('auth') || key.includes('token'))) {
-            keysToRemove.push(key);
+        // Only clear specific Supabase tokens if they're corrupted
+        const token = localStorage.getItem('supabase.auth.token');
+        if (token) {
+          try {
+            JSON.parse(token);
+            console.log('Valid token found, keeping it');
+            return; // Token is valid, don't clear
+          } catch (e) {
+            console.log('Invalid token format, clearing it');
           }
         }
         
-        keysToRemove.forEach(key => localStorage.removeItem(key));
+        // Only clear specific problematic tokens
+        const tokensToRemove = [
+          'supabase.auth.token',
+          'sb-auth-token'
+        ];
+        
+        tokensToRemove.forEach(token => {
+          localStorage.removeItem(token);
+          sessionStorage.removeItem(token);
+        });
         
         console.log('Cleared invalid auth tokens');
       } catch (error) {

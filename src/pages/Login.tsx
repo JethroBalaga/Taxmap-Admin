@@ -18,7 +18,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supaBaseClient';
 import Logo from '../Images/Flag_of_Manolo_Fortich,_Bukidnon.png';
 import backgroundImg from '../Images/Background.jpg';
-import favicon from '../Images/favicon.png'; // Import your favicon (it will be included in build)
 import '../CSS/Login.css';
 
 const AlertBox: React.FC<{ message: string; isOpen: boolean; onClose: () => void }> = ({ message, isOpen, onClose }) => {
@@ -31,6 +30,30 @@ const AlertBox: React.FC<{ message: string; isOpen: boolean; onClose: () => void
       buttons={['OK']}
     />
   );
+};
+
+// Navigation helper for Electron
+const navigateTo = (path: string) => {
+  console.log('Navigating to:', path);
+  console.log('Current hash before:', window.location.hash);
+  
+  // Method 1: Direct hash change (works in both web and Electron)
+  window.location.hash = path;
+  
+  // Method 2: For Electron - force update if needed
+  if (isElectron()) {
+    setTimeout(() => {
+      if (window.location.hash !== `#${path}`) {
+        console.log('Electron navigation fallback activated');
+        window.location.href = `/#${path}`;
+      }
+    }, 100);
+  }
+};
+
+// Check if running in Electron
+const isElectron = (): boolean => {
+  return !!(window && (window as any).require);
 };
 
 const Login: React.FC = () => {
@@ -117,7 +140,7 @@ const Login: React.FC = () => {
       }
 
       // 4. Verify credentials through Supabase Auth
-      const { error: authError } = await supabase.auth.signInWithPassword({
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: resolvedEmail,
         password
       });
@@ -145,11 +168,33 @@ const Login: React.FC = () => {
         console.error('Failed to log admin login activity:', logError.message);
       }
 
-      // 6. Login successful
+      // 6. Login successful - Use Electron-compatible navigation
+      console.log('Login successful! Starting navigation...');
       setShowToast(true);
+      
       setTimeout(() => {
-        navigation.push('/menu', 'forward', 'replace');
-      }, 300);
+        console.log('Attempting navigation to /menu');
+        
+        // Try multiple navigation methods
+        if (isElectron()) {
+          // For Electron: use direct navigation
+          navigateTo('/menu');
+        } else {
+          // For web: use Ionic router
+          navigation.push('/menu', 'forward', 'replace');
+        }
+        
+        // Fallback: check if navigation worked
+        setTimeout(() => {
+          const currentHash = window.location.hash;
+          console.log('Current hash after navigation attempt:', currentHash);
+          
+          if (!currentHash.includes('/menu')) {
+            console.log('Navigation failed, using fallback...');
+            window.location.href = '#/menu';
+          }
+        }, 1000);
+      }, 1500);
 
     } catch (error) {
       setAlertMessage('An unexpected error occurred. Please try again.');
