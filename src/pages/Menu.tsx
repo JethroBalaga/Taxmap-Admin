@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   IonButton,
   IonButtons,
@@ -137,6 +138,10 @@ const Menu: React.FC = () => {
             <Route path="/menu/machinerytable/:formId" component={MachineryTable} />
             <Route path="/menu/agriculturalland/:formId" component={AgriculturalLand} />
             <Route path="/menu/nonagriculturalland/:formId" component={NonAgriculturalLand} />
+            
+            {/* Add these routes to handle tab navigation */}
+            <Route exact path="/menu/home/:tab" component={Home} />
+            <Route exact path="/menu/people/:tab" component={People} />
             
             <Route exact path="/menu">
               <Redirect to="/menu/dashboard" />

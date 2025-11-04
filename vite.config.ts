@@ -9,16 +9,23 @@ const isElectron = process.env.ELECTRON === 'true';
 export default defineConfig({
   plugins: [
     react(),
-    // Conditionally disable legacy plugin for Electron
+    // Completely disable legacy plugin for Electron builds
     isElectron ? null : legacy({
       targets: ['defaults', 'not IE 11'],
       modernPolyfills: true
     })
   ].filter(Boolean),
-  base: "/",
+  base: "./",
   
   build: {
-    target: isElectron ? 'es2020' : 'es2015'
+    target: isElectron ? 'esnext' : 'es2015',
+    // Add these settings to prevent legacy chunk issues
+    rollupOptions: {
+      output: {
+        // Don't create legacy chunks for Electron
+        manualChunks: undefined
+      }
+    }
   },
   
   test: {

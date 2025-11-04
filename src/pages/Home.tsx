@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   IonIcon,
   IonLabel,
@@ -11,7 +11,6 @@ import {
 } from '@ionic/react';
 import { Route, Redirect, useLocation } from 'react-router';
 import { albumsOutline, bookOutline, trailSignOutline } from 'ionicons/icons';
-import { useEffect } from 'react';
 import Classification from './Home.tabs/Classification';
 import District from './Home.tabs/District';
 import Kind from './Home.tabs/Kind';
@@ -28,12 +27,166 @@ import BuildingSubCom from './Home.tabs/BuildingSubCom';
 import Equipment from './Home.tabs/Equipment';
 import LandAdjustment from './Home.tabs/LandAdjustment';
 
-const Home: React.FC = () => {
+// Better Electron detection
+const useElectron = () => {
+  const [isElectron, setIsElectron] = useState(false);
+
+  useEffect(() => {
+    // Multiple ways to detect Electron
+    const electronDetected = (
+      // @ts-ignore
+      window.process?.versions?.electron ||
+      // @ts-ignore
+      window.navigator.userAgent.includes('Electron') ||
+      // @ts-ignore
+      (window.require && window.process && window.process.type) ||
+      window.location.protocol === 'file:'
+    );
+    
+    setIsElectron(!!electronDetected);
+  }, []);
+
+  return isElectron;
+};
+
+// Electron-compatible tabs component for Home
+const ElectronHomeTabs: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('classification');
   const location = useLocation();
 
   useEffect(() => {
-    console.log('Current pathname:', location.pathname);
+    const path = location.pathname;
+    if (path.includes('/district')) setActiveTab('district');
+    else if (path.includes('/kind')) setActiveTab('kind');
+    else if (path.includes('/subclass')) setActiveTab('subclass');
+    else if (path.includes('/taxrate')) setActiveTab('taxrate');
+    else if (path.includes('/barangay')) setActiveTab('barangay');
+    else if (path.includes('/assesmentlevel')) setActiveTab('assesmentlevel');
+    else if (path.includes('/subclassrate')) setActiveTab('subclassrate');
+    else if (path.includes('/structure')) setActiveTab('structure');
+    else if (path.includes('/buildingcode')) setActiveTab('buildingcode');
+    else if (path.includes('/actualused')) setActiveTab('actualused');
+    else if (path.includes('/buildingcom')) setActiveTab('buildingcom');
+    else if (path.includes('/buildingsubcom')) setActiveTab('buildingsubcom');
+    else if (path.includes('/equipment')) setActiveTab('equipment');
+    else if (path.includes('/landadjustment')) setActiveTab('landadjustment');
+    else setActiveTab('classification');
   }, [location.pathname]);
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    // Update URL without page reload
+    window.history.pushState(null, '', `#/menu/home/${tab}`);
+  };
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'classification': return <Classification />;
+      case 'district': return <District />;
+      case 'kind': return <Kind />;
+      case 'subclass': return <Subclass />;
+      case 'taxrate': return <Taxrate />;
+      case 'barangay': return <Barangay />;
+      case 'assesmentlevel': return <AssessmentLevel />;
+      case 'subclassrate': return <SubclassRate />;
+      case 'structure': return <Structure />;
+      case 'buildingcode': return <BuildingCode />;
+      case 'actualused': return <ActualUsed />;
+      case 'buildingcom': return <BuildingCom />;
+      case 'buildingsubcom': return <BuildingSubCom />;
+      case 'equipment': return <Equipment />;
+      case 'landadjustment': return <LandAdjustment />;
+      default: return <Classification />;
+    }
+  };
+
+  const mainTabs = [
+    { name: 'Classification', tab: 'classification', icon: bookOutline },
+    { name: 'District', tab: 'district', icon: trailSignOutline },
+    { name: 'Kind', tab: 'kind', icon: albumsOutline },
+  ];
+
+  const additionalTabs = [
+    'subclass', 'taxrate', 'barangay', 'assesmentlevel', 'subclassrate',
+    'structure', 'buildingcode', 'actualused', 'buildingcom', 'buildingsubcom',
+    'equipment', 'landadjustment'
+  ];
+
+  return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {/* Additional tabs as buttons at top */}
+      <div style={{ padding: '10px', display: 'flex', flexWrap: 'wrap', gap: '5px', background: '#f8f9fa' }}>
+        {additionalTabs.map(tab => (
+          <button
+            key={tab}
+            onClick={() => handleTabChange(tab)}
+            style={{
+              padding: '5px 10px',
+              background: activeTab === tab ? '#007bff' : 'white',
+              color: activeTab === tab ? 'white' : 'black',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              fontSize: '12px',
+              cursor: 'pointer'
+            }}
+          >
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {/* Content area */}
+      <div style={{ flex: 1, paddingBottom: '60px', overflow: 'auto' }}>
+        {renderContent()}
+      </div>
+
+      {/* Custom bottom tab bar */}
+      <div style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        background: '#f8f9fa',
+        borderTop: '1px solid #ddd',
+        display: 'flex',
+        height: '60px',
+        zIndex: 1000
+      }}>
+        {mainTabs.map((item) => (
+          <button
+            key={item.tab}
+            onClick={() => handleTabChange(item.tab)}
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: activeTab === item.tab ? '#3880ff' : 'transparent',
+              color: activeTab === item.tab ? 'white' : '#495057',
+              border: 'none',
+              fontSize: '12px',
+              padding: '8px 4px',
+              cursor: 'pointer'
+            }}
+          >
+            <IonIcon icon={item.icon} style={{ fontSize: '20px', marginBottom: '4px' }} />
+            <IonLabel style={{ fontSize: '10px' }}>{item.name}</IonLabel>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const Home: React.FC = () => {
+  const location = useLocation();
+  const isElectron = useElectron();
+
+  useEffect(() => {
+    console.log('Home component mounted, current path:', location.pathname);
+    console.log('Running in Electron:', isElectron);
+  }, [location.pathname, isElectron]);
 
   const tabs = [
     { name: 'Classification', tab: 'classification', url: '/menu/home/classification', icon: bookOutline },
@@ -44,42 +197,62 @@ const Home: React.FC = () => {
   return (
     <IonPage>
       <IonContent fullscreen>
-        <IonTabs>
-          <IonRouterOutlet>
-            <Route exact path="/menu/home/classification" render={() => <Classification />} />
-            <Route exact path="/menu/home/district" render={() => <District />} />
-            <Route exact path="/menu/home/kind" render={() => <Kind />} />
-            <Route exact path="/menu/home/subclass" render={() => <Subclass />} />
-            <Route exact path="/menu/home/taxrate" render={() => <Taxrate />} />
-            <Route exact path="/menu/home/barangay" render={() => <Barangay />} />
-            <Route exact path="/menu/home/assesmentlevel" render={() => <AssessmentLevel />} />
-            <Route exact path="/menu/home/subclassrate" render={() => <SubclassRate />} />
-            <Route exact path="/menu/home/structure" render={() => <Structure />} />
-            <Route exact path="/menu/home/buildingcode" render={() => <BuildingCode />} />
-            <Route exact path="/menu/home/actualused" render={() => <ActualUsed />} />
-            <Route exact path="/menu/home/buildingcom" render={() => <BuildingCom />} />
-            <Route exact path="/menu/home/buildingsubcom" render={() => <BuildingSubCom />} />
-            <Route exact path="/menu/home/equipment" render={() => <Equipment />} />
-            <Route exact path="/menu/home/landadjustment" render={() => <LandAdjustment />} />
+        {/* Debug overlay */}
+        <div style={{
+          position: 'fixed',
+          top: '10px',
+          right: '10px',
+          background: isElectron ? 'red' : 'green',
+          color: 'white',
+          padding: '5px 10px',
+          fontSize: '12px',
+          zIndex: 9999
+        }}>
+          {isElectron ? 'ELECTRON Mode' : 'BROWSER Mode'}
+        </div>
 
-            <Route exact path="/menu/home">
-              <Redirect to="/menu/home/classification" />
-            </Route>
-          </IonRouterOutlet>
+        {isElectron ? (
+          // Electron-compatible tabs
+          <ElectronHomeTabs />
+        ) : (
+          // Original Ionic Tabs (works in browser)
+          <IonTabs>
+            <IonRouterOutlet>
+              <Route exact path="/menu/home/classification" component={Classification} />
+              <Route exact path="/menu/home/district" component={District} />
+              <Route exact path="/menu/home/kind" component={Kind} />
+              <Route exact path="/menu/home/subclass" component={Subclass} />
+              <Route exact path="/menu/home/taxrate" component={Taxrate} />
+              <Route exact path="/menu/home/barangay" component={Barangay} />
+              <Route exact path="/menu/home/assesmentlevel" component={AssessmentLevel} />
+              <Route exact path="/menu/home/subclassrate" component={SubclassRate} />
+              <Route exact path="/menu/home/structure" component={Structure} />
+              <Route exact path="/menu/home/buildingcode" component={BuildingCode} />
+              <Route exact path="/menu/home/actualused" component={ActualUsed} />
+              <Route exact path="/menu/home/buildingcom" component={BuildingCom} />
+              <Route exact path="/menu/home/buildingsubcom" component={BuildingSubCom} />
+              <Route exact path="/menu/home/equipment" component={Equipment} />
+              <Route exact path="/menu/home/landadjustment" component={LandAdjustment} />
 
-          <IonTabBar slot="bottom">
-            {tabs.map((item, index) => (
-              <IonTabButton 
-                key={index} 
-                tab={item.tab} 
-                href={item.url}
-              >
-                <IonIcon icon={item.icon} />
-                <IonLabel>{item.name}</IonLabel>
-              </IonTabButton>
-            ))}
-          </IonTabBar>
-        </IonTabs>
+              <Route exact path="/menu/home">
+                <Redirect to="/menu/home/classification" />
+              </Route>
+            </IonRouterOutlet>
+
+            <IonTabBar slot="bottom">
+              {tabs.map((item, index) => (
+                <IonTabButton 
+                  key={index} 
+                  tab={item.tab} 
+                  href={item.url}
+                >
+                  <IonIcon icon={item.icon} />
+                  <IonLabel>{item.name}</IonLabel>
+                </IonTabButton>
+              ))}
+            </IonTabBar>
+          </IonTabs>
+        )}
       </IonContent>
     </IonPage>
   );

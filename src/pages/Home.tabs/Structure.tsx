@@ -180,7 +180,7 @@ const Structure: React.FC = () => {
         { icon: arrowUpCircle, onClick: handleEditClick, disabled: !selectedRow, title: "Edit Structure" },
         { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Structure" },
         { icon: constructOutline, onClick: handleConstructClick, disabled: !selectedRow, title: "Building Code" },
-        { icon: cubeOutline, onClick: handleCubeOutlineClick, disabled: !selectedRow, title: "Building Component" } // Fixed: should be disabled when no selection
+        { icon: cubeOutline, onClick: handleCubeOutlineClick, disabled: false, title: "Building Component" } // Fixed: should be disabled when no selection
     ];
 
     return (
