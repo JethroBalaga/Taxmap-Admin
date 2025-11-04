@@ -323,18 +323,11 @@ const Structure: React.FC = () => {
     };
 
     const handleCubeOutlineClick = () => {
-        if (!selectedRow) return;
-        
+        // Always enabled - navigate to building components without requiring selected row
         if (isElectron) {
-            window.location.hash = `/menu/home/buildingcom?structure_code=${selectedRow.structure_code}`;
-            // Store the data in sessionStorage for Electron since we can't pass state
-            sessionStorage.setItem('structureData', JSON.stringify(selectedRow));
+            window.location.hash = '/menu/home/buildingcom';
         } else {
-            history.push({
-                pathname: '/menu/home/buildingcom',
-                search: `?structure_code=${selectedRow.structure_code}`,
-                state: { structureData: selectedRow }
-            });
+            history.push('/menu/home/buildingcom');
         }
     };
 
@@ -393,7 +386,7 @@ const Structure: React.FC = () => {
         { icon: arrowUpCircle, onClick: handleEditClick, disabled: !selectedRow, title: "Edit Structure" },
         { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete Structure" },
         { icon: constructOutline, onClick: handleConstructClick, disabled: !selectedRow, title: "Building Code" },
-        { icon: cubeOutline, onClick: handleCubeOutlineClick, disabled: !selectedRow, title: "Building Component" }
+        { icon: cubeOutline, onClick: handleCubeOutlineClick, disabled: false, title: "Building Component" } // Always enabled
     ];
 
     // For Electron: Use simpler structure without nested IonPage
