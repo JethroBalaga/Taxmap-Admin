@@ -58,7 +58,7 @@ const NonAgriculturalLand: React.FC = () => {
   const [formData, setFormData] = useState<FormData | null>(null);
   const [valuationData, setValuationData] = useState<ComprehensiveValuation[]>([]);
   const [adjustmentData, setAdjustmentData] = useState<AdjustmentData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const history = useHistory();

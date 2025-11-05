@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { MapContainer, TileLayer, useMap, Marker } from 'react-leaflet';
+import { IonButton, IonIcon } from '@ionic/react';
+import { refresh } from 'ionicons/icons';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { getMarkerIconByKind } from '../utils/markericons';
@@ -35,11 +37,10 @@ interface PropertyDetails {
   class_id?: string;
   area?: number;
   status?: string;
-  declarant_id?: number;
+  declarant?: string;
   district_id?: number;
-  declarant_firstname?: string;
-  declarant_lastname?: string;
   district_name?: string;
+  value_info_id?: string;
 }
 
 interface MapConProps {
@@ -100,6 +101,51 @@ const SatelliteToggleControl = ({
   return null;
 };
 
+// Refresh Control Component
+const RefreshControl = ({ 
+  onRefresh 
+}: { 
+  onRefresh: () => void;
+}) => {
+  const map = useMap();
+  const controlRef = useRef<any>(null);
+
+  useEffect(() => {
+    const CustomControl = L.Control.extend({
+      options: { position: 'topright' },
+      onAdd: function () {
+        const container = L.DomUtil.create('div', 'leaflet-control refresh-control-container');
+        
+        const button = L.DomUtil.create('button', 'refresh-control-btn', container);
+        button.type = 'button';
+        button.title = 'Refresh Map Data';
+        button.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+              <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+            </svg>
+            <span style="font-size: 14px; font-weight: 500;">Refresh</span>
+          </div>
+        `;
+        
+        L.DomEvent.on(button, 'click', (e) => {
+          L.DomEvent.stop(e);
+          onRefresh();
+        });
+        
+        return container;
+      }
+    });
+
+    controlRef.current = new CustomControl();
+    controlRef.current.addTo(map);
+    
+    return () => controlRef.current?.remove();
+  }, [map, onRefresh]);
+
+  return null;
+};
+
 // Filter Control Component
 const FilterControl = ({ 
   onFilterChange,
@@ -148,7 +194,7 @@ const FilterControl = ({
             counts.new++;
           }
 
-          // Count by kind_id
+          // Count by kind_id directly
           if (tag.kind_id) {
             const kindStr = String(tag.kind_id).trim();
             switch (kindStr) {
@@ -188,10 +234,12 @@ const FilterControl = ({
         button.type = 'button';
         button.title = 'Filter Markers';
         button.innerHTML = `
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>
-          </svg>
-          <span>Filter</span>
+          <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>
+            </svg>
+            <span style="font-size: 14px; font-weight: 500;">Filter</span>
+          </div>
         `;
         
         L.DomEvent.on(button, 'click', (e) => {
@@ -287,14 +335,15 @@ const FilterControl = ({
   return null;
 };
 
-// Component to set up the map logic and markers - UPDATED TO MATCH STAFF VERSION
+// Component to set up the map logic and markers
 const MapLogic = ({ 
   onMarkerClick,
   searchQuery = '',
   currentFilter = 'all',
   isSatelliteView = false,
   onPhotoTagsLoaded,
-  onToggleSatellite
+  onToggleSatellite,
+  onRefresh
 }: { 
   onMarkerClick: (tagId: string) => void;
   searchQuery?: string;
@@ -302,6 +351,7 @@ const MapLogic = ({
   isSatelliteView?: boolean;
   onPhotoTagsLoaded?: (tags: PropertyDetails[]) => void;
   onToggleSatellite: () => void;
+  onRefresh: () => void;
 }) => {
   const map = useMap();
   const tileLayerRef = useRef<any>(null);
@@ -311,24 +361,24 @@ const MapLogic = ({
   const [loading, setLoading] = useState(true);
   const [markerIcons, setMarkerIcons] = useState<{[tagId: string]: L.Icon}>({});
 
-  // TILE LAYER SETUP - EXACTLY LIKE STAFF VERSION
+  // TILE LAYER SETUP
   useEffect(() => {
     // Remove existing tile layer
     if (tileLayerRef.current) {
       map.removeLayer(tileLayerRef.current);
     }
 
-    // Add Tile Layer - EXACT CONFIGURATION LIKE STAFF VERSION
+    // Add Tile Layer
     const currentTileUrl = isSatelliteView ? SATELLITE_URL : OPENSTREETMAP_URL;
     
     const tileLayer = L.tileLayer(currentTileUrl, {
       attribution: isSatelliteView 
         ? 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics'
         : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      noWrap: true, // EXACTLY LIKE STAFF VERSION
+      noWrap: true,
       minZoom: MIN_ZOOM_LOCKED,
       maxZoom: MAX_ZOOM,
-      maxNativeZoom: 18 // EXACTLY LIKE STAFF VERSION - THIS IS THE KEY!
+      maxNativeZoom: 18
     });
 
     tileLayer.addTo(map);
@@ -370,55 +420,55 @@ const MapLogic = ({
     };
   }, [map, allowZoomOut, isSatelliteView]);
 
-  useEffect(() => {
-    // Fetch photo tags from database using the view
-    const fetchPhotoTags = async () => {
-      try {
-        setLoading(true);
-        console.log('Starting to fetch photo tags using property_details_view...');
+  // Fetch photo tags from database using the view
+  const fetchPhotoTags = useCallback(async () => {
+    try {
+      setLoading(true);
+      console.log('Starting to fetch photo tags using property_details_view...');
 
-        // Fetch with bounds using the view
-        const { data, error } = await supabase
-          .from('property_details_view')
-          .select('*')
-          .gte('latitude', manoloFortichBounds.getSouthWest().lat)
-          .lte('latitude', manoloFortichBounds.getNorthEast().lat)
-          .gte('longitude', manoloFortichBounds.getSouthWest().lng)
-          .lte('longitude', manoloFortichBounds.getNorthEast().lng);
+      // Fetch with bounds using the view
+      const { data, error } = await supabase
+        .from('property_details_view')
+        .select('*')
+        .gte('latitude', manoloFortichBounds.getSouthWest().lat)
+        .lte('latitude', manoloFortichBounds.getNorthEast().lat)
+        .gte('longitude', manoloFortichBounds.getSouthWest().lng)
+        .lte('longitude', manoloFortichBounds.getNorthEast().lng);
 
-        if (error) {
-          console.error('Error fetching photo tags from view:', error);
-        } else if (data) {
-          console.log('Fetched photo tags from view:', data.length);
-          
-          setPhotoTags(data);
-          setFilteredPhotoTags(data);
-          
-          // Pass the photo tags back to parent component for filter counts
-          if (onPhotoTagsLoaded) {
-            onPhotoTagsLoaded(data);
-          }
-          
-          // Set marker icons
-          const icons: {[tagId: string]: L.Icon} = {};
-          data.forEach(tag => {
-            if (tag.kind_id) {
-              icons[tag.tag_id] = getMarkerIconByKind(tag.kind_id);
-            } else {
-              icons[tag.tag_id] = getMarkerIconByKind('1'); // Default to land
-            }
-          });
-          setMarkerIcons(icons);
+      if (error) {
+        console.error('Error fetching photo tags from view:', error);
+      } else if (data) {
+        console.log('Fetched photo tags from view:', data.length);
+        
+        setPhotoTags(data);
+        setFilteredPhotoTags(data);
+        
+        // Pass the photo tags back to parent component for filter counts
+        if (onPhotoTagsLoaded) {
+          onPhotoTagsLoaded(data);
         }
-      } catch (error) {
-        console.error('Error loading photo tags:', error);
-      } finally {
-        setLoading(false);
+        
+        // Set marker icons - FIXED: using kind_id directly
+        const icons: {[tagId: string]: L.Icon} = {};
+        data.forEach(tag => {
+          if (tag.kind_id) {
+            icons[tag.tag_id] = getMarkerIconByKind(tag.kind_id);
+          } else {
+            icons[tag.tag_id] = getMarkerIconByKind('1'); // Default to land
+          }
+        });
+        setMarkerIcons(icons);
       }
-    };
-
-    fetchPhotoTags();
+    } catch (error) {
+      console.error('Error loading photo tags:', error);
+    } finally {
+      setLoading(false);
+    }
   }, [onPhotoTagsLoaded]);
+
+  useEffect(() => {
+    fetchPhotoTags();
+  }, [fetchPhotoTags]);
 
   // Filter and search functionality
   useEffect(() => {
@@ -472,11 +522,11 @@ const MapLogic = ({
               safeIncludes(tag.class_id, query) ||
               safeIncludes(tag.area, query) ||
               safeIncludes(tag.status, query) ||
-              safeIncludes(tag.declarant_firstname, query) ||
-              safeIncludes(tag.declarant_lastname, query) ||
+              safeIncludes(tag.declarant, query) ||
               safeIncludes(tag.district_name, query) ||
               safeIncludes(tag.latitude, query) ||
-              safeIncludes(tag.longitude, query);
+              safeIncludes(tag.longitude, query) ||
+              safeIncludes(tag.value_info_id, query);
           }
 
           if (matchesFilter && matchesSearch) {
@@ -498,11 +548,14 @@ const MapLogic = ({
 
   return (
     <>
-      {/* Satellite Toggle Control INSIDE MapLogic like staff version */}
+      {/* Satellite Toggle Control */}
       <SatelliteToggleControl 
         isSatelliteView={isSatelliteView}
         onToggle={onToggleSatellite}
       />
+      
+      {/* Refresh Control - positioned below filter */}
+      <RefreshControl onRefresh={onRefresh} />
       
       {!loading && filteredPhotoTags.map((tag) => (
         <Marker
@@ -511,6 +564,7 @@ const MapLogic = ({
           icon={markerIcons[tag.tag_id] || getMarkerIconByKind('1')}
           eventHandlers={{
             click: () => {
+              console.log('Marker clicked:', tag.tag_id);
               onMarkerClick(tag.tag_id);
             }
           }}
@@ -535,6 +589,7 @@ const MapCon: React.FC<MapConProps> = ({ searchQuery = '', isAdmin = false }) =>
   }, []);
 
   const handleMarkerClick = (tagId: string) => {
+    console.log('MapCon: Marker clicked with tag_id:', tagId);
     setSelectedTagId(tagId);
     setShowPopup(true);
   };
@@ -558,6 +613,11 @@ const MapCon: React.FC<MapConProps> = ({ searchQuery = '', isAdmin = false }) =>
     setPhotoTags(tags);
   }, []);
 
+  const handleRefresh = () => {
+    console.log('Refreshing map data...');
+    window.location.reload();
+  };
+
   return (
     <div className="map-content" style={{ height: '100vh', width: '100%', overflow: 'hidden', position: 'relative' }}>
       {isMounted && (
@@ -570,8 +630,6 @@ const MapCon: React.FC<MapConProps> = ({ searchQuery = '', isAdmin = false }) =>
           maxBounds={manoloFortichBounds}
           maxBoundsViscosity={1.0}
         >
-          {/* Remove the base TileLayer - MapLogic handles it dynamically */}
-          
           <MapLogic 
             onMarkerClick={handleMarkerClick} 
             searchQuery={searchQuery}
@@ -579,6 +637,7 @@ const MapCon: React.FC<MapConProps> = ({ searchQuery = '', isAdmin = false }) =>
             isSatelliteView={isSatelliteView}
             onPhotoTagsLoaded={handlePhotoTagsLoaded}
             onToggleSatellite={handleToggleSatellite}
+            onRefresh={handleRefresh}
           />
 
           {/* Filter Control */}

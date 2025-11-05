@@ -77,7 +77,7 @@ const MachineryTable: React.FC = () => {
   const [formContext, setFormContext] = useState<FormContextData | null>(null);
   const [assessmentData, setAssessmentData] = useState<MachineAssessmentData[]>([]);
   const [calculationsData, setCalculationsData] = useState<MachineCalculationsData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     loadMachineryData();

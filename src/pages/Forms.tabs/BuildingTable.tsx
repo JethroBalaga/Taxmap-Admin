@@ -68,7 +68,7 @@ const BuildingTable: React.FC = () => {
   const [assessmentSummary, setAssessmentSummary] = useState<AssessmentSummary[]>([]);
   const [buildingAdjustments, setBuildingAdjustments] = useState<BuildingAdjustment[]>([]);
   const [filteredAdjustments, setFilteredAdjustments] = useState<BuildingAdjustment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   const location = useLocation();
   const history = useHistory(); // Add history hook
