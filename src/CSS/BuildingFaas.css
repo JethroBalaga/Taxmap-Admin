@@ -1,74 +1,684 @@
-.faas-page {
-  font-family: "Arial", sans-serif;
-  background: #fff;
+.building-faas-page { --ion-background-color: #fff; }
+
+#combined-faas-sheet {
+  width: 210mm;
+  margin: 0 auto;
+  background: white;
+  box-sizing: border-box;
+}
+
+.sheet {
+  width: 210mm;
+  margin: 0 auto;
+  padding: 15mm;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 10px;
+  line-height: 1.08;
   color: #000;
-}
-
-.faas-grid {
-  border: 1px solid #444;
-  padding: 16px;
   background: #fff;
+  box-sizing: border-box;
+  /* REMOVE min-height and page-break-after */
 }
 
-.section-title {
-  margin-top: 20px;
-  font-size: 1rem;
-  font-weight: bold;
-  text-align: left;
-  border-bottom: 1px solid #333;
-  padding-bottom: 4px;
+.back-page {
+  margin-top: 0;
 }
 
-label {
-  font-size: 0.9rem;
-  display: block;
+.back-sheet {
+  width: 210mm;
+  padding: 15mm;
+  box-sizing: border-box;
+  /* REMOVE min-height */
+}
+
+/* KEEP ALL YOUR EXISTING STYLING BUT REMOVE HEIGHT FORCING */
+
+.form-title {
+  text-align: center;
+  font-weight: 700;
+  font-size: 12px;
+  margin-bottom: 6px;
+  color: #000;
+  padding: 0 2px;
+}
+
+.transaction-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
   margin-bottom: 4px;
+  padding: 0 2px;
+}
+.trans-label { 
+  font-weight: 700; 
+  font-size: 10px;
+  white-space: nowrap;
+}
+.trans-input { 
+  width: 45mm;
+}
+.trans-input input { 
+  width: 100%; 
+  border: none; 
+  border-bottom: 1px solid #000; 
+  padding: 2px 3px;
+  font-size: 10px;
 }
 
-ion-input {
-  --padding-start: 6px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  height: 28px;
-  font-size: 0.9rem;
-  background: #fafafa;
+.box { 
+  border: 1px solid #000; 
+  padding: 4px; 
+  margin-bottom: 6px;
+  box-sizing: border-box;
+}
+.section-title { 
+  font-weight: 700; 
+  font-size: 10.5px;
+  margin-bottom: 4px;
+  padding: 0 2px;
 }
 
-ion-row {
-  margin-bottom: 8px;
+.row { 
+  display: flex; 
+  gap: 0px;
+  align-items: stretch;
+  margin-bottom: 3px;
+  min-height: 18px;
+}
+.row.small { 
+  margin-bottom: 2px; 
+  gap: 0px;
+  min-height: 16px;
+}
+.cell { 
+  border-left: 1px solid #000; 
+  padding: 1px 3px;
+  display: flex; 
+  align-items: center;
+  box-sizing: border-box;
+}
+.cell:first-child { 
+  border-left: none; 
 }
 
-.table-header {
+/* LABELS - REDUCED WIDTHS */
+.cell.label { 
+  width: 100px;
+  font-weight: 700; 
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 9px;
+  justify-content: flex-start;
+}
+.cell.label.narrow { 
+  width: 85px;
+  font-weight: 700; 
+  flex-shrink: 0;
+  font-size: 9px;
+  justify-content: flex-start;
+}
+.cell.label.admin-label {
+  width: 80px;
+  font-size: 9px;
+  font-weight: 700;
+  flex-shrink: 0;
+  line-height: 1.0;
+  justify-content: flex-start;
+  white-space: nowrap;
+}
+.cell.label.special-indicator-label {
+  width: 80px;
+  font-size: 8.5px;
+  font-weight: 700;
+  flex-shrink: 0;
+  line-height: 1.0;
+  justify-content: flex-start;
+}
+.cell.label.cct-label {
+  width: 60px;
+  font-size: 8.5px;
+  font-weight: 700;
+  flex-shrink: 0;
+  line-height: 1.0;
+  justify-content: flex-start;
+}
+.cell.label.cert-label {
+  width: 90px;
+  font-size: 8.5px;
+  font-weight: 700;
+  flex-shrink: 0;
+  line-height: 1.0;
+  justify-content: flex-start;
+}
+
+/* ALIGN VERTICAL LINES FOR SPECIFIC FIELDS */
+.top-box .cell.label {
+  width: 85px !important;
+}
+
+.top-box .cell.label.narrow {
+  width: 65px !important;
+}
+
+.top-box .cell.label.admin-label {
+  width: 85px !important;
+}
+
+/* INPUT CELLS - ADJUSTED FLEX VALUES */
+.cell.input { 
+  flex: 0.4;
+  min-width: 0;
+  justify-content: flex-start;
+}
+.cell.input.right-aligned { 
+  justify-content: flex-start;
+}
+.cell.input.short { 
+  flex: 0.15;
+  flex-shrink: 0;
+  justify-content: flex-start;
+}
+.cell.input.extra-short { 
+  flex: 0.12;
+  flex-shrink: 0;
+  justify-content: flex-start;
+}
+.cell.input.wide { 
+  flex: 0.7;
+  justify-content: flex-start;
+}
+.cell.input.narrow { 
+  flex: 0.25;
+  flex-shrink: 0;
+  justify-content: flex-start;
+}
+.cell.input.narrower { 
+  flex: 0.15;
+  flex-shrink: 0;
+  justify-content: flex-start;
+}
+
+/* Make all wide inputs in top box same flex for alignment */
+.top-box .cell.input.wide {
+  flex: 1.2 !important;
+}
+
+/* Make all narrow inputs in top box same flex for alignment */
+.top-box .cell.input.narrow {
+  flex: 0.6 !important;
+}
+
+/* Specific adjustment for ARP No. input */
+.row:first-child .cell.input:first-child {
+  flex: 1.2 !important;
+}
+
+/* SPECIFIC FIELDS */
+.row:first-child .cell.input:first-child {
+  flex: 0.5;
+}
+
+.row:nth-child(2) .cell.input.wide {
+  flex: 0.8;
+}
+
+.row:nth-child(3) .cell.input.wide,
+.row:nth-child(5) .cell.input.wide {
+  flex: 0.8;
+}
+
+.row:nth-child(4) .cell.input.wide {
+  flex: 1.0;
+}
+
+/* GENERAL DESCRIPTION SECTION FIXES */
+.gen-box .row.small {
+  align-items: center;
+  min-height: 16px;
+}
+
+/* Standardize all labels in General Description */
+.gen-box .cell.label {
+  width: 80px !important;
+  font-weight: 700;
+  font-size: 9px;
+  flex-shrink: 0;
+  justify-content: flex-start;
+  white-space: nowrap;
+}
+
+.gen-box .cell.label.narrow {
+  width: 80px !important;
+}
+
+.gen-box .cell.label.special-indicator-label {
+  width: 80px !important;
+}
+
+.gen-box .cell.label.cct-label {
+  width: 80px !important;
+}
+
+.gen-box .cell.label.cert-label {
+  width: 80px !important;
+}
+
+/* Standardize all input lengths in General Description */
+.gen-box .cell.input.narrow {
+  flex: 0.6 !important;
+}
+
+.gen-box .cell.input.short {
+  flex: 0.5 !important;
+}
+
+.gen-box .cell.input.wide {
+  flex: 1.0 !important;
+}
+
+/* Specific row adjustments for proper vertical alignment */
+.gen-box .row.small:nth-child(1) .cell.input.narrow:nth-child(2) {
+  flex: 0.6 !important;
+}
+
+.gen-box .row.small:nth-child(1) .cell.input.narrow:nth-child(4) {
+  flex: 0.6 !important;
+}
+
+.gen-box .row.small:nth-child(2) .cell.input.narrow:nth-child(2) {
+  flex: 0.6 !important;
+}
+
+.gen-box .row.small:nth-child(2) .cell.input.narrower:nth-child(4) {
+  flex: 0.6 !important;
+}
+
+.gen-box .row.small:nth-child(3) .cell.input.narrow:nth-child(2) {
+  flex: 0.6 !important;
+}
+
+.gen-box .row.small:nth-child(3) .cell.input.short:nth-child(4) {
+  flex: 0.5 !important;
+}
+
+.gen-box .row.small:nth-child(3) .cell.input.narrow:nth-child(6) {
+  flex: 0.6 !important;
+}
+
+.gen-box .row.small:nth-child(4) .cell.input.narrow:nth-child(2) {
+  flex: 0.6 !important;
+}
+
+.gen-box .row.small:nth-child(4) .cell.input.narrow:nth-child(4) {
+  flex: 0.6 !important;
+}
+
+.gen-box .row.small:nth-child(5) .cell.input.narrow:nth-child(2) {
+  flex: 0.6 !important;
+}
+
+.gen-box .row.small:nth-child(5) .cell.input.narrow:nth-child(4) {
+  flex: 0.6 !important;
+}
+
+.gen-box .row.small:nth-child(6) .cell.input.narrow:nth-child(2) {
+  flex: 0.6 !important;
+}
+
+.gen-box .row.small:nth-child(6) .cell.input.narrow:nth-child(4) {
+  flex: 0.6 !important;
+}
+
+.gen-box .row.small:nth-child(7) .cell.input.short:nth-child(2) {
+  flex: 0.5 !important;
+}
+
+.gen-box .row.small:nth-child(7) .cell.input.short:nth-child(4) {
+  flex: 0.5 !important;
+}
+
+.gen-box .row.small:nth-child(7) .cell.input.wide:nth-child(6) {
+  flex: 1.0 !important;
+}
+
+/* BUILDING LOCATION SECTION FIXES - ALL INPUTS SAME LENGTH */
+.two-col-box .col .row.small {
+  min-height: 16px;
+  margin-bottom: 2px;
+}
+
+.two-col-box .col .cell.label {
+  width: 70px !important;
+  font-weight: 700;
+  font-size: 9px;
+  flex-shrink: 0;
+  justify-content: flex-start;
+  white-space: nowrap;
+}
+
+/* MAKE ALL INPUTS IN BUILDING LOCATION THE SAME LENGTH */
+.two-col-box .col:first-child .cell.input.right-aligned {
+  flex: 1.0 !important;
+}
+
+.two-col-box .col:first-child .cell.input.narrow {
+  flex: 1.0 !important;
+}
+
+/* LAND REFERENCE SECTION - Make inputs consistent */
+.two-col-box .col:last-child .cell.label.narrow {
+  width: 65px !important;
+}
+
+.two-col-box .col:last-child .cell.input.narrow {
+  flex: 0.6 !important;
+}
+
+.two-col-box .col:last-child .cell.input.short {
+  flex: 0.4 !important;
+}
+
+/* FLOOR PLAN - MODERATE HEIGHT */
+.floor-area-one { 
+  border: 1px solid #000; 
+  height: 40mm;
+  background: #fff; 
+  box-sizing: border-box;
+}
+
+/* REDUCE GAPS IN TWO-COLUMN LAYOUT */
+.two-col-box { 
+  display: flex; 
+  gap: 4px;
+}
+
+input, textarea {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #000;
+  background: transparent;
+  font-size: 10px;
+  padding: 1px 2px;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+  line-height: 1.08;
+  text-align: left;
+}
+input[type="date"] {
+  min-height: 14px;
+  font-size: 9px;
+}
+textarea { 
+  min-height: 40px;
+  border: 1px solid #000; 
+  resize: vertical; 
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 10px;
+}
+
+.two-col-box .col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.two-col-box .col .row {
+  flex: 1;
+}
+
+.materials-box {
+  font-size: 8px;
+}
+.materials-table { 
+  width: 100%; 
+  font-size: 8px;
+  margin-top: 4px;
+  border-collapse: collapse;
+}
+.materials-row, .materials-row.header { 
+  display: flex; 
+  min-height: 14px;
+  align-items: stretch;
+}
+.materials-row.header { 
+  font-weight: 700; 
+  border-bottom: 1px solid #000;
+  font-size: 7.5px;
+  text-align: center;
+  background-color: #f8f8f8;
+}
+.m.cell { 
+  border-left: 1px solid #000; 
+  padding: 0px 1px;
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  box-sizing: border-box;
+  min-width: 0;
+  text-align: center;
+  line-height: 1.0;
+  height: 14px;
+}
+.m.cell:first-child { 
+  border-left: none; 
+}
+.m.cell.roof-col { 
+  flex: 0.8;
+  flex-shrink: 0;
+}
+.m.cell.flooring-col { 
+  flex: 0.8;
+  flex-shrink: 0;
+}
+.m.cell.walls-col { 
+  flex: 0.9;
+  flex-shrink: 0;
+}
+.m.cell.floor-col { 
+  flex: 0.3;
+  flex-shrink: 0;
+}
+.m.cell input { 
+  border: none; 
+  border-bottom: 1px solid #000; 
+  width: 95%;
+  text-align: center; 
+  padding: 0px;
+  font-size: 8px;
+  background: transparent;
+  min-height: 10px;
+  margin: 0 auto;
+  display: block;
+  height: 10px;
+}
+.materials-row.header .m.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0px 1px;
+  line-height: 1.0;
+  word-wrap: break-word;
+  hyphens: auto;
+  height: 14px;
+}
+.materials-row.header .m.cell.roof-col { 
+  font-size: 7.5px;
+  padding: 0 1px; 
+}
+.materials-row.header .m.cell.flooring-col { 
+  font-size: 7.5px;
+  padding: 0 1px; 
+}
+.materials-row.header .m.cell.walls-col { 
+  font-size: 7px;
+  padding: 0 1px;
+  line-height: 1.0;
+}
+.materials-row.header .m.cell.floor-col { 
+  font-size: 7px;
+  padding: 0 1px;
+}
+.small-muted { 
+  font-size: 7.5px;
+  color: #444; 
+  margin-bottom: 3px;
+  padding: 0 2px;
+}
+.print-btn-row {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0;
+}
+.materials-box .materials-row {
+  align-items: stretch;
+}
+.materials-box .section-title {
+  font-size: 10px;
+  margin-bottom: 2px;
+}
+.gen-box .row.small {
+  align-items: center;
+}
+.gen-box .cell {
+  align-items: center;
+}
+
+/* Back page specific styles */
+.section-header {
   font-weight: bold;
-  background: #e9e9e9;
-  border-top: 1px solid #999;
-  border-bottom: 1px solid #999;
+  text-align: center;
+  margin: 10px 0;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0;
+  font-size: 11px;
+}
+
+.table th, .table td {
+  border: 1px solid #000;
+  padding: 4px;
   text-align: center;
 }
 
-.page-break {
-  page-break-before: always;
+.table input {
+  width: 100%;
+  border: none;
+  outline: none;
+  text-align: center;
+  background: transparent;
+  font-size: 11px;
 }
 
-.print-btn {
-  position: absolute;
-  right: 12px;
-  top: 8px;
+.subtotal-row {
+  font-weight: bold;
+  background-color: #f0f0f0;
 }
 
-/* Print Styling */
+.subtotal-row td {
+  text-align: center;
+  font-weight: bold;
+}
+
+.tax-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 15px 0;
+  font-size: 12px;
+  align-items: center;
+}
+
+.tax-row label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.effectivity {
+  font-size: 12px;
+}
+
+.signature-container {
+  display: flex;
+  justify-content: space-between;
+  margin: 20px 0;
+}
+
+.sig-line {
+  border-bottom: 1px solid #000;
+  width: 200px;
+  height: 20px;
+  margin-top: 5px;
+}
+
+.prov {
+  font-size: 11px;
+  margin-top: 5px;
+  text-align: center;
+}
+
+.memoranda {
+  margin: 15px 0;
+  font-size: 12px;
+  border: 1px solid #000;
+  padding: 8px;
+}
+
+.powered {
+  text-align: center;
+  font-size: 10px;
+  margin-top: 20px;
+  color: #666;
+}
+
 @media print {
-  ion-header,
-  .print-btn {
-    display: none !important;
-  }
-  ion-page {
+  @page { 
+    size: a4;
+    margin: 0;
+  } 
+  body { 
+    -webkit-print-color-adjust: exact; 
+    print-color-adjust: exact;
     margin: 0;
     padding: 0;
-    box-shadow: none;
   }
-  .faas-grid {
-    border: none;
-    padding: 0;
+  .print-btn-row, ion-button, ion-header { 
+    display: none !important; 
+  }
+  .sheet { 
+    margin: 0; 
+    border: none; 
+    padding: 15mm;
+    width: 210mm;
+    /* REMOVE min-height and page-break-after */
+  }
+  .back-sheet {
+    margin: 0;
+    padding: 15mm;
+    width: 210mm;
+    /* REMOVE min-height */
+  }
+  .box { 
+    page-break-inside: avoid; 
+    break-inside: avoid;
+  }
+  input, textarea {
+    border-bottom: 1px solid #000 !important;
+    background: transparent !important;
+  }
+  .materials-row.header {
+    background-color: #f8f8f8 !important;
+  }
+  
+  /* Add manual page break only for back page */
+  .back-page {
+    page-break-before: always;
   }
 }

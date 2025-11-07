@@ -16,13 +16,15 @@ import {
   IonLoading,
   IonButtons,
   IonButton,
-  IonIcon
+  IonIcon,
+  IonModal
 } from '@ionic/react';
 import { arrowBackOutline } from 'ionicons/icons';
 import '../../CSS/Setup.css';
 import { useParams, useHistory } from 'react-router-dom';
 import { supabase } from '../../utils/supaBaseClient';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
+import BuildingFaas from '../../components/Fass/BuildingFaas/BuildingFaas'; // Import the BuildingFaas component
 
 interface FormData {
   form_id: string;
@@ -80,6 +82,7 @@ const BuildingTable: React.FC = () => {
   const [buildingAdjustments, setBuildingAdjustments] = useState<BuildingAdjustment[]>([]);
   const [filteredAdjustments, setFilteredAdjustments] = useState<BuildingAdjustment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showFaasModal, setShowFaasModal] = useState(false);
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
   
   const { formId } = useParams<{ formId: string }>();
@@ -241,9 +244,11 @@ const BuildingTable: React.FC = () => {
   };
 
   const handleViewFaas = () => {
-    // TODO: Add View Faas functionality here
-    console.log('View Faas clicked for form:', formId);
-    // You can add navigation or modal opening logic here
+    setShowFaasModal(true);
+  };
+
+  const handleCloseFaas = () => {
+    setShowFaasModal(false);
   };
 
   const formatFieldName = (fieldName: string): string => {
@@ -314,7 +319,17 @@ const BuildingTable: React.FC = () => {
           </IonButtons>
           <IonTitle>Building Details - Form {formId}</IonTitle>
           <IonButtons slot="end">
-            <IonButton onClick={handleViewFaas}>
+            <IonButton 
+              onClick={handleViewFaas}
+              fill="solid"
+              color="primary"
+              style={{
+                '--background': '#3880ff',
+                '--background-hover': '#3171e0',
+                '--background-activated': '#3171e0',
+                '--background-focused': '#3171e0',
+              }}
+            >
               View Faas
             </IonButton>
           </IonButtons>
@@ -433,6 +448,15 @@ const BuildingTable: React.FC = () => {
             </IonRow>
           )}
         </IonGrid>
+
+        {/* Faas Modal */}
+        <IonModal 
+          isOpen={showFaasModal} 
+          onDidDismiss={handleCloseFaas}
+          style={{ '--width': '95%', '--height': '90%', '--border-radius': '8px' }}
+        >
+          <BuildingFaas />
+        </IonModal>
       </IonContent>
     </IonPage>
   );
