@@ -16,7 +16,7 @@ import {
     IonLabel,
     IonToast,
     IonAlert,
-    IonBadge // Add IonBadge for displaying boolean values
+    IonBadge
 } from '@ionic/react';
 import { add, arrowUpCircle, trash, arrowBack, checkmarkCircle, closeCircle } from 'ionicons/icons';
 import { useHistory, useLocation } from 'react-router-dom';

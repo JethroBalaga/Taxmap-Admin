@@ -13,14 +13,210 @@ import {
   IonSearchbar,
   IonAlert,
   IonToast,
+  IonButtons,
+  IonButton
 } from '@ionic/react';
-import { add, arrowUpCircle, trash, cashOutline, podiumOutline } from 'ionicons/icons';
+import { add, arrowUpCircle, trash, cashOutline, podiumOutline, arrowBack } from 'ionicons/icons';
 import './../../CSS/Setup2.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 import DistrictCreateModal from '../../components/DistrictModal/DistrictCreateModal';
 import DistrictUpdateModal from '../../components/DistrictModal/DistrictUpdateModal';
 import { useHistory } from 'react-router-dom';
+
+// Electron detection hook
+const useElectron = () => {
+  const [isElectron, setIsElectron] = useState(false);
+
+  useEffect(() => {
+    const electronDetected = (
+      // @ts-ignore
+      window.process?.versions?.electron ||
+      // @ts-ignore
+      window.navigator.userAgent.includes('Electron') ||
+      // @ts-ignore
+      (window.require && window.process && window.process.type) ||
+      window.location.protocol === 'file:'
+    );
+    
+    setIsElectron(!!electronDetected);
+  }, []);
+
+  return isElectron;
+};
+
+// Custom Electron Components
+const ElectronLoading: React.FC<{ isOpen: boolean }> = ({ isOpen }) => {
+  if (!isOpen) return null;
+  
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 9999
+    }}>
+      <div style={{
+        background: 'white',
+        padding: '20px',
+        borderRadius: '8px',
+        textAlign: 'center'
+      }}>
+        <div>Loading...</div>
+      </div>
+    </div>
+  );
+};
+
+const ElectronAlert: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  header: string;
+  message: string;
+  buttons: { text: string; handler?: () => void; role?: string }[];
+}> = ({ isOpen, onClose, header, message, buttons }) => {
+  if (!isOpen) return null;
+
+  const handleButtonClick = (button: { text: string; handler?: () => void; role?: string }) => {
+    if (button.handler) {
+      button.handler();
+    }
+    onClose();
+  };
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 9999
+    }}>
+      <div style={{
+        background: 'white',
+        padding: '20px',
+        borderRadius: '8px',
+        maxWidth: '400px',
+        width: '90%'
+      }}>
+        <h3 style={{ margin: '0 0 10px 0' }}>{header}</h3>
+        <div dangerouslySetInnerHTML={{ __html: message }} />
+        <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+          {buttons.map((button, index) => (
+            <button
+              key={index}
+              onClick={() => handleButtonClick(button)}
+              style={{
+                padding: '8px 16px',
+                background: button.role === 'cancel' ? '#6c757d' : '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              {button.text}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ElectronToast: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  message: string;
+  duration: number;
+  color?: string;
+}> = ({ isOpen, onClose, message, duration, color = 'success' }) => {
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => {
+        onClose();
+      }, duration);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, duration, onClose]);
+
+  if (!isOpen) return null;
+
+  const backgroundColor = color === 'danger' ? '#dc3545' : '#28a745';
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: '20px',
+      right: '20px',
+      background: backgroundColor,
+      color: 'white',
+      padding: '12px 20px',
+      borderRadius: '4px',
+      zIndex: 9999,
+      maxWidth: '300px'
+    }}>
+      {message}
+    </div>
+  );
+};
+
+const ElectronHeader: React.FC<{ 
+  onBack: () => void;
+}> = ({ onBack }) => (
+  <div style={{
+    background: '#3880ff',
+    color: 'white',
+    padding: '12px 16px',
+    borderBottom: '1px solid #2a5fc1',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+  }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <button 
+        onClick={onBack}
+        style={{
+          background: 'rgba(255,255,255,0.2)',
+          color: 'white',
+          border: 'none',
+          padding: '8px 12px',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          fontSize: '14px',
+          fontWeight: '500'
+        }}
+      >
+        <IonIcon 
+          icon={arrowBack} 
+          style={{ fontSize: '16px', color: 'white' }}
+        />
+        Back
+      </button>
+      <h2 style={{ 
+        margin: 0, 
+        fontSize: '18px', 
+        fontWeight: '600',
+        flex: 1 
+      }}>
+        District Setup
+      </h2>
+    </div>
+  </div>
+);
 
 interface DistrictItem {
   district_id: number;
@@ -30,6 +226,8 @@ interface DistrictItem {
 }
 
 const District: React.FC = () => {
+  const history = useHistory();
+  const isElectron = useElectron();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [districts, setDistricts] = useState<DistrictItem[]>([]);
@@ -42,7 +240,6 @@ const District: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
-  const history = useHistory();
   const [isError, setIsError] = useState(false);
 
   // Focus search input on mount
@@ -52,7 +249,6 @@ const District: React.FC = () => {
     }, 100);
     return () => clearTimeout(timer);
   }, []);
-
 
   // Fetch data
   const fetchDistricts = useCallback(async () => {
@@ -74,6 +270,7 @@ const District: React.FC = () => {
     } catch (error) {
       console.error('Error fetching districts:', error);
       setToastMessage('Failed to load districts');
+      setIsError(true);
       setShowToast(true);
     } finally {
       setIsLoading(false);
@@ -147,6 +344,7 @@ const District: React.FC = () => {
     } catch (error) {
       console.error('Error checking district usage:', error);
       setToastMessage('Error checking if district can be deleted');
+      setIsError(true);
       setShowToast(true);
     } finally {
       setIsLoading(false);
@@ -155,7 +353,11 @@ const District: React.FC = () => {
 
   const handleCashClick = () => {
     if (!selectedRow) return;
-    history.push(`/menu/home/taxrate?district_id=${selectedRow.district_id}`);
+    if (isElectron) {
+      window.location.hash = `/menu/home/taxrate?district_id=${selectedRow.district_id}`;
+    } else {
+      history.push(`/menu/home/taxrate?district_id=${selectedRow.district_id}`);
+    }
   };
 
   const handleDeleteConfirm = async () => {
@@ -177,6 +379,7 @@ const District: React.FC = () => {
     } catch (error) {
       console.error('Error deleting district:', error);
       setToastMessage('Cannot delete district with taxrate and barangay');
+      setIsError(true);
       setShowToast(true);
     } finally {
       setIsLoading(false);
@@ -184,24 +387,149 @@ const District: React.FC = () => {
     }
   };
 
-  // In your District.tsx component, modify the handleBarangayClick function:
-const handleBarangayClick = () => {
-  if (!selectedRow) return;
-  history.push(`/menu/home/barangay?district_id=${selectedRow.district_id}`);
-};
-  
+  const handleBarangayClick = () => {
+    if (!selectedRow) return;
+    if (isElectron) {
+      window.location.hash = `/menu/home/barangay?district_id=${selectedRow.district_id}`;
+    } else {
+      history.push(`/menu/home/barangay?district_id=${selectedRow.district_id}`);
+    }
+  };
+
+  const handleBackClick = () => {
+    if (isElectron) {
+      window.location.hash = '/menu';
+    } else {
+      history.push('/menu');
+    }
+  };
+
   const iconButtons = [
     { icon: add, onClick: () => setShowCreateModal(true), disabled: false, title: "Add District" },
     { icon: arrowUpCircle, onClick: handleUpdateClick, disabled: !selectedRow, title: "Edit District" },
     { icon: trash, onClick: handleDeleteClick, disabled: !selectedRow, title: "Delete District" },
     { icon: cashOutline, onClick: handleCashClick, disabled: !selectedRow, title: "Manage Tax Rates" },
-    { icon: podiumOutline, onClick:  handleBarangayClick, disabled: !selectedRow, title: "Manage Barangay" },
+    { icon: podiumOutline, onClick: handleBarangayClick, disabled: !selectedRow, title: "Manage Barangay" },
   ];
 
+  // For Electron: Use simpler structure without nested IonPage
+  if (isElectron) {
+    return (
+      <div style={{ 
+        height: '100vh', 
+        display: 'flex', 
+        flexDirection: 'column',
+        background: '#f5f5f5'
+      }}>
+        <ElectronHeader onBack={handleBackClick} />
+        
+        <div style={{ 
+          flex: 1, 
+          overflow: 'auto', 
+          padding: '16px',
+          background: 'white'
+        }}>
+          <IonGrid style={{ padding: 0 }}>
+            <IonRow>
+              <IonCol size="12" className="search-container">
+                <IonSearchbar
+                  ref={searchRef}
+                  placeholder="Search districts..."
+                  onIonInput={(e) => setSearchTerm(e.detail.value || '')}
+                  debounce={0}
+                />
+
+                <div className="icon-group">
+                  {iconButtons.map((btn, index) => (
+                    <IonIcon
+                      key={index}
+                      icon={btn.icon}
+                      className={`icon-yellow ${btn.disabled ? 'icon-disabled' : ''}`}
+                      onClick={btn.disabled ? undefined : btn.onClick}
+                      title={btn.title}
+                    />
+                  ))}
+                </div>
+              </IonCol>
+            </IonRow>
+
+            <IonRow>
+              <IonCol size="12">
+                <DynamicTable
+                  data={filteredData}
+                  title="Districts"
+                  keyField="district_id"
+                  onRowClick={handleRowClick}
+                  selectedRow={selectedRow} 
+                />
+              </IonCol>
+            </IonRow>
+          </IonGrid>
+
+          {/* Use custom components for Electron */}
+          <ElectronLoading isOpen={isLoading} />
+
+          {/* Modals - These should work in Electron if they use proper React Portals */}
+          <DistrictCreateModal
+            isOpen={showCreateModal}
+            onClose={() => setShowCreateModal(false)}
+            onDistrictCreated={fetchDistricts}
+          />
+
+          <DistrictUpdateModal
+            isOpen={showUpdateModal}
+            onClose={() => setShowUpdateModal(false)}
+            districtData={selectedDistrict}
+            onDistrictUpdated={fetchDistricts}
+          />
+
+          <ElectronAlert
+            isOpen={showDeleteAlert}
+            onClose={() => setShowDeleteAlert(false)}
+            header={'Confirm Delete'}
+            message={`Are you sure you want to delete district #${selectedRow?.district_id} (${selectedRow?.district_name})?`}
+            buttons={[
+              {
+                text: 'Cancel',
+                role: 'cancel',
+              },
+              {
+                text: 'Delete',
+                handler: handleDeleteConfirm
+              }
+            ]}
+          />
+
+          <ElectronAlert
+            isOpen={showCannotDeleteAlert}
+            onClose={() => setShowCannotDeleteAlert(false)}
+            header={'Cannot Delete'}
+            message={`District #${selectedRow?.district_id} cannot be deleted because it is being used in other records.`}
+            buttons={[{ text: 'OK', handler: () => {} }]}
+          />
+
+          <ElectronToast
+            isOpen={showToast}
+            onClose={() => setShowToast(false)}
+            message={toastMessage}
+            duration={3000}
+            color={isError ? 'danger' : 'success'}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Original code for browser
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
+          <IonButtons slot="start">
+            <IonButton onClick={handleBackClick}>
+              <IonIcon icon={arrowBack} />
+            </IonButton>
+          </IonButtons>
           <IonTitle>District Setup</IonTitle>
         </IonToolbar>
       </IonHeader>
@@ -224,7 +552,7 @@ const handleBarangayClick = () => {
                     icon={btn.icon}
                     className={`icon-yellow ${btn.disabled ? 'icon-disabled' : ''}`}
                     onClick={btn.disabled ? undefined : btn.onClick}
-                    title={btn.title} // Tooltip on hover
+                    title={btn.title}
                   />
                 ))}
               </div>
@@ -290,7 +618,7 @@ const handleBarangayClick = () => {
           onDidDismiss={() => setShowToast(false)}
           message={toastMessage}
           duration={3000}
-          color={isError ? 'green' : 'success'}
+          color={isError ? 'danger' : 'success'}
         />
       </IonContent>
     </IonPage>

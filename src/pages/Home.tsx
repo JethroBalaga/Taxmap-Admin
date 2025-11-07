@@ -170,20 +170,6 @@ const Home: React.FC = () => {
   return (
     <IonPage>
       <IonContent fullscreen>
-        {/* Debug overlay */}
-        <div style={{
-          position: 'fixed',
-          top: '10px',
-          right: '10px',
-          background: isElectron ? 'red' : 'green',
-          color: 'white',
-          padding: '5px 10px',
-          fontSize: '12px',
-          zIndex: 9999
-        }}>
-          {isElectron ? 'ELECTRON Mode' : 'BROWSER Mode'}
-        </div>
-
         {isElectron ? (
           // Electron-compatible tabs
           <ElectronHomeTabs />

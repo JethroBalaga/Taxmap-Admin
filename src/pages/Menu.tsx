@@ -93,7 +93,7 @@ const Menu: React.FC = () => {
             <IonMenuToggle key={index}>
               <IonItem 
                 routerLink={item.url} 
-                routerDirection="none"
+                routerDirection="root"
                 detail={false}
               >
                 <IonIcon icon={item.icon} slot="start"></IonIcon>
@@ -129,9 +129,9 @@ const Menu: React.FC = () => {
         <IonContent>
           <IonRouterOutlet>
             <Route exact path="/menu/dashboard" component={Dashboard} />
-            <Route path="/menu/home" component={Home} />
+            <Route exact path="/menu/home" component={Home} />
             <Route exact path="/menu/map" component={Map} />
-            <Route path="/menu/people" component={People} />
+            <Route exact path="/menu/people" component={People} />
             <Route exact path="/menu/forms" component={Forms} />
             <Route exact path="/menu/buildingtable" component={BuildingTable} />
             <Route exact path="/menu/logs" component={Logs} />
@@ -139,9 +139,27 @@ const Menu: React.FC = () => {
             <Route path="/menu/agriculturalland/:formId" component={AgriculturalLand} />
             <Route path="/menu/nonagriculturalland/:formId" component={NonAgriculturalLand} />
             
-            {/* Add these routes to handle tab navigation */}
-            <Route exact path="/menu/home/:tab" component={Home} />
-            <Route exact path="/menu/people/:tab" component={People} />
+            {/* Fix the tab navigation routes */}
+            <Route exact path="/menu/home/classification" component={Home} />
+            <Route exact path="/menu/home/district" component={Home} />
+            <Route exact path="/menu/home/kind" component={Home} />
+            <Route exact path="/menu/home/subclass" component={Home} />
+            <Route exact path="/menu/home/taxrate" component={Home} />
+            <Route exact path="/menu/home/barangay" component={Home} />
+            <Route exact path="/menu/home/assesmentlevel" component={Home} />
+            <Route exact path="/menu/home/subclassrate" component={Home} />
+            <Route exact path="/menu/home/structure" component={Home} />
+            <Route exact path="/menu/home/buildingcode" component={Home} />
+            <Route exact path="/menu/home/actualused" component={Home} />
+            <Route exact path="/menu/home/buildingcom" component={Home} />
+            <Route exact path="/menu/home/buildingsubcom" component={Home} />
+            <Route exact path="/menu/home/equipment" component={Home} />
+            <Route exact path="/menu/home/landadjustment" component={Home} />
+            
+            <Route exact path="/menu/people/declarant" component={People} />
+            <Route exact path="/menu/people/user" component={People} />
+            <Route exact path="/menu/people/register" component={People} />
+            <Route exact path="/menu/people/devices" component={People} />
             
             <Route exact path="/menu">
               <Redirect to="/menu/dashboard" />

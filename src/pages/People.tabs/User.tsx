@@ -20,12 +20,271 @@ import {
     IonLabel,
     IonButtons
 } from '@ionic/react';
-import { add, arrowUpCircle, banOutline, trash, eye, eyeOff, checkmarkCircle, closeCircle, phonePortraitOutline } from 'ionicons/icons';
+import { add, arrowUpCircle, banOutline, trash, eye, eyeOff, checkmarkCircle, closeCircle, phonePortraitOutline, arrowBack } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 import { useHistory, useLocation } from 'react-router-dom';
 import bcrypt from 'bcryptjs';
+
+// Electron detection hook
+const useElectron = () => {
+  const [isElectron, setIsElectron] = useState(false);
+
+  useEffect(() => {
+    const electronDetected = (
+      // @ts-ignore
+      window.process?.versions?.electron ||
+      // @ts-ignore
+      window.navigator.userAgent.includes('Electron') ||
+      // @ts-ignore
+      (window.require && window.process && window.process.type) ||
+      window.location.protocol === 'file:'
+    );
+    
+    setIsElectron(!!electronDetected);
+  }, []);
+
+  return isElectron;
+};
+
+// Custom Electron Components
+const ElectronLoading: React.FC<{ isOpen: boolean }> = ({ isOpen }) => {
+  if (!isOpen) return null;
+  
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 9999
+    }}>
+      <div style={{
+        background: 'white',
+        padding: '20px',
+        borderRadius: '8px',
+        textAlign: 'center'
+      }}>
+        <div>Loading...</div>
+      </div>
+    </div>
+  );
+};
+
+const ElectronAlert: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  header: string;
+  message: string;
+  buttons: { text: string; handler?: () => void; role?: string }[];
+}> = ({ isOpen, onClose, header, message, buttons }) => {
+  if (!isOpen) return null;
+
+  const handleButtonClick = (button: { text: string; handler?: () => void; role?: string }) => {
+    if (button.handler) {
+      button.handler();
+    }
+    onClose();
+  };
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 9999
+    }}>
+      <div style={{
+        background: 'white',
+        padding: '20px',
+        borderRadius: '8px',
+        maxWidth: '400px',
+        width: '90%'
+      }}>
+        <h3 style={{ margin: '0 0 10px 0' }}>{header}</h3>
+        <div dangerouslySetInnerHTML={{ __html: message }} />
+        <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+          {buttons.map((button, index) => (
+            <button
+              key={index}
+              onClick={() => handleButtonClick(button)}
+              style={{
+                padding: '8px 16px',
+                background: button.role === 'cancel' ? '#6c757d' : '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              {button.text}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ElectronToast: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  message: string;
+  duration: number;
+  color?: string;
+}> = ({ isOpen, onClose, message, duration, color = 'success' }) => {
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => {
+        onClose();
+      }, duration);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, duration, onClose]);
+
+  if (!isOpen) return null;
+
+  const backgroundColor = color === 'danger' ? '#dc3545' : '#28a745';
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: '20px',
+      right: '20px',
+      background: backgroundColor,
+      color: 'white',
+      padding: '12px 20px',
+      borderRadius: '4px',
+      zIndex: 9999,
+      maxWidth: '300px'
+    }}>
+      {message}
+    </div>
+  );
+};
+
+const ElectronHeader: React.FC<{ 
+  onBack: () => void;
+}> = ({ onBack }) => (
+  <div style={{
+    background: '#3880ff',
+    color: 'white',
+    padding: '12px 16px',
+    borderBottom: '1px solid #2a5fc1',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+  }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <button 
+        onClick={onBack}
+        style={{
+          background: 'rgba(255,255,255,0.2)',
+          color: 'white',
+          border: 'none',
+          padding: '8px 12px',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          fontSize: '14px',
+          fontWeight: '500'
+        }}
+      >
+        <IonIcon 
+          icon={arrowBack} 
+          style={{ fontSize: '16px', color: 'white' }}
+        />
+        Back
+      </button>
+      <h2 style={{ 
+        margin: 0, 
+        fontSize: '18px', 
+        fontWeight: '600',
+        flex: 1 
+      }}>
+        User Management
+      </h2>
+    </div>
+  </div>
+);
+
+// Custom Electron Modal
+const ElectronModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}> = ({ isOpen, onClose, title, children }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 9999
+    }}>
+      <div style={{
+        background: 'white',
+        borderRadius: '8px',
+        maxWidth: '500px',
+        width: '90%',
+        maxHeight: '80vh',
+        overflow: 'auto',
+        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+      }}>
+        <div style={{
+          background: '#3880ff',
+          color: 'white',
+          padding: '16px 20px',
+          borderTopLeftRadius: '8px',
+          borderTopRightRadius: '8px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>{title}</h3>
+          <button 
+            onClick={onClose}
+            style={{
+              background: 'rgba(255,255,255,0.2)',
+              color: 'white',
+              border: 'none',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            Close
+          </button>
+        </div>
+        <div style={{ padding: '20px' }}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface UserItem {
     user_id: string;
@@ -39,8 +298,11 @@ interface UserItem {
 }
 
 const User: React.FC = () => {
+    const history = useHistory();
+    const location = useLocation();
+    const isElectron = useElectron();
     const [users, setUsers] = useState<UserItem[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedRow, setSelectedRow] = useState<UserItem | null>(null);
     const [showDeleteAlert, setShowDeleteAlert] = useState(false);
@@ -48,8 +310,6 @@ const User: React.FC = () => {
     const [toastMessage, setToastMessage] = useState('');
     const searchRef = useRef<HTMLIonSearchbarElement>(null);
     const [isError, setIsError] = useState(false);
-    const history = useHistory();
-    const location = useLocation();
     
     // Ban/Unban functionality states
     const [showBanModal, setShowBanModal] = useState(false);
@@ -403,12 +663,28 @@ const User: React.FC = () => {
     };
 
     const handleAddUser = () => {
-        history.push('/menu/people/register');
+        if (isElectron) {
+            window.location.hash = '/menu/people/register';
+        } else {
+            history.push('/menu/people/register');
+        }
     };
 
     const handleCheckDevice = () => {
         if (selectedRow) {
-            history.push(`/menu/people/devices?user_id=${selectedRow.user_id}`);
+            if (isElectron) {
+                window.location.hash = `/menu/people/devices?user_id=${selectedRow.user_id}`;
+            } else {
+                history.push(`/menu/people/devices?user_id=${selectedRow.user_id}`);
+            }
+        }
+    };
+
+    const handleBackClick = () => {
+        if (isElectron) {
+            window.location.hash = '/menu';
+        } else {
+            history.push('/menu');
         }
     };
 
@@ -454,10 +730,339 @@ const User: React.FC = () => {
         }
     ];
 
+    // For Electron: Use simpler structure without nested IonPage
+    if (isElectron) {
+        return (
+            <div style={{ 
+                height: '100vh', 
+                display: 'flex', 
+                flexDirection: 'column',
+                background: '#f5f5f5'
+            }}>
+                <ElectronHeader onBack={handleBackClick} />
+                
+                <div style={{ 
+                    flex: 1, 
+                    overflow: 'auto', 
+                    padding: '16px',
+                    background: 'white'
+                }}>
+                    <IonGrid style={{ padding: 0 }}>
+                        <IonRow>
+                            <IonCol size="12" className="search-container">
+                                <IonSearchbar
+                                    ref={searchRef}
+                                    placeholder="Search users..."
+                                    onIonInput={(e) => setSearchTerm(e.detail.value || '')}
+                                    debounce={0}
+                                />
+
+                                <div className="icon-group">
+                                    {iconButtons.map((btn, index) => (
+                                        <IonIcon
+                                            key={index}
+                                            icon={btn.icon}
+                                            className={`icon-yellow ${btn.disabled ? 'icon-disabled' : ''}`}
+                                            onClick={btn.disabled ? undefined : btn.onClick}
+                                            title={btn.title}
+                                        />
+                                    ))}
+                                </div>
+                            </IonCol>
+                        </IonRow>
+
+                        <IonRow>
+                            <IonCol size="12">
+                                <DynamicTable
+                                    data={filteredData}
+                                    title="Users"
+                                    keyField="user_id"
+                                    onRowClick={handleRowClick}
+                                    selectedRow={selectedRow} 
+                                />
+                            </IonCol>
+                        </IonRow>
+                    </IonGrid>
+
+                    {/* Use custom components for Electron */}
+                    <ElectronLoading isOpen={isLoading} />
+
+                    {/* Ban/Unban Modal for Electron */}
+                    <ElectronModal
+                        isOpen={showBanModal}
+                        onClose={() => {
+                            setShowBanModal(false);
+                            setAdminPassword('');
+                            setIsPasswordCorrect(null);
+                            setShowAdminPassword(false);
+                        }}
+                        title={selectedRow?.suspended ? 'Unban User Confirmation' : 'Ban User Confirmation'}
+                    >
+                        <div style={{ textAlign: 'center', padding: '10px' }}>
+                            <h3 style={{ marginBottom: '15px' }}>
+                                {selectedRow?.suspended ? 'Confirm Unban User' : 'Confirm Ban User'}
+                            </h3>
+                            <p style={{ marginBottom: '15px' }}>
+                                You are about to {selectedRow?.suspended ? 'unban' : 'ban'} the user: 
+                                <strong> {selectedRow?.username}</strong>
+                            </p>
+                            <p style={{ 
+                                color: '#ffc409', 
+                                fontSize: '14px', 
+                                marginBottom: '20px',
+                                padding: '10px',
+                                background: '#fff8e1',
+                                borderRadius: '4px'
+                            }}>
+                                {selectedRow?.suspended 
+                                    ? 'This action will restore the user\'s access and allow them to log in again.'
+                                    : 'This action will suspend the user\'s account and prevent them from logging in.'
+                                }
+                            </p>
+                            
+                            <div style={{ margin: '20px 0' }}>
+                                <label style={{ 
+                                    display: 'block', 
+                                    marginBottom: '8px', 
+                                    fontWeight: '500',
+                                    textAlign: 'left'
+                                }}>
+                                    Admin Password Verification
+                                </label>
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        type={showAdminPassword ? "text" : "password"}
+                                        value={adminPassword}
+                                        onChange={(e) => handleAdminPasswordChange(e.target.value)}
+                                        placeholder="Enter your admin password to confirm"
+                                        style={{
+                                            width: '100%',
+                                            padding: '12px',
+                                            border: '1px solid #ddd',
+                                            borderRadius: '4px',
+                                            fontSize: '14px'
+                                        }}
+                                    />
+                                    <button
+                                        onClick={() => setShowAdminPassword(!showAdminPassword)}
+                                        style={{
+                                            position: 'absolute',
+                                            right: '8px',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            color: '#666'
+                                        }}
+                                    >
+                                        <IonIcon icon={showAdminPassword ? eyeOff : eye} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Password validation indicator */}
+                            {adminPassword && (
+                                <div style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center', 
+                                    margin: '10px 0',
+                                    color: isPasswordCorrect ? 'green' : 'red',
+                                    fontSize: '14px'
+                                }}>
+                                    <IonIcon 
+                                        icon={isPasswordCorrect ? checkmarkCircle : closeCircle} 
+                                        style={{ marginRight: '8px' }}
+                                    />
+                                    <span>
+                                        {isPasswordCorrect ? 'Password is correct' : 'Password is incorrect'}
+                                    </span>
+                                </div>
+                            )}
+
+                            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                                <button
+                                    onClick={() => setShowBanModal(false)}
+                                    style={{
+                                        flex: 1,
+                                        padding: '12px',
+                                        border: '1px solid #ddd',
+                                        background: 'white',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        fontSize: '14px'
+                                    }}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleBanConfirm}
+                                    disabled={!isPasswordCorrect}
+                                    style={{
+                                        flex: 1,
+                                        padding: '12px',
+                                        background: selectedRow?.suspended ? '#28a745' : '#dc3545',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: isPasswordCorrect ? 'pointer' : 'not-allowed',
+                                        opacity: isPasswordCorrect ? 1 : 0.6,
+                                        fontSize: '14px'
+                                    }}
+                                >
+                                    {selectedRow?.suspended ? 'Confirm Unban' : 'Confirm Ban'}
+                                </button>
+                            </div>
+                        </div>
+                    </ElectronModal>
+
+                    {/* Delete Confirmation Modal for Electron */}
+                    <ElectronModal
+                        isOpen={showDeleteAlert}
+                        onClose={() => {
+                            setShowDeleteAlert(false);
+                            setDeleteAdminPassword('');
+                            setIsDeletePasswordCorrect(null);
+                            setShowDeleteAdminPassword(false);
+                        }}
+                        title="Delete User Confirmation"
+                    >
+                        <div style={{ textAlign: 'center', padding: '10px' }}>
+                            <h3 style={{ marginBottom: '15px' }}>Confirm Delete User</h3>
+                            <p style={{ marginBottom: '15px' }}>
+                                You are about to permanently delete the user: <strong>{selectedRow?.username}</strong>
+                            </p>
+                            <p style={{ 
+                                color: '#dc3545', 
+                                fontSize: '14px', 
+                                marginBottom: '20px',
+                                padding: '10px',
+                                background: '#f8d7da',
+                                borderRadius: '4px'
+                            }}>
+                                This action cannot be undone and will permanently remove all user data.
+                            </p>
+                            
+                            <div style={{ margin: '20px 0' }}>
+                                <label style={{ 
+                                    display: 'block', 
+                                    marginBottom: '8px', 
+                                    fontWeight: '500',
+                                    textAlign: 'left'
+                                }}>
+                                    Admin Password Verification
+                                </label>
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        type={showDeleteAdminPassword ? "text" : "password"}
+                                        value={deleteAdminPassword}
+                                        onChange={(e) => handleDeleteAdminPasswordChange(e.target.value)}
+                                        placeholder="Enter your admin password to confirm"
+                                        style={{
+                                            width: '100%',
+                                            padding: '12px',
+                                            border: '1px solid #ddd',
+                                            borderRadius: '4px',
+                                            fontSize: '14px'
+                                        }}
+                                    />
+                                    <button
+                                        onClick={() => setShowDeleteAdminPassword(!showDeleteAdminPassword)}
+                                        style={{
+                                            position: 'absolute',
+                                            right: '8px',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            color: '#666'
+                                        }}
+                                    >
+                                        <IonIcon icon={showDeleteAdminPassword ? eyeOff : eye} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Password validation indicator */}
+                            {deleteAdminPassword && (
+                                <div style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center', 
+                                    margin: '10px 0',
+                                    color: isDeletePasswordCorrect ? 'green' : 'red',
+                                    fontSize: '14px'
+                                }}>
+                                    <IonIcon 
+                                        icon={isDeletePasswordCorrect ? checkmarkCircle : closeCircle} 
+                                        style={{ marginRight: '8px' }}
+                                    />
+                                    <span>
+                                        {isDeletePasswordCorrect ? 'Password is correct' : 'Password is incorrect'}
+                                    </span>
+                                </div>
+                            )}
+
+                            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                                <button
+                                    onClick={() => setShowDeleteAlert(false)}
+                                    style={{
+                                        flex: 1,
+                                        padding: '12px',
+                                        border: '1px solid #ddd',
+                                        background: 'white',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        fontSize: '14px'
+                                    }}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleDeleteConfirm}
+                                    disabled={!isDeletePasswordCorrect}
+                                    style={{
+                                        flex: 1,
+                                        padding: '12px',
+                                        background: '#dc3545',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: isDeletePasswordCorrect ? 'pointer' : 'not-allowed',
+                                        opacity: isDeletePasswordCorrect ? 1 : 0.6,
+                                        fontSize: '14px'
+                                    }}
+                                >
+                                    Confirm Delete
+                                </button>
+                            </div>
+                        </div>
+                    </ElectronModal>
+
+                    <ElectronToast
+                        isOpen={showToast}
+                        onClose={() => setShowToast(false)}
+                        message={toastMessage}
+                        duration={3000}
+                        color={isError ? 'danger' : 'success'}
+                    />
+                </div>
+            </div>
+        );
+    }
+
+    // Original code for browser
     return (
         <IonPage>
             <IonHeader>
                 <IonToolbar>
+                    <IonButtons slot="start">
+                        <IonButton onClick={handleBackClick}>
+                            <IonIcon icon={arrowBack} />
+                        </IonButton>
+                    </IonButtons>
                     <IonTitle>Users</IonTitle>
                 </IonToolbar>
             </IonHeader>
