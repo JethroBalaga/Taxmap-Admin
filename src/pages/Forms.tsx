@@ -138,16 +138,15 @@ const Forms: React.FC = () => {
       setToastMessage('Status updated to Inspected');
       setShowToast(true);
 
-      // Navigate based on kind and class
+      // Navigate based on kind and class - USE URL PARAMETERS FOR ALL
       const kindDescription = selectedRow.kind_description?.toUpperCase();
       const classId = selectedRow.class_id?.toUpperCase();
       
       if (kindDescription === 'MACHINERY') {
         history.push(`/menu/machinerytable/${selectedRow.form_id}`);
       } else if (kindDescription === 'BUILDING') {
-        history.push(`/menu/buildingtable`, { 
-          formId: selectedRow.form_id
-        });
+        // FIXED: Use URL parameter instead of location state
+        history.push(`/menu/buildingtable/${selectedRow.form_id}`);
       } else if (kindDescription === 'LAND' && classId === 'A') {
         history.push(`/menu/agriculturalland/${selectedRow.form_id}`);
       } else if (kindDescription === 'LAND' && classId !== 'A') {

@@ -8,20 +8,30 @@ import {
   IonGrid,
   IonRow,
   IonCol,
+  IonCard,
+  IonCardContent,
+  IonCardHeader,
+  IonCardTitle,
   IonSearchbar,
   IonLoading,
-  IonButtons, // Add this import
-  IonButton, // Add this import
-  IonIcon // Add this import
+  IonButtons,
+  IonButton,
+  IonIcon
 } from '@ionic/react';
-import { arrowBackOutline } from 'ionicons/icons'; // Add this import
+import { arrowBackOutline } from 'ionicons/icons';
 import '../../CSS/Setup.css';
-import { useLocation, useHistory } from 'react-router-dom'; // Add useHistory
+import { useParams, useHistory } from 'react-router-dom';
 import { supabase } from '../../utils/supaBaseClient';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 
-interface RouteParams {
-  formId: string;
+interface FormData {
+  form_id: string;
+  declarant_name: string;
+  district_name: string;
+  class_id: string;
+  kind_description: string;
+  status: string;
+  [key: string]: any;
 }
 
 interface GeneralDescription {
@@ -64,28 +74,29 @@ interface BuildingAdjustment {
 
 const BuildingTable: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [formData, setFormData] = useState<FormData | null>(null);
   const [generalData, setGeneralData] = useState<GeneralDescription[]>([]);
   const [assessmentSummary, setAssessmentSummary] = useState<AssessmentSummary[]>([]);
   const [buildingAdjustments, setBuildingAdjustments] = useState<BuildingAdjustment[]>([]);
   const [filteredAdjustments, setFilteredAdjustments] = useState<BuildingAdjustment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const searchRef = useRef<HTMLIonSearchbarElement>(null);
-  const location = useLocation();
-  const history = useHistory(); // Add history hook
-
-  const { formId } = location.state as RouteParams || {};
-
-  // Add back button handler
-  const handleBack = () => {
-    history.goBack(); // Go back to Forms page
-  };
+  
+  const { formId } = useParams<{ formId: string }>();
+  const history = useHistory();
 
   useEffect(() => {
     if (formId) {
+      loadFormData();
+    }
+  }, [formId]);
+
+  useEffect(() => {
+    if (formData) {
       fetchGeneralDescriptionData();
       fetchAssessmentSummary();
     }
-  }, [formId]);
+  }, [formData]);
 
   useEffect(() => {
     if (generalData.length > 0) {
@@ -108,10 +119,46 @@ const BuildingTable: React.FC = () => {
     }
   }, [searchTerm, buildingAdjustments]);
 
-  const fetchGeneralDescriptionData = async () => {
+  const loadFormData = async () => {
     setIsLoading(true);
     try {
-      // First get value_info_id from form_id
+      const { data, error } = await supabase
+        .from('form_view')
+        .select('*')
+        .eq('form_id', formId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching form data:', error);
+        return;
+      }
+
+      console.log('Raw form data:', data);
+
+      if (data) {
+        const kind = data.kind_description?.toUpperCase();
+        const classId = data.class_id?.toUpperCase();
+        
+        console.log(`Checking conditions - Kind: ${kind}, Class: ${classId}`);
+        
+        // Check if it's BUILDING
+        if (kind === 'BUILDING') {
+          setFormData(data);
+        } else {
+          console.log(`This form is not a Building. Found: Kind=${kind}, Class=${classId}. Required: Kind=BUILDING`);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load form data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchGeneralDescriptionData = async () => {
+    if (!formId) return;
+
+    try {
       const { data: valueInfoData, error: valueError } = await supabase
         .from('value_info')
         .select('value_info_id')
@@ -130,7 +177,6 @@ const BuildingTable: React.FC = () => {
 
       const valueInfoIds = valueInfoData.map(item => item.value_info_id);
 
-      // Then get general description data using value_info_ids
       const { data: generalData, error: generalError } = await supabase
         .from('general_descriptiontbl')
         .select('*')
@@ -144,12 +190,12 @@ const BuildingTable: React.FC = () => {
       setGeneralData(generalData || []);
     } catch (error) {
       console.error('Failed to load general description data:', error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const fetchAssessmentSummary = async () => {
+    if (!formId) return;
+
     try {
       const { data, error } = await supabase
         .from('vw_form_assessment_summary')
@@ -169,7 +215,6 @@ const BuildingTable: React.FC = () => {
 
   const fetchBuildingAdjustments = async () => {
     try {
-      // Get value_info_ids from generalData
       const valueInfoIds = generalData.map(item => item.value_info_id);
 
       if (valueInfoIds.length === 0) return;
@@ -189,6 +234,35 @@ const BuildingTable: React.FC = () => {
     } catch (error) {
       console.error('Failed to load building adjustments:', error);
     }
+  };
+
+  const handleBack = () => {
+    history.goBack();
+  };
+
+  const handleViewFaas = () => {
+    // TODO: Add View Faas functionality here
+    console.log('View Faas clicked for form:', formId);
+    // You can add navigation or modal opening logic here
+  };
+
+  const formatFieldName = (fieldName: string): string => {
+    return fieldName
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  // Filter out form_id from the form data to display
+  const getDisplayData = () => {
+    if (!formData) return [];
+    
+    return Object.entries(formData)
+      .filter(([key]) => key !== 'form_id')
+      .map(([key, value]) => ({
+        field: formatFieldName(key),
+        value: value || 'N/A'
+      }));
   };
 
   // Create display data for general description that excludes ID fields
@@ -238,7 +312,12 @@ const BuildingTable: React.FC = () => {
               Back to Forms
             </IonButton>
           </IonButtons>
-          <IonTitle>Building Details</IonTitle>
+          <IonTitle>Building Details - Form {formId}</IonTitle>
+          <IonButtons slot="end">
+            <IonButton onClick={handleViewFaas}>
+              View Faas
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
 
@@ -246,7 +325,28 @@ const BuildingTable: React.FC = () => {
         <IonLoading isOpen={isLoading} message="Loading building details..." />
 
         <IonGrid>
-          {/* General Description Table - Placed ABOVE the search */}
+          {/* Form Details Card - Like NonAgriculturalLand */}
+          {formData && (
+            <IonRow>
+              <IonCol size="12">
+                <IonCard>
+                  <IonCardHeader>
+                    <IonCardTitle>Form Details</IonCardTitle>
+                  </IonCardHeader>
+                  <IonCardContent>
+                    {getDisplayData().map((item, index) => (
+                      <div key={index} className="data-field">
+                        <strong>{item.field}:</strong> 
+                        <span className="field-value">{item.value}</span>
+                      </div>
+                    ))}
+                  </IonCardContent>
+                </IonCard>
+              </IonCol>
+            </IonRow>
+          )}
+
+          {/* General Description Table */}
           {generalData.length > 0 && (
             <IonRow>
               <IonCol size="12">
@@ -260,20 +360,7 @@ const BuildingTable: React.FC = () => {
             </IonRow>
           )}
 
-          {/* Search Bar - For Building Adjustments Table */}
-          <IonRow>
-            <IonCol size="12" className="search-container">
-              <IonSearchbar
-                ref={searchRef}
-                placeholder="Search adjustments by area, rate, completion %, or value..."
-                onIonInput={(e) => setSearchTerm(e.detail.value || '')}
-                debounce={300}
-                value={searchTerm}
-              />
-            </IonCol>
-          </IonRow>
-
-          {/* Assessment Summary Table - Placed BELOW the building adjustments */}
+          {/* Assessment Summary Table */}
           {assessmentSummary.length > 0 && (
             <IonRow>
               <IonCol size="12">
@@ -287,7 +374,20 @@ const BuildingTable: React.FC = () => {
             </IonRow>
           )}
 
-             {/* Building Adjustments Table - Uses the search functionality */}
+          {/* Search Bar - ABOVE Building Adjustments Table */}
+          <IonRow>
+            <IonCol size="12" className="search-container">
+              <IonSearchbar
+                ref={searchRef}
+                placeholder="Search adjustments by area, rate, completion %, or value..."
+                onIonInput={(e) => setSearchTerm(e.detail.value || '')}
+                debounce={300}
+                value={searchTerm}
+              />
+            </IonCol>
+          </IonRow>
+
+          {/* Building Adjustments Table - With Search Functionality */}
           {filteredAdjustments.length > 0 ? (
             <IonRow>
               <IonCol size="12">
@@ -317,6 +417,17 @@ const BuildingTable: React.FC = () => {
               <IonCol size="12">
                 <div style={{ textAlign: 'center', padding: '20px' }}>
                   No assessment summary data found for this form.
+                </div>
+              </IonCol>
+            </IonRow>
+          )}
+
+          {/* Show message if no form data found */}
+          {!isLoading && !formData && (
+            <IonRow>
+              <IonCol size="12">
+                <div style={{ textAlign: 'center', padding: '20px' }}>
+                  No building data found for this form.
                 </div>
               </IonCol>
             </IonRow>

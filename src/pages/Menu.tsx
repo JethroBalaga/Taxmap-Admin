@@ -91,8 +91,8 @@ const Menu: React.FC = () => {
         <IonContent className="ion-padding">
           {path.map((item, index) => (
             <IonMenuToggle key={index}>
-              <IonItem 
-                routerLink={item.url} 
+              <IonItem
+                routerLink={item.url}
                 routerDirection="root"
                 detail={false}
               >
@@ -124,7 +124,7 @@ const Menu: React.FC = () => {
             <IonTitle>Menu</IonTitle>
           </IonToolbar>
         </IonHeader>
-        
+
         {/* Content area where pages will render WITH their own headers */}
         <IonContent>
           <IonRouterOutlet>
@@ -133,12 +133,12 @@ const Menu: React.FC = () => {
             <Route exact path="/menu/map" component={Map} />
             <Route exact path="/menu/people" component={People} />
             <Route exact path="/menu/forms" component={Forms} />
-            <Route exact path="/menu/buildingtable" component={BuildingTable} />
+            <Route exact path="/menu/buildingtable/:formId" component={BuildingTable} />
             <Route exact path="/menu/logs" component={Logs} />
             <Route path="/menu/machinerytable/:formId" component={MachineryTable} />
             <Route path="/menu/agriculturalland/:formId" component={AgriculturalLand} />
             <Route path="/menu/nonagriculturalland/:formId" component={NonAgriculturalLand} />
-            
+
             {/* Fix the tab navigation routes */}
             <Route exact path="/menu/home/classification" component={Home} />
             <Route exact path="/menu/home/district" component={Home} />
@@ -155,12 +155,12 @@ const Menu: React.FC = () => {
             <Route exact path="/menu/home/buildingsubcom" component={Home} />
             <Route exact path="/menu/home/equipment" component={Home} />
             <Route exact path="/menu/home/landadjustment" component={Home} />
-            
+
             <Route exact path="/menu/people/declarant" component={People} />
             <Route exact path="/menu/people/user" component={People} />
             <Route exact path="/menu/people/register" component={People} />
             <Route exact path="/menu/people/devices" component={People} />
-            
+
             <Route exact path="/menu">
               <Redirect to="/menu/dashboard" />
             </Route>

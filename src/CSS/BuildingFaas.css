@@ -1,0 +1,74 @@
+.faas-page {
+  font-family: "Arial", sans-serif;
+  background: #fff;
+  color: #000;
+}
+
+.faas-grid {
+  border: 1px solid #444;
+  padding: 16px;
+  background: #fff;
+}
+
+.section-title {
+  margin-top: 20px;
+  font-size: 1rem;
+  font-weight: bold;
+  text-align: left;
+  border-bottom: 1px solid #333;
+  padding-bottom: 4px;
+}
+
+label {
+  font-size: 0.9rem;
+  display: block;
+  margin-bottom: 4px;
+}
+
+ion-input {
+  --padding-start: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  height: 28px;
+  font-size: 0.9rem;
+  background: #fafafa;
+}
+
+ion-row {
+  margin-bottom: 8px;
+}
+
+.table-header {
+  font-weight: bold;
+  background: #e9e9e9;
+  border-top: 1px solid #999;
+  border-bottom: 1px solid #999;
+  text-align: center;
+}
+
+.page-break {
+  page-break-before: always;
+}
+
+.print-btn {
+  position: absolute;
+  right: 12px;
+  top: 8px;
+}
+
+/* Print Styling */
+@media print {
+  ion-header,
+  .print-btn {
+    display: none !important;
+  }
+  ion-page {
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+  .faas-grid {
+    border: none;
+    padding: 0;
+  }
+}
