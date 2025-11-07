@@ -15,9 +15,10 @@ import {
     IonButtons,
     IonLabel,
     IonToast,
-    IonAlert
+    IonAlert,
+    IonBadge // Add IonBadge for displaying boolean values
 } from '@ionic/react';
-import { add, arrowUpCircle, trash, arrowBack } from 'ionicons/icons';
+import { add, arrowUpCircle, trash, arrowBack, checkmarkCircle, closeCircle } from 'ionicons/icons';
 import { useHistory, useLocation } from 'react-router-dom';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
@@ -52,6 +53,7 @@ interface BuildingSubComItem {
     description: string;
     rate: number;
     building_com_id: string;
+    percent: boolean; // Add percent field
     created_at?: string;
 }
 
@@ -254,6 +256,31 @@ const ElectronHeader: React.FC<{
   </div>
 );
 
+// Component to display percent status
+const PercentStatus: React.FC<{ percent: boolean }> = ({ percent }) => {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      {percent ? (
+        <>
+          <IonIcon 
+            icon={checkmarkCircle} 
+            style={{ color: '#28a745', fontSize: '18px' }} 
+          />
+          <span style={{ color: '#28a745', fontWeight: '500' }}>Percent</span>
+        </>
+      ) : (
+        <>
+          <IonIcon 
+            icon={closeCircle} 
+            style={{ color: '#6c757d', fontSize: '18px' }} 
+          />
+          <span style={{ color: '#6c757d' }}>Fixed</span>
+        </>
+      )}
+    </div>
+  );
+};
+
 const BuildingSubCom: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -315,7 +342,7 @@ const BuildingSubCom: React.FC = () => {
         try {
             const { data, error } = await supabase
                 .from('building_subcomponenttbl')
-                .select('building_subcom_id, description, rate, building_com_id, created_at')
+                .select('building_subcom_id, description, rate, building_com_id, percent, created_at') // Add percent field
                 .eq('building_com_id', buildingComId)
                 .order('created_at', { ascending: false });
 
@@ -347,7 +374,8 @@ const BuildingSubCom: React.FC = () => {
             item.building_subcom_id.toLowerCase().includes(term) ||
             item.description.toLowerCase().includes(term) ||
             item.rate.toString().includes(term) ||
-            item.building_com_id.toLowerCase().includes(term)
+            item.building_com_id.toLowerCase().includes(term) ||
+            (item.percent ? 'percent' : 'fixed').includes(term) // Search by percent status
         );
     }, [buildingSubComponents, searchTerm]);
 
@@ -484,7 +512,7 @@ const BuildingSubCom: React.FC = () => {
                                     title="Building Sub-Components"
                                     keyField="building_subcom_id"
                                     onRowClick={handleRowClick}
-                                    selectedRow={selectedRow} 
+                                    selectedRow={selectedRow}
                                 />
                             </IonCol>
                         </IonRow>
@@ -598,7 +626,7 @@ const BuildingSubCom: React.FC = () => {
                                 title="Building Sub-Components"
                                 keyField="building_subcom_id"
                                 onRowClick={handleRowClick}
-                                selectedRow={selectedRow} 
+                                selectedRow={selectedRow}
                             />
                         </IonCol>
                     </IonRow>

@@ -10,6 +10,9 @@ import {
   IonCol,
   IonLoading,
   IonToast,
+  IonCheckbox,
+  IonLabel,
+  IonItem,
 } from '@ionic/react';
 import Input from '../Globalcomponents/Input';
 import './../../CSS/Modal.css';
@@ -32,6 +35,7 @@ const BuildingSubComCreateModal: React.FC<BuildingSubComCreateModalProps> = ({
   const [buildingSubcomId, setBuildingSubcomId] = useState(''); // Updated variable name
   const [description, setDescription] = useState('');
   const [rate, setRate] = useState('');
+  const [percent, setPercent] = useState(false); // New state for percent checkbox
   const [isLoading, setIsLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -58,6 +62,7 @@ const BuildingSubComCreateModal: React.FC<BuildingSubComCreateModalProps> = ({
           description: description.toUpperCase(),
           rate: rateValue,
           building_com_id: building_com_id,
+          percent: percent, // Add the percent field
         }]);
 
       if (error) throw error;
@@ -66,6 +71,7 @@ const BuildingSubComCreateModal: React.FC<BuildingSubComCreateModalProps> = ({
       setBuildingSubcomId('');
       setDescription('');
       setRate('');
+      setPercent(false); // Reset checkbox
       onBuildingSubComCreated();
       setTimeout(onClose, 1000);
     } catch (error: any) {
@@ -96,9 +102,22 @@ const BuildingSubComCreateModal: React.FC<BuildingSubComCreateModalProps> = ({
     }
   };
 
+  const handlePercentChange = (checked: boolean) => {
+    setPercent(checked);
+  };
+
+  const handleClose = () => {
+    // Reset form when closing
+    setBuildingSubcomId('');
+    setDescription('');
+    setRate('');
+    setPercent(false);
+    onClose();
+  };
+
   return (
     <>
-      <IonModal isOpen={isOpen} onDidDismiss={onClose} className="classification-modal">
+      <IonModal isOpen={isOpen} onDidDismiss={handleClose} className="classification-modal">
         <IonHeader>
           <IonToolbar className="modal-header">
             <IonTitle className="modal-title">CREATE BUILDING SUB-COMPONENT</IonTitle>
@@ -143,6 +162,25 @@ const BuildingSubComCreateModal: React.FC<BuildingSubComCreateModalProps> = ({
                   />
                 </div>
 
+                {/* Percent Checkbox */}
+                <div className="input-wrapper">
+                  <IonItem className="checkbox-item" lines="none">
+                    <IonCheckbox
+                      checked={percent}
+                      onIonChange={(e) => handlePercentChange(e.detail.checked)}
+                      slot="start"
+                      className="percent-checkbox"
+                    />
+                    <IonLabel className="checkbox-label">Percent</IonLabel>
+                  </IonItem>
+                  <div className="checkbox-hint">
+                    {percent 
+                      ? 'Rate will be treated as a percentage' 
+                      : 'Rate will be treated as a fixed value'
+                    }
+                  </div>
+                </div>
+
                 {/* Building Component ID (Display only) */}
                 <div className="input-wrapper">
                   <Input
@@ -158,7 +196,7 @@ const BuildingSubComCreateModal: React.FC<BuildingSubComCreateModalProps> = ({
                 <div className="button-group">
                   <Button
                     variant="secondary"
-                    onClick={onClose}
+                    onClick={handleClose}
                     className="cancel-btn"
                     disabled={isLoading}
                   >

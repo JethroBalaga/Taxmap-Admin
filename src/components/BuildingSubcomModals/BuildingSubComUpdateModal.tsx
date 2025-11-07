@@ -10,6 +10,9 @@ import {
   IonCol,
   IonLoading,
   IonToast,
+  IonCheckbox,
+  IonLabel,
+  IonItem,
 } from '@ionic/react';
 import Input from '../Globalcomponents/Input';
 import './../../CSS/Modal.css';
@@ -25,6 +28,7 @@ interface BuildingSubComUpdateModalProps {
     description: string;
     rate: number;
     building_com_id: string;
+    percent: boolean; // Add percent field
   };
 }
 
@@ -37,6 +41,7 @@ const BuildingSubComUpdateModal: React.FC<BuildingSubComUpdateModalProps> = ({
   const [buildingSubcomId, setBuildingSubcomId] = useState(buildingSubComData.building_subcom_id);
   const [description, setDescription] = useState(buildingSubComData.description);
   const [rate, setRate] = useState(buildingSubComData.rate.toString());
+  const [percent, setPercent] = useState(buildingSubComData.percent); // Add percent state
   const [isLoading, setIsLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -47,6 +52,7 @@ const BuildingSubComUpdateModal: React.FC<BuildingSubComUpdateModalProps> = ({
     setBuildingSubcomId(buildingSubComData.building_subcom_id);
     setDescription(buildingSubComData.description);
     setRate(buildingSubComData.rate.toString());
+    setPercent(buildingSubComData.percent); // Update percent field
   }, [buildingSubComData]);
 
   const handleUpdate = async () => {
@@ -78,12 +84,13 @@ const BuildingSubComUpdateModal: React.FC<BuildingSubComUpdateModalProps> = ({
 
       // Update the record - handle both ID change and no ID change scenarios
       if (buildingSubcomId === buildingSubComData.building_subcom_id) {
-        // Only description and/or rate changed
+        // Only description, rate, and/or percent changed
         const { error } = await supabase
           .from('building_subcomponenttbl')
           .update({
             description: description.toUpperCase(),
             rate: rateValue,
+            percent: percent, // Add percent field
           })
           .eq('building_subcom_id', buildingSubComData.building_subcom_id)
           .eq('building_com_id', buildingSubComData.building_com_id);
@@ -106,6 +113,7 @@ const BuildingSubComUpdateModal: React.FC<BuildingSubComUpdateModalProps> = ({
             description: description.toUpperCase(),
             rate: rateValue,
             building_com_id: buildingSubComData.building_com_id,
+            percent: percent, // Add percent field
           }]);
 
         if (insertError) throw insertError;
@@ -142,9 +150,22 @@ const BuildingSubComUpdateModal: React.FC<BuildingSubComUpdateModalProps> = ({
     }
   };
 
+  const handlePercentChange = (checked: boolean) => {
+    setPercent(checked);
+  };
+
+  const handleClose = () => {
+    // Reset form when closing
+    setBuildingSubcomId(buildingSubComData.building_subcom_id);
+    setDescription(buildingSubComData.description);
+    setRate(buildingSubComData.rate.toString());
+    setPercent(buildingSubComData.percent);
+    onClose();
+  };
+
   return (
     <>
-      <IonModal isOpen={isOpen} onDidDismiss={onClose} className="classification-modal">
+      <IonModal isOpen={isOpen} onDidDismiss={handleClose} className="classification-modal">
         <IonHeader>
           <IonToolbar className="modal-header">
             <IonTitle className="modal-title">UPDATE BUILDING SUB-COMPONENT</IonTitle>
@@ -189,6 +210,25 @@ const BuildingSubComUpdateModal: React.FC<BuildingSubComUpdateModalProps> = ({
                   />
                 </div>
 
+                {/* Percent Checkbox */}
+                <div className="input-wrapper">
+                  <IonItem className="checkbox-item" lines="none">
+                    <IonCheckbox
+                      checked={percent}
+                      onIonChange={(e) => handlePercentChange(e.detail.checked)}
+                      slot="start"
+                      className="percent-checkbox"
+                    />
+                    <IonLabel className="checkbox-label">Percent</IonLabel>
+                  </IonItem>
+                  <div className="checkbox-hint">
+                    {percent 
+                      ? 'Rate will be treated as a percentage' 
+                      : 'Rate will be treated as a fixed value'
+                    }
+                  </div>
+                </div>
+
                 {/* Building Component ID (Display only) */}
                 <div className="input-wrapper">
                   <Input
@@ -204,7 +244,7 @@ const BuildingSubComUpdateModal: React.FC<BuildingSubComUpdateModalProps> = ({
                 <div className="button-group">
                   <Button
                     variant="secondary"
-                    onClick={onClose}
+                    onClick={handleClose}
                     className="cancel-btn"
                     disabled={isLoading}
                   >
