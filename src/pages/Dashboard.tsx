@@ -331,6 +331,9 @@ const Dashboard: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
+          <IonButtons slot="start">
+            <IonMenuButton />
+          </IonButtons>
           <IonTitle>{getPageTitle()}</IonTitle>
         </IonToolbar>
       </IonHeader>
