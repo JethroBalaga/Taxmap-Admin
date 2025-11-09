@@ -144,6 +144,7 @@ const BuildingFaas: React.FC<BuildingFaasProps> = ({
             generalData={generalData}
             assessmentSummary={assessmentSummary}
             buildingAdjustments={buildingAdjustments}
+            buildingCodes={buildingCodes}
             isTaxable={isTaxable}
             isExempt={isExempt}
             currentQuarter={currentQuarter}

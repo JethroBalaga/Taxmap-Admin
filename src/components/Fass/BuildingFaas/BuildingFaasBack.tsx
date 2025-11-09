@@ -6,6 +6,7 @@ interface BuildingFaasBackProps {
   generalData?: any[];
   assessmentSummary?: any[];
   buildingAdjustments?: any[];
+  buildingCodes?: any[];
   isTaxable?: boolean;
   isExempt?: boolean;
   currentQuarter?: string;
@@ -34,6 +35,7 @@ const BuildingFaasBack: React.FC<BuildingFaasBackProps> = ({
   generalData = [],
   assessmentSummary = [],
   buildingAdjustments = [],
+  buildingCodes = [], // NOW RECEIVING buildingCodes
   isTaxable = true,
   isExempt = false,
   currentQuarter = "1",
@@ -44,12 +46,12 @@ const BuildingFaasBack: React.FC<BuildingFaasBackProps> = ({
   const [buildingComponents, setBuildingComponents] = useState<BuildingComponent[]>([]);
   const [buildingSubcomponents, setBuildingSubcomponents] = useState<BuildingSubcomponent[]>([]);
   
-  // Back page states - ADD THESE BACK!
+  // Back page states
   const [appraisal, setAppraisal] = useState<Record<string, string>>({});
   const [addItems, setAddItems] = useState<Record<string, string>>({});
   const [assessment, setAssessment] = useState<Record<string, string>>({});
 
-  // Back page handlers - ADD THESE BACK!
+  // Back page handlers
   const setApp = (r: number, c: number, v: string) =>
     setAppraisal((p) => ({ ...p, [`r${r}_c${c}`]: v }));
   const setItem = (r: number, c: number, v: string) =>
@@ -122,96 +124,74 @@ const BuildingFaasBack: React.FC<BuildingFaasBackProps> = ({
   const getCombinedAppraisalData = () => {
     const combinedData = [];
 
-    // Use assessmentSummary as the primary source for values
-    if (assessmentSummary && assessmentSummary.length > 0) {
-      assessmentSummary.forEach((assessmentItem, index) => {
-        // Try to find matching general data by index or use first available
-        const generalItem = generalData[index] || generalData[0] || {};
-        
-        const totalArea = parseFloat(assessmentItem.area) || parseFloat(generalItem.area) || 0;
-        const totalBaseValue = parseFloat(assessmentItem.base_market_value) || parseFloat(generalItem.base_market_value) || 0;
-        const totalAdjustedValue = parseFloat(assessmentItem.final_adjusted_market_value) || parseFloat(generalItem.final_adjusted_market_value) || 0;
-        const depreciationRate = parseFloat(generalItem.depreciation_rate) || 0;
-        
-        // Get number of storeys from general data
-        const storeyCount = parseInt(generalItem.storey) || 1;
-        
-        // Calculate per storey values
-        const areaPerStorey = totalArea / storeyCount;
-        const baseValuePerStorey = totalBaseValue / storeyCount;
-        const adjustedValuePerStorey = totalAdjustedValue / storeyCount;
-        const depreciationCostPerStorey = (baseValuePerStorey * (depreciationRate / 100));
+    console.log('=== BUILDING FAAS BACK - DATA SOURCES ===');
+    console.log('General Data:', generalData);
+    console.log('Building Codes:', buildingCodes);
+    console.log('Assessment Summary:', assessmentSummary);
+    console.log('========================================');
 
-        // Create separate entries for each storey
-        for (let storey = 1; storey <= storeyCount; storey++) {
-          combinedData.push({
-            description: `${generalItem.building_code || 'Building Structure'} - ${getFloorName(storey)}`,
-            type: 'Structure',
-            area: areaPerStorey,
-            unitValue: 0,
-            completionPercent: generalItem.construction_percent || '100',
-            baseValue: baseValuePerStorey,
-            depreciationRate: depreciationRate,
-            depreciationCost: depreciationCostPerStorey,
-            marketValue: adjustedValuePerStorey,
-            storeyNumber: storey,
-            totalStoreys: storeyCount
-          });
-        }
-      });
-    } 
-    // If no assessment summary but we have general data, use general data
-    else if (generalData && generalData.length > 0) {
+    // Use general data as primary source
+    if (generalData && generalData.length > 0) {
       generalData.forEach((generalItem, index) => {
-        const totalArea = parseFloat(generalItem.area) || 0;
-        const totalBaseValue = parseFloat(generalItem.base_market_value) || 0;
-        const totalAdjustedValue = parseFloat(generalItem.final_adjusted_market_value) || 0;
+        // Get data from general_descriptiontbl
+        const area = parseFloat(generalItem.area) || 0;
+        const baseMarketValue = parseFloat(generalItem.base_market_value) || 0;
+        const adjustedMarketValue = parseFloat(generalItem.final_adjusted_market_value) || 0;
         const depreciationRate = parseFloat(generalItem.depreciation_rate) || 0;
+        
+        // Get building code data from building_codetbl
+        const buildingCodeData = buildingCodes.find(code => code.building_code === generalItem.building_code);
+        const description = buildingCodeData?.description || generalItem.building_code || 'Building Structure';
+        const structureType = buildingCodeData?.structure_code || 'Structure';
+        const unitValue = buildingCodeData?.rate || 0;
         
         // Get number of storeys from general data
         const storeyCount = parseInt(generalItem.storey) || 1;
         
-        // Calculate per storey values
-        const areaPerStorey = totalArea / storeyCount;
-        const baseValuePerStorey = totalBaseValue / storeyCount;
-        const adjustedValuePerStorey = totalAdjustedValue / storeyCount;
+        console.log(`Processing ${storeyCount}-storey building:`, {
+          description,
+          structureType,
+          unitValue,
+          area,
+          baseMarketValue,
+          adjustedMarketValue,
+          depreciationRate,
+          storeyCount
+        });
+
+        // Calculate per storey values - SPLIT ALL VALUES BY STOREY
+        const areaPerStorey = area / storeyCount;
+        const baseValuePerStorey = baseMarketValue / storeyCount;
+        const adjustedValuePerStorey = adjustedMarketValue / storeyCount;
         const depreciationCostPerStorey = (baseValuePerStorey * (depreciationRate / 100));
 
         // Create separate entries for each storey
         for (let storey = 1; storey <= storeyCount; storey++) {
           combinedData.push({
-            description: `${generalItem.building_code || 'Building Structure'} - ${getFloorName(storey)}`,
-            type: 'Structure',
+            // From building_codetbl
+            description: `${description} - ${getFloorName(storey)}`,
+            type: structureType,
+            unitValue: unitValue,
+            
+            // From general_descriptiontbl (split by storey)
             area: areaPerStorey,
-            unitValue: 0,
-            completionPercent: generalItem.construction_percent || '100',
             baseValue: baseValuePerStorey,
+            marketValue: adjustedValuePerStorey, // Adjusted Market Value
             depreciationRate: depreciationRate,
             depreciationCost: depreciationCostPerStorey,
-            marketValue: adjustedValuePerStorey,
+            completionPercent: generalItem.construction_percent || '100',
+            
+            // Metadata
             storeyNumber: storey,
             totalStoreys: storeyCount
           });
         }
       });
-    }
-    // If no data at all, create a default entry
-    else {
-      combinedData.push({
-        description: 'Building Structure - 1st Floor',
-        type: 'Structure',
-        area: 0,
-        unitValue: 0,
-        completionPercent: '100',
-        baseValue: 0,
-        depreciationRate: 0,
-        depreciationCost: 0,
-        marketValue: 0,
-        storeyNumber: 1,
-        totalStoreys: 1
-      });
+    } else {
+      console.log('No general data available');
     }
 
+    console.log('Final combined appraisal data:', combinedData);
     return combinedData;
   };
 
@@ -232,7 +212,7 @@ const BuildingFaasBack: React.FC<BuildingFaasBackProps> = ({
       totalDepreciation += item.depreciationCost;
     });
 
-    // Calculate from building adjustments (additional items)
+    // Calculate from building adjustments
     buildingAdjustments.forEach(adjustment => {
       const area = parseFloat(adjustment.area) || 0;
       const baseValue = parseFloat(adjustment.base_value) || 0;
@@ -251,9 +231,10 @@ const BuildingFaasBack: React.FC<BuildingFaasBackProps> = ({
       totalAdjustedValue,
       totalArea,
       totalDepreciation,
-      totalMarketValue: totalAdjustedValue > 0 ? totalAdjustedValue : totalBaseValue
+      totalMarketValue: totalAdjustedValue
     };
 
+    console.log('Final calculated values:', result);
     return result;
   };
 
@@ -267,13 +248,12 @@ const BuildingFaasBack: React.FC<BuildingFaasBackProps> = ({
   const ROW_ITEMS = 10;
   const ROW_ASSESSMENT = 4;
 
-  // Calculate subtotals for main building structures from COMBINED data
+  // Calculate subtotals
   const mainBuildingArea = combinedAppraisalData.reduce((sum, item) => sum + item.area, 0);
   const mainBuildingBaseValue = combinedAppraisalData.reduce((sum, item) => sum + item.baseValue, 0);
   const mainBuildingMarketValue = combinedAppraisalData.reduce((sum, item) => sum + item.marketValue, 0);
   const mainBuildingDepreciation = combinedAppraisalData.reduce((sum, item) => sum + item.depreciationCost, 0);
 
-  // Calculate subtotals for additional items (building adjustments)
   const additionalItemsArea = buildingAdjustments.reduce((sum, adj) => sum + (parseFloat(adj.area) || 0), 0);
   const additionalItemsBaseValue = buildingAdjustments.reduce((sum, adj) => sum + (parseFloat(adj.base_value) || 0), 0);
   const additionalItemsMarketValue = buildingAdjustments.reduce((sum, adj) => sum + (parseFloat(adj.adjusted_value) || 0), 0);
@@ -283,7 +263,6 @@ const BuildingFaasBack: React.FC<BuildingFaasBackProps> = ({
     return sum + (baseValue * (depreciationRate / 100));
   }, 0);
 
-  // Calculate totals
   const totalArea = mainBuildingArea + additionalItemsArea;
   const totalBaseValue = mainBuildingBaseValue + additionalItemsBaseValue;
   const totalMarketValue = mainBuildingMarketValue + additionalItemsMarketValue;
@@ -292,7 +271,16 @@ const BuildingFaasBack: React.FC<BuildingFaasBackProps> = ({
   return (
     <div className="back-page page-break">
       <div className="sheet back-sheet">
-        {/* PROPERTY APPRAISAL - DUPLICATED BY STOREY */}
+        {/* Debug Info */}
+        <div style={{ padding: '10px', background: '#f0f0f0', marginBottom: '10px', fontSize: '12px' }}>
+          <strong>DEBUG INFO:</strong><br />
+          General Data: {generalData.length} items | 
+          Building Codes: {buildingCodes.length} items | 
+          Storeys: {combinedAppraisalData.map(item => item.storeyNumber).join(', ')} |
+          Total Market Value: {formatCurrency(totalMarketValue)}
+        </div>
+
+        {/* PROPERTY APPRAISAL */}
         <div className="section-header">PROPERTY APPRAISAL</div>
 
         <table className="table appraisal-table">
@@ -310,7 +298,7 @@ const BuildingFaasBack: React.FC<BuildingFaasBackProps> = ({
             </tr>
           </thead>
           <tbody>
-            {/* Combined Appraisal Data Rows - Duplicated by Storey */}
+            {/* Combined Appraisal Data Rows */}
             {combinedAppraisalData.map((item, index) => (
               <tr key={`combined-${index}`}>
                 <td>
@@ -370,7 +358,7 @@ const BuildingFaasBack: React.FC<BuildingFaasBackProps> = ({
               </tr>
             ))}
 
-            {/* Empty rows for main appraisal */}
+            {/* Empty rows */}
             {[...Array(Math.max(0, ROW_APPRAISAL - combinedAppraisalData.length))].map((_, index) => {
               const emptyIndex = index + combinedAppraisalData.length;
               return (
@@ -387,29 +375,21 @@ const BuildingFaasBack: React.FC<BuildingFaasBackProps> = ({
               );
             })}
 
-            {/* Subtotal for main building structures */}
+            {/* Subtotal */}
             <tr className="subtotal-row">
               <td colSpan={2} style={{ textAlign: 'left', fontWeight: 'bold' }}>Sub-total</td>
-              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
-                {mainBuildingArea.toFixed(2)}
-              </td>
+              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{mainBuildingArea.toFixed(2)}</td>
               <td></td>
               <td></td>
-              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
-                {formatCurrency(mainBuildingBaseValue)}
-              </td>
+              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(mainBuildingBaseValue)}</td>
               <td></td>
-              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
-                {formatCurrency(mainBuildingDepreciation)}
-              </td>
-              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
-                {formatCurrency(mainBuildingMarketValue)}
-              </td>
+              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(mainBuildingDepreciation)}</td>
+              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(mainBuildingMarketValue)}</td>
             </tr>
           </tbody>
         </table>
 
-        {/* ADDITIONAL ITEMS - Building Adjustments with Components and Subcomponents */}
+        {/* ADDITIONAL ITEMS */}
         <div className="section-header">ADDITIONAL ITEMS:</div>
 
         <table className="table items-table">
@@ -427,7 +407,6 @@ const BuildingFaasBack: React.FC<BuildingFaasBackProps> = ({
             </tr>
           </thead>
           <tbody>
-            {/* Building Adjustments Rows with Component and Subcomponent Data */}
             {buildingAdjustments.map((adjustment, index) => {
               const area = parseFloat(adjustment.area) || 0;
               const baseValue = parseFloat(adjustment.base_value) || 0;
@@ -435,7 +414,6 @@ const BuildingFaasBack: React.FC<BuildingFaasBackProps> = ({
               const depreciationRate = parseFloat(adjustment.depreciation_rate) || 0;
               const depreciationCost = baseValue * (depreciationRate / 100);
 
-              // Get component and subcomponent data
               const componentDescription = getComponentDescription(adjustment.building_com_id);
               const subcomponentData = getSubcomponentData(adjustment.building_subcom_id);
               const unitValue = subcomponentData.rate;
@@ -501,7 +479,7 @@ const BuildingFaasBack: React.FC<BuildingFaasBackProps> = ({
               );
             })}
 
-            {/* Empty rows for additional items */}
+            {/* Empty rows */}
             {[...Array(Math.max(0, ROW_ITEMS - buildingAdjustments.length))].map((_, index) => {
               const emptyIndex = index + buildingAdjustments.length;
               return (
@@ -518,44 +496,28 @@ const BuildingFaasBack: React.FC<BuildingFaasBackProps> = ({
               );
             })}
 
-            {/* Subtotal for additional items */}
+            {/* Subtotal */}
             <tr className="subtotal-row">
               <td colSpan={2} style={{ textAlign: 'left', fontWeight: 'bold' }}>Sub-total</td>
-              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
-                {additionalItemsArea.toFixed(2)}
-              </td>
+              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{additionalItemsArea.toFixed(2)}</td>
               <td></td>
               <td></td>
-              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
-                {formatCurrency(additionalItemsBaseValue)}
-              </td>
+              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(additionalItemsBaseValue)}</td>
               <td></td>
-              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
-                {formatCurrency(additionalItemsDepreciation)}
-              </td>
-              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
-                {formatCurrency(additionalItemsMarketValue)}
-              </td>
+              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(additionalItemsDepreciation)}</td>
+              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(additionalItemsMarketValue)}</td>
             </tr>
 
-            {/* TOTAL - Combined total of main building and additional items */}
+            {/* TOTAL */}
             <tr className="subtotal-row">
               <td colSpan={2} style={{ textAlign: 'left', fontWeight: 'bold' }}>TOTAL</td>
-              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
-                {totalArea.toFixed(2)}
-              </td>
+              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{totalArea.toFixed(2)}</td>
               <td></td>
               <td></td>
-              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
-                {formatCurrency(totalBaseValue)}
-              </td>
+              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(totalBaseValue)}</td>
               <td></td>
-              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
-                {formatCurrency(totalDepreciation)}
-              </td>
-              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
-                {formatCurrency(totalMarketValue)}
-              </td>
+              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(totalDepreciation)}</td>
+              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(totalMarketValue)}</td>
             </tr>
           </tbody>
         </table>
@@ -607,7 +569,6 @@ const BuildingFaasBack: React.FC<BuildingFaasBackProps> = ({
               );
             })}
             
-            {/* If no assessment data, show one row with totals */}
             {assessmentSummary.length === 0 && (
               <tr>
                 <td>
@@ -662,9 +623,7 @@ const BuildingFaasBack: React.FC<BuildingFaasBackProps> = ({
             <input 
               type="checkbox" 
               checked={isTaxable}
-              onChange={(e) => {
-                onTaxableChange?.(e.target.checked);
-              }}
+              onChange={(e) => onTaxableChange?.(e.target.checked)}
             />
           </label>
           <label>
@@ -672,14 +631,10 @@ const BuildingFaasBack: React.FC<BuildingFaasBackProps> = ({
             <input 
               type="checkbox" 
               checked={isExempt}
-              onChange={(e) => {
-                onExemptChange?.(e.target.checked);
-              }}
+              onChange={(e) => onExemptChange?.(e.target.checked)}
             />
           </label>
-          <div className="effectivity">
-            Effectivity of Assessment: {currentQuarter} Qtr. {currentYear} Yr.
-          </div>
+          <div className="effectivity">Effectivity of Assessment: {currentQuarter} Qtr. {currentYear} Yr.</div>
         </div>
 
         <div className="signature-container">

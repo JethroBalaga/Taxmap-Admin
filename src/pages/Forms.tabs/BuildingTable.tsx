@@ -24,7 +24,7 @@ import '../../CSS/Setup.css';
 import { useParams, useHistory } from 'react-router-dom';
 import { supabase } from '../../utils/supaBaseClient';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
-import BuildingFaas from '../../components/Fass/BuildingFaas/BuildingFaas';
+import BuildingFaas from '../../components/Fass/BuildingFaas/BuildingFaas'; // Import the BuildingFaas component
 
 interface FormData {
   form_id: string;
@@ -50,9 +50,6 @@ interface GeneralDescription {
   value_info_id: string;
   general_id: string;
   created_at?: string;
-  area?: number;
-  base_market_value?: number;
-  final_adjusted_market_value?: number;
 }
 
 interface AssessmentSummary {
@@ -77,21 +74,12 @@ interface BuildingAdjustment {
   value_info_id: string;
 }
 
-interface BuildingCode {
-  building_code: string;
-  structure_code: string;
-  description: string;
-  rate: number;
-  created_at: string;
-}
-
 const BuildingTable: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState<FormData | null>(null);
   const [generalData, setGeneralData] = useState<GeneralDescription[]>([]);
   const [assessmentSummary, setAssessmentSummary] = useState<AssessmentSummary[]>([]);
   const [buildingAdjustments, setBuildingAdjustments] = useState<BuildingAdjustment[]>([]);
-  const [buildingCodes, setBuildingCodes] = useState<BuildingCode[]>([]);
   const [filteredAdjustments, setFilteredAdjustments] = useState<BuildingAdjustment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showFaasModal, setShowFaasModal] = useState(false);
@@ -103,7 +91,6 @@ const BuildingTable: React.FC = () => {
   useEffect(() => {
     if (formId) {
       loadFormData();
-      fetchBuildingCodes();
     }
   }, [formId]);
 
@@ -157,6 +144,7 @@ const BuildingTable: React.FC = () => {
         
         console.log(`Checking conditions - Kind: ${kind}, Class: ${classId}`);
         
+        // Check if it's BUILDING
         if (kind === 'BUILDING') {
           setFormData(data);
         } else {
@@ -167,23 +155,6 @@ const BuildingTable: React.FC = () => {
       console.error('Failed to load form data:', error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const fetchBuildingCodes = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('building_codetbl')
-        .select('*');
-
-      if (error) {
-        console.error('Error fetching building codes:', error);
-        return;
-      }
-
-      setBuildingCodes(data || []);
-    } catch (error) {
-      console.error('Failed to load building codes:', error);
     }
   };
 
@@ -268,10 +239,6 @@ const BuildingTable: React.FC = () => {
     }
   };
 
-  const getBuildingCodeData = (buildingCode: string) => {
-    return buildingCodes.find(code => code.building_code === buildingCode);
-  };
-
   const handleBack = () => {
     history.goBack();
   };
@@ -291,6 +258,7 @@ const BuildingTable: React.FC = () => {
       .join(' ');
   };
 
+  // Filter out form_id from the form data to display
   const getDisplayData = () => {
     if (!formData) return [];
     
@@ -302,6 +270,7 @@ const BuildingTable: React.FC = () => {
       }));
   };
 
+  // Create display data for general description that excludes ID fields
   const getGeneralDisplayData = () => {
     return generalData.map(item => {
       const { value_info_id, general_id, created_at, ...displayItem } = item;
@@ -309,6 +278,7 @@ const BuildingTable: React.FC = () => {
     });
   };
 
+  // Create display data for assessment summary that excludes form_id and value_info_id
   const getAssessmentDisplayData = () => {
     return assessmentSummary.map(item => {
       const { form_id, value_info_id, ...displayItem } = item;
@@ -316,6 +286,7 @@ const BuildingTable: React.FC = () => {
     });
   };
 
+  // Create display data for building adjustments that excludes value_info_id
   const getAdjustmentDisplayData = () => {
     return filteredAdjustments.map(item => {
       const { value_info_id, ...displayItem } = item;
@@ -323,6 +294,7 @@ const BuildingTable: React.FC = () => {
     });
   };
 
+  // Handle row clicks
   const handleGeneralRowClick = (rowData: any) => {
     console.log('General description row clicked:', rowData);
   };
@@ -368,6 +340,7 @@ const BuildingTable: React.FC = () => {
         <IonLoading isOpen={isLoading} message="Loading building details..." />
 
         <IonGrid>
+          {/* Form Details Card - Like NonAgriculturalLand */}
           {formData && (
             <IonRow>
               <IonCol size="12">
@@ -388,6 +361,7 @@ const BuildingTable: React.FC = () => {
             </IonRow>
           )}
 
+          {/* General Description Table */}
           {generalData.length > 0 && (
             <IonRow>
               <IonCol size="12">
@@ -401,6 +375,7 @@ const BuildingTable: React.FC = () => {
             </IonRow>
           )}
 
+          {/* Assessment Summary Table */}
           {assessmentSummary.length > 0 && (
             <IonRow>
               <IonCol size="12">
@@ -414,6 +389,7 @@ const BuildingTable: React.FC = () => {
             </IonRow>
           )}
 
+          {/* Search Bar - ABOVE Building Adjustments Table */}
           <IonRow>
             <IonCol size="12" className="search-container">
               <IonSearchbar
@@ -426,6 +402,7 @@ const BuildingTable: React.FC = () => {
             </IonCol>
           </IonRow>
 
+          {/* Building Adjustments Table - With Search Functionality */}
           {filteredAdjustments.length > 0 ? (
             <IonRow>
               <IonCol size="12">
@@ -449,6 +426,7 @@ const BuildingTable: React.FC = () => {
             )
           )}
 
+          {/* Show message if no assessment data found */}
           {!isLoading && assessmentSummary.length === 0 && (
             <IonRow>
               <IonCol size="12">
@@ -459,6 +437,7 @@ const BuildingTable: React.FC = () => {
             </IonRow>
           )}
 
+          {/* Show message if no form data found */}
           {!isLoading && !formData && (
             <IonRow>
               <IonCol size="12">
@@ -470,19 +449,13 @@ const BuildingTable: React.FC = () => {
           )}
         </IonGrid>
 
+        {/* Faas Modal */}
         <IonModal 
           isOpen={showFaasModal} 
           onDidDismiss={handleCloseFaas}
           style={{ '--width': '95%', '--height': '90%', '--border-radius': '8px' }}
         >
-          <BuildingFaas 
-            formData={formData}
-            generalData={generalData}
-            assessmentSummary={assessmentSummary}
-            buildingAdjustments={buildingAdjustments}
-            buildingCodes={buildingCodes}
-            onClose={handleCloseFaas}
-          />
+          <BuildingFaas />
         </IonModal>
       </IonContent>
     </IonPage>
