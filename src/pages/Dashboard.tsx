@@ -14,8 +14,6 @@ import {
   IonCardTitle,
   IonSpinner,
   IonText,
-  IonButtons,
-  IonMenuButton,
   IonButton,
   IonIcon,
   IonSegment,
@@ -23,7 +21,7 @@ import {
   IonLabel,
   IonAlert
 } from '@ionic/react';
-import { arrowBack } from 'ionicons/icons';
+import { arrowBack, refresh } from 'ionicons/icons';
 import { Pie, Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -132,6 +130,38 @@ const Dashboard: React.FC = () => {
       loadAllData();
     }
   }, [timeRange, selectedView]);
+
+  // Refresh function
+  const handleRefresh = () => {
+    if (selectedView === 'overview') {
+      fetchStats(setStats, setIsLoading, setError);
+      const loadAllData = async () => {
+        setIsLineChartLoading(true);
+        await Promise.all([
+          fetchAdminActivity(timeRange, setAdminActivityData),
+          fetchUserActivity(timeRange, setUserActivityData),
+          fetchFormSubmissions(timeRange, setFormSubmissionData),
+          fetchFormReviewStats(timeRange, setFormReviewData)
+        ]);
+        setIsLineChartLoading(false);
+      };
+      loadAllData();
+    } else {
+      if (selectedView === 'kinds') {
+        fetchKindDistribution(setKindData, setIsChartLoading);
+      } else {
+        const kindMap: Record<string, number> = {
+          'land': 1,
+          'building': 2, 
+          'machinery': 3
+        };
+        const kindId = kindMap[selectedView];
+        if (kindId) {
+          fetchClassificationDistribution(kindId, setClassificationData, setIsChartLoading);
+        }
+      }
+    }
+  };
 
   // Chart data configurations
   const kindsChartData = {
@@ -331,10 +361,10 @@ const Dashboard: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonButtons slot="start">
-            <IonMenuButton />
-          </IonButtons>
           <IonTitle>{getPageTitle()}</IonTitle>
+          <IonButton slot="end" onClick={handleRefresh}>
+            <IonIcon slot="icon-only" icon={refresh} />
+          </IonButton>
         </IonToolbar>
       </IonHeader>
 
@@ -462,10 +492,15 @@ const Dashboard: React.FC = () => {
                     <IonCardHeader>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <IonCardTitle>{getChartTitle()}</IonCardTitle>
-                        <IonButton fill="clear" onClick={() => setSelectedView('overview')} color="medium">
-                          <IonIcon slot="start" icon={arrowBack} />
-                          Back to Overview
-                        </IonButton>
+                        <div>
+                          <IonButton fill="clear" onClick={handleRefresh} color="medium">
+                            <IonIcon slot="icon-only" icon={refresh} />
+                          </IonButton>
+                          <IonButton fill="clear" onClick={() => setSelectedView('overview')} color="medium">
+                            <IonIcon slot="start" icon={arrowBack} />
+                            Back to Overview
+                          </IonButton>
+                        </div>
                       </div>
                     </IonCardHeader>
                     <IonCardContent>

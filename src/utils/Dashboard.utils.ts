@@ -79,50 +79,81 @@ export const fetchStats = async (
     setIsLoading(true);
     setError('');
 
-    // Get total forms count
-    const { count: totalForms, error: formsError } = await supabase
-      .from('formtbl').select('*', { count: 'exact', head: true });
-    if (formsError) throw formsError;
+    // Get all forms data from form_view
+    const { data: allForms, error: formsError } = await supabase
+      .from('form_view')
+      .select('form_id, kind_description, class_id, status');
 
-    // Get counts by kind
-    const { data: kindCounts, error: kindError } = await supabase
-      .from('formtbl').select('kind_id').in('kind_id', KIND_IDS);
-    if (kindError) throw kindError;
+    let totalForms = 0;
+    let totalLand = 0;
+    let totalBuilding = 0;
+    let totalMachinery = 0;
 
-    const kindStats = KIND_IDS.map(id => ({
-      id,
-      count: kindCounts?.filter(item => item.kind_id === id).length || 0
-    }));
+    if (formsError) {
+      console.error('Forms query error:', formsError);
+      setError('Failed to load forms data: ' + formsError.message);
+    } else if (allForms) {
+      totalForms = allForms.length;
+      
+      // Count by kind_description instead of kind_id
+      totalLand = allForms.filter(form => 
+        form.kind_description && form.kind_description.toLowerCase().includes('land')
+      ).length;
+      
+      totalBuilding = allForms.filter(form => 
+        form.kind_description && form.kind_description.toLowerCase().includes('building')
+      ).length;
+      
+      totalMachinery = allForms.filter(form => 
+        form.kind_description && form.kind_description.toLowerCase().includes('machinery')
+      ).length;
+    }
 
     // Get user statistics
     let totalUsers = 0, activeUsers = 0;
     try {
-      const { count: usersCount } = await supabase
-        .from('users').select('*', { count: 'exact', head: true });
-      totalUsers = usersCount || 0;
+      // Get total users count
+      const { count: usersCount, error: usersError } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true });
+      
+      if (usersError) {
+        console.error('Users count error:', usersError);
+      } else {
+        totalUsers = usersCount || 0;
+      }
 
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      const { count: activeUsersCount } = await supabase
-        .from('user_activity_logs')
-        .select('user_id', { count: 'exact', head: true })
-        .gte('timestamp', thirtyDaysAgo).eq('activity_type', 'LOGIN');
-      activeUsers = activeUsersCount || 0;
-    } catch (error) {
-      console.log('User statistics not available');
+      // Get active users (not suspended)
+      const { count: activeUsersCount, error: activeUsersError } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .eq('suspended', false);
+      
+      if (activeUsersError) {
+        console.error('Active users error:', activeUsersError);
+        activeUsers = totalUsers;
+      } else {
+        activeUsers = activeUsersCount || 0;
+      }
+
+    } catch (userError) {
+      console.error('User statistics error:', userError);
     }
 
-    setStats({
-      totalForms: totalForms || 0,
-      totalLand: kindStats[0].count,
-      totalBuilding: kindStats[1].count,
-      totalMachinery: kindStats[2].count,
+    const finalStats: DashboardStats = {
+      totalForms,
+      totalLand,
+      totalBuilding,
+      totalMachinery,
       totalUsers,
       activeUsers
-    });
+    };
+
+    setStats(finalStats);
 
   } catch (error: any) {
     console.error('Error fetching admin stats:', error);
-    setError(error.message || 'Failed to load admin dashboard data');
+    setError('Failed to load dashboard data: ' + error.message);
   } finally {
     setIsLoading(false);
   }
@@ -134,27 +165,42 @@ export const fetchKindDistribution = async (
 ) => {
   try {
     setIsChartLoading(true);
+    
+    // Get all forms with kind_description from form_view
     const { data, error } = await supabase
-      .from('formtbl').select('kind_id').in('kind_id', KIND_IDS);
-    if (error) throw error;
+      .from('form_view')
+      .select('kind_description');
+    
+    if (error) {
+      console.error('Kind distribution error:', error);
+      throw error;
+    }
 
-    const kindCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0 };
-    data?.forEach(item => { 
-      if (item.kind_id in kindCounts) {
-        kindCounts[item.kind_id]++;
-      }
-    });
+    // Count by kind_description
+    const landCount = data?.filter(form => 
+      form.kind_description && form.kind_description.toLowerCase().includes('land')
+    ).length || 0;
+    
+    const buildingCount = data?.filter(form => 
+      form.kind_description && form.kind_description.toLowerCase().includes('building')
+    ).length || 0;
+    
+    const machineryCount = data?.filter(form => 
+      form.kind_description && form.kind_description.toLowerCase().includes('machinery')
+    ).length || 0;
 
     const total = data?.length || 0;
-    const processedData = KIND_IDS.map(id => ({
-      kind_id: id,
-      count: kindCounts[id] || 0,
-      percentage: total > 0 ? ((kindCounts[id] || 0) / total) * 100 : 0
-    }));
+    const processedData = [
+      { kind_id: 1, count: landCount, percentage: total > 0 ? (landCount / total) * 100 : 0 },
+      { kind_id: 2, count: buildingCount, percentage: total > 0 ? (buildingCount / total) * 100 : 0 },
+      { kind_id: 3, count: machineryCount, percentage: total > 0 ? (machineryCount / total) * 100 : 0 }
+    ];
 
     setKindData(processedData);
+    
   } catch (error) {
     console.error('Error fetching kind distribution:', error);
+    setKindData([]);
   } finally {
     setIsChartLoading(false);
   }
@@ -167,13 +213,36 @@ export const fetchClassificationDistribution = async (
 ) => {
   try {
     setIsChartLoading(true);
+    
+    // Map kind_id to kind_description for filtering
+    const kindMap: Record<number, string> = {
+      1: 'land',
+      2: 'building', 
+      3: 'machinery'
+    };
+    const kindDescription = kindMap[kindId];
+    
+    if (!kindDescription) {
+      console.error('Invalid kindId:', kindId);
+      setClassificationData([]);
+      return;
+    }
+    
     const { data, error } = await supabase
-      .from('formtbl').select('class_id').eq('kind_id', kindId);
-    if (error) throw error;
+      .from('form_view')
+      .select('class_id, kind_description')
+      .ilike('kind_description', `%${kindDescription}%`);
+    
+    if (error) {
+      console.error('Classification distribution error:', error);
+      throw error;
+    }
 
     const classCounts: { [key: string]: number } = {};
     data?.forEach(item => { 
-      classCounts[item.class_id] = (classCounts[item.class_id] || 0) + 1 
+      if (item.class_id) {
+        classCounts[item.class_id] = (classCounts[item.class_id] || 0) + 1;
+      }
     });
 
     const total = data?.length || 0;
@@ -184,17 +253,69 @@ export const fetchClassificationDistribution = async (
     }));
 
     setClassificationData(processedData);
+    
   } catch (error) {
     console.error('Error fetching classification distribution:', error);
-    // Fallback to mock data
-    const mockData = ['A', 'B', 'C', 'D', 'E'].map((class_id, i) => ({
-      class_id,
-      count: Math.floor(Math.random() * 20) + 5,
-      percentage: [40, 25, 15, 10, 5][i]
-    }));
-    setClassificationData(mockData);
+    setClassificationData([]);
   } finally {
     setIsChartLoading(false);
+  }
+};
+
+export const fetchFormSubmissions = async (
+  timeRange: TimeRangeType,
+  setFormSubmissionData: (data: FormSubmissionData[]) => void
+) => {
+  try {
+    const days = timeRange === '7days' ? 7 : 30;
+    const dateLabels = generateDateLabels(days);
+
+    try {
+      // Use form_view with created_at
+      const { data: formData, error: formError } = await supabase
+        .from('form_view')
+        .select('created_at, kind_id')
+        .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
+        .in('kind_id', KIND_IDS);
+
+      if (formError) {
+        console.error('Error fetching form submissions:', formError);
+        throw formError;
+      }
+
+      const processedData = dateLabels.map(date => {
+        const dateForms = formData?.filter(form => 
+          form.created_at && form.created_at.split('T')[0] === date
+        ) || [];
+        
+        const landCount = dateForms.filter(f => f.kind_id === 1).length;
+        const buildingCount = dateForms.filter(f => f.kind_id === 2).length;
+        const machineryCount = dateForms.filter(f => f.kind_id === 3).length;
+        
+        return {
+          date,
+          totalCount: landCount + buildingCount + machineryCount,
+          landCount,
+          buildingCount,
+          machineryCount
+        };
+      });
+      
+      setFormSubmissionData(processedData);
+      
+    } catch (error) {
+      console.error('Error fetching form submissions:', error);
+      // Return empty data
+      setFormSubmissionData(dateLabels.map(date => ({
+        date,
+        totalCount: 0,
+        landCount: 0,
+        buildingCount: 0,
+        machineryCount: 0
+      })));
+    }
+  } catch (error) {
+    console.error('Error fetching form submissions:', error);
   }
 };
 
@@ -215,7 +336,7 @@ export const fetchAdminActivity = async (
 
       const processedData = dateLabels.map(date => {
         const dateActivities = adminData?.filter(activity => 
-          activity.timestamp.split('T')[0] === date
+          activity.timestamp && activity.timestamp.split('T')[0] === date
         ) || [];
         return {
           date,
@@ -223,15 +344,16 @@ export const fetchAdminActivity = async (
           systemActionCount: dateActivities.filter(a => a.activity_type === 'SYSTEM_ACTION').length,
         };
       });
+      
       setAdminActivityData(processedData);
+      
     } catch {
-      // Fallback to mock data
-      const mockData = dateLabels.map(date => ({
+      const emptyData = dateLabels.map(date => ({
         date,
-        loginCount: Math.floor(Math.random() * 5) + 1,
-        systemActionCount: Math.floor(Math.random() * 2),
+        loginCount: 0,
+        systemActionCount: 0,
       }));
-      setAdminActivityData(mockData);
+      setAdminActivityData(emptyData);
     }
   } catch (error) {
     console.error('Error fetching admin activity:', error);
@@ -255,71 +377,22 @@ export const fetchUserActivity = async (
 
       const processedData = dateLabels.map(date => {
         const dateActivities = userData?.filter(activity => 
-          activity.timestamp.split('T')[0] === date
+          activity.timestamp && activity.timestamp.split('T')[0] === date
         ) || [];
         return { date, loginCount: dateActivities.length };
       });
+      
       setUserActivityData(processedData);
+      
     } catch {
-      const mockData = dateLabels.map(date => ({
-        date, loginCount: Math.floor(Math.random() * 15) + 5
+      const emptyData = dateLabels.map(date => ({
+        date, 
+        loginCount: 0
       }));
-      setUserActivityData(mockData);
+      setUserActivityData(emptyData);
     }
   } catch (error) {
     console.error('Error fetching user activity:', error);
-  }
-};
-
-export const fetchFormSubmissions = async (
-  timeRange: TimeRangeType,
-  setFormSubmissionData: (data: FormSubmissionData[]) => void
-) => {
-  try {
-    const days = timeRange === '7days' ? 7 : 30;
-    const dateLabels = generateDateLabels(days);
-
-    try {
-      const { data: formData } = await supabase
-        .from('formtbl')
-        .select('created_at, kind_id')
-        .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
-        .in('kind_id', KIND_IDS);
-
-      const processedData = dateLabels.map(date => {
-        const dateForms = formData?.filter(form => form.created_at.split('T')[0] === date) || [];
-        const landCount = dateForms.filter(f => f.kind_id === 1).length;
-        const buildingCount = dateForms.filter(f => f.kind_id === 2).length;
-        const machineryCount = dateForms.filter(f => f.kind_id === 3).length;
-        return {
-          date,
-          totalCount: landCount + buildingCount + machineryCount,
-          landCount,
-          buildingCount,
-          machineryCount
-        };
-      });
-      setFormSubmissionData(processedData);
-    } catch {
-      const baseSubmissions = timeRange === '7days' ? 3 : 10;
-      const mockData = dateLabels.map((date, index) => {
-        const progression = Math.floor(index * 0.8) + 1;
-        const totalCount = baseSubmissions + progression;
-        const landCount = Math.max(1, Math.floor(totalCount * 0.5));
-        const buildingCount = Math.max(1, Math.floor(totalCount * 0.3));
-        const machineryCount = Math.max(1, Math.floor(totalCount * 0.2));
-        return {
-          date,
-          totalCount: landCount + buildingCount + machineryCount,
-          landCount,
-          buildingCount,
-          machineryCount
-        };
-      });
-      setFormSubmissionData(mockData);
-    }
-  } catch (error) {
-    console.error('Error fetching form submissions:', error);
   }
 };
 
@@ -333,23 +406,25 @@ export const fetchFormReviewStats = async (
 
     try {
       const { data: reviewedForms } = await supabase
-        .from('formtbl')
+        .from('form_view')
         .select('created_at, status')
         .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
         .eq('status', 'Inspected');
 
       const processedData = dateLabels.map(date => {
         const dateReviews = reviewedForms?.filter(form => 
-          form.created_at.split('T')[0] === date
+          form.created_at && form.created_at.split('T')[0] === date
         ) || [];
         return { date, reviewCount: dateReviews.length };
       });
+      
       setFormReviewData(processedData);
     } catch {
-      const mockData = dateLabels.map(date => ({
-        date, reviewCount: Math.floor(Math.random() * 8) + 2
+      const emptyData = dateLabels.map(date => ({
+        date, 
+        reviewCount: 0
       }));
-      setFormReviewData(mockData);
+      setFormReviewData(emptyData);
     }
   } catch (error) {
     console.error('Error fetching form review stats:', error);
