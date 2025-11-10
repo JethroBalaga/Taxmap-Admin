@@ -19,10 +19,11 @@ import {
   IonButtons,
   IonText
 } from '@ionic/react';
-import { arrowBackOutline, leaf, trendingUp, calculator } from 'ionicons/icons';
+import { arrowBackOutline, leaf, trendingUp, calculator, documentOutline } from 'ionicons/icons';
 import { supabase } from '../../utils/supaBaseClient';
 import { useHistory, useParams } from 'react-router-dom';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
+import LandFaasBackModal from '../../components/Fass/LandFaas/LandFaasBackModal';
 import '../../CSS/Setup.css';
 import '../../CSS/AgriculturalCard.css';
 
@@ -33,6 +34,8 @@ interface FormData {
   class_id: string;
   kind_description: string;
   status: string;
+  area?: number;
+  actualUse?: string;
   [key: string]: any;
 }
 
@@ -54,6 +57,8 @@ interface AgriculturalLandValuation {
   adjusted_market_value: number;
   assessment_level: string;
   assessed_value: number;
+  subclass_id?: string;
+  subclass_description?: string;
 }
 
 const AgriculturalLand: React.FC = () => {
@@ -63,6 +68,7 @@ const AgriculturalLand: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
+  const [showFaasModal, setShowFaasModal] = useState(false);
   const history = useHistory();
   const { formId } = useParams<{ formId: string }>();
 
@@ -202,6 +208,14 @@ const AgriculturalLand: React.FC = () => {
     history.goBack();
   };
 
+  const handleViewFaas = () => {
+    setShowFaasModal(true);
+  };
+
+  const handleCloseFaas = () => {
+    setShowFaasModal(false);
+  };
+
   const formatFieldName = (fieldName: string): string => {
     return fieldName
       .split('_')
@@ -247,6 +261,32 @@ const AgriculturalLand: React.FC = () => {
     console.log('Valuation row clicked:', rowData);
   };
 
+  // Calculate base market value for FAAS
+  const getBaseMarketValue = () => {
+    if (valuationData.length > 0) {
+      return valuationData[0]?.base_market_value || 0;
+    }
+    return 0;
+  };
+
+  // Calculate adjusted market value for FAAS
+  const getAdjustedMarketValue = () => {
+    if (valuationData.length > 0) {
+      return valuationData[0]?.adjusted_market_value || 0;
+    }
+    return 0;
+  };
+
+  // Get assessment level for FAAS
+  const getAssessmentLevel = () => {
+    if (valuationData.length > 0) {
+      return {
+        rate_percent: valuationData[0]?.assessment_level || '0%'
+      };
+    }
+    return { rate_percent: '0%' };
+  };
+
   return (
     <IonPage>
       <IonHeader>
@@ -258,6 +298,22 @@ const AgriculturalLand: React.FC = () => {
             </IonButton>
           </IonButtons>
           <IonTitle>Agricultural Land - Form {formId}</IonTitle>
+          <IonButtons slot="end">
+            <IonButton
+              onClick={handleViewFaas}
+              fill="solid"
+              color="primary"
+              style={{
+                '--background': '#3880ff',
+                '--background-hover': '#3171e0',
+                '--background-activated': '#3171e0',
+                '--background-focused': '#3171e0',
+              }}
+            >
+              <IonIcon icon={documentOutline} slot="start" />
+              View FAAS
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
 
@@ -415,6 +471,20 @@ const AgriculturalLand: React.FC = () => {
             </IonRow>
           )}
         </IonGrid>
+
+        {/* LAND FAAS BACK MODAL */}
+        <LandFaasBackModal
+          isOpen={showFaasModal}
+          onClose={handleCloseFaas}
+          formData={formData}
+          baseMarketValue={getBaseMarketValue()}
+          adjustedMarketValue={getAdjustedMarketValue()}
+          assessmentLevel={getAssessmentLevel()}
+          agriculturalData={adjustmentData}
+          subclassRates={valuationData}
+          isAgricultural={true}
+          formId={formId}
+        />
       </IonContent>
     </IonPage>
   );

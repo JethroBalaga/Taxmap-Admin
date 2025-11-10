@@ -24,6 +24,7 @@ import { useParams, useHistory } from 'react-router-dom';
 import { supabase } from '../../utils/supaBaseClient';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import '../../CSS/MachineryTable.css';
+import MachineFaasBackModal from '../../components/Fass/MachineFaas/MachineFaasBackModal';
 
 interface RouteParams {
   formId: string;
@@ -32,6 +33,8 @@ interface RouteParams {
 interface FormContextData {
   district_name: string;
   declarant_name: string;
+  form_id: string;
+  actual_use?: string;
 }
 
 interface MachineAssessmentData {
@@ -55,7 +58,6 @@ interface MachineCalculationsData {
   condition: string;
   years_used: number;
   estimated_life: number;
-  // Additional machine data fields that may contain null values
   machine_description: string | null;
   machine_details: string | null;
   purchase_type: string | null;
@@ -78,6 +80,8 @@ const MachineryTable: React.FC = () => {
   const [assessmentData, setAssessmentData] = useState<MachineAssessmentData[]>([]);
   const [calculationsData, setCalculationsData] = useState<MachineCalculationsData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showFaasModal, setShowFaasModal] = useState(false);
+  const [selectedMachine, setSelectedMachine] = useState<MachineCalculationsData | null>(null);
 
   useEffect(() => {
     loadMachineryData();
@@ -98,7 +102,9 @@ const MachineryTable: React.FC = () => {
       if (formData) {
         setFormContext({
           district_name: formData.district_name,
-          declarant_name: formData.declarant_name
+          declarant_name: formData.declarant_name,
+          form_id: formData.form_id,
+          actual_use: formData.actual_used_id || 'Industrial'
         });
       }
 
@@ -151,7 +157,6 @@ const MachineryTable: React.FC = () => {
               condition: machine.condition,
               years_used: machine.years_used,
               estimated_life: machine.estimated_life,
-              // Include all machine data fields including potential null values
               machine_description: machine.machine_description,
               machine_details: machine.machine_details,
               purchase_type: machine.purchase_type,
@@ -165,7 +170,6 @@ const MachineryTable: React.FC = () => {
               installation: machine.installation,
               others: machine.others,
               depreciation: machine.depreciation,
-              // Calculated values
               total_cost: calculations?.total_cost || 0,
               adjusted_market_value: calculations?.adjusted_market_value || 0,
               years_remaining: calculations?.years_remaining || 0
@@ -186,6 +190,37 @@ const MachineryTable: React.FC = () => {
   const handleBack = () => {
     history.goBack();
   };
+
+  const handleViewFaas = () => {
+    setShowFaasModal(true);
+  };
+
+  const handleCloseFaas = () => {
+    setShowFaasModal(false);
+  };
+
+  // Calculate values with useEffect to avoid render-time issues
+  const [baseMarketValue, setBaseMarketValue] = useState<number>(0);
+  const [adjustedMarketValue, setAdjustedMarketValue] = useState<number>(0);
+  const [assessmentLevel, setAssessmentLevel] = useState<string>('N/A');
+
+  useEffect(() => {
+    // Calculate base market value
+    const baseValue = calculationsData.reduce((sum, machine) => {
+      return sum + (machine.total_cost || 0);
+    }, 0);
+    setBaseMarketValue(baseValue);
+
+    // Calculate adjusted market value
+    const adjustedValue = calculationsData.reduce((sum, machine) => {
+      return sum + (machine.adjusted_market_value || 0);
+    }, 0);
+    setAdjustedMarketValue(adjustedValue);
+
+    // Get assessment level
+    const level = assessmentData.length > 0 ? assessmentData[0]?.assessment_level || 'N/A' : 'N/A';
+    setAssessmentLevel(level);
+  }, [calculationsData, assessmentData]);
 
   const formatCurrency = (value: number | null) => {
     if (value === null || value === undefined) return 'N/A';
@@ -230,7 +265,8 @@ const MachineryTable: React.FC = () => {
           <IonToolbar>
             <IonButtons slot="start">
               <IonButton onClick={handleBack}>
-                <IonIcon slot="icon-only" icon={arrowBack} />
+                <IonIcon slot="start" icon={arrowBack} />
+                Back
               </IonButton>
             </IonButtons>
             <IonTitle>Machinery Equipment</IonTitle>
@@ -252,83 +288,111 @@ const MachineryTable: React.FC = () => {
         <IonToolbar>
           <IonButtons slot="start">
             <IonButton onClick={handleBack}>
-              <IonIcon slot="icon-only" icon={arrowBack} />
+              <IonIcon slot="start" icon={arrowBack} />
+              Back
             </IonButton>
           </IonButtons>
-          <IonTitle>Machinery - Form {formId}</IonTitle>
+          <IonTitle>Machinery Details - Form {formId}</IonTitle>
+          <IonButtons slot="end">
+            <IonButton
+              onClick={handleViewFaas}
+              fill="solid"
+              color="primary"
+              disabled={calculationsData.length === 0}
+            >
+              View Property Assessment
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
 
       <IonContent fullscreen>
-        <div className="machinery-admin-container">
-          {/* Form Info Cards - Only District and Declarant */}
+        <IonGrid>
+          {/* Form Info Cards */}
           {formContext && (
-            <div className="form-info-cards">
-              <IonRow class="ion-justify-content-center">
-                <IonCol size="12" size-md="6" size-lg="3">
-                  <IonCard className="info-card district-card">
+            <IonRow>
+              <IonCol size="12">
+                <IonCard>
+                  <IonCardHeader>
+                    <IonCardTitle>Form Details</IonCardTitle>
+                  </IonCardHeader>
+                  <IonCardContent>
+                    <div className="data-field">
+                      <strong>District:</strong>
+                      <span className="field-value">{formContext.district_name}</span>
+                    </div>
+                    <div className="data-field">
+                      <strong>Declarant:</strong>
+                      <span className="field-value">{formContext.declarant_name}</span>
+                    </div>
+                    <div className="data-field">
+                      <strong>Form ID:</strong>
+                      <span className="field-value">{formContext.form_id}</span>
+                    </div>
+                  </IonCardContent>
+                </IonCard>
+              </IonCol>
+            </IonRow>
+          )}
+
+          {/* Assessment Summary Table */}
+          {assessmentData.length > 0 && (
+            <IonRow>
+              <IonCol size="12">
+                <DynamicTable
+                  data={assessmentData.map(item => ({
+                    ...item,
+                    base_market_value_formatted: formatCurrency(item.base_market_value),
+                    adjusted_market_value_formatted: formatCurrency(item.adjusted_market_value),
+                    assessed_value_formatted: formatCurrency(item.assessed_value)
+                  }))}
+                  title="Assessment Summary"
+                  keyField="value_info_id"
+                />
+              </IonCol>
+            </IonRow>
+          )}
+
+          {/* Machinery Equipment Cards */}
+          {calculationsData.length === 0 ? (
+            <IonRow>
+              <IonCol size="12">
+                <div className="empty-state">
+                  <IonIcon icon={construct} size="large" />
+                  <IonText>
+                    <h3>No Machinery Equipment Found</h3>
+                    <p>No machinery has been added to Form {formId} yet.</p>
+                  </IonText>
+                </div>
+              </IonCol>
+            </IonRow>
+          ) : (
+            <>
+              <IonRow>
+                <IonCol size="12">
+                  <IonCard>
                     <IonCardHeader>
-                      <IonCardTitle>
-                        <IonIcon icon={location} className="card-icon" />
-                        District
-                      </IonCardTitle>
+                      <IonCardTitle>Machinery Summary</IonCardTitle>
                     </IonCardHeader>
                     <IonCardContent>
-                      <IonText className="card-value">{formContext.district_name}</IonText>
-                    </IonCardContent>
-                  </IonCard>
-                </IonCol>
-                
-                <IonCol size="12" size-md="6" size-lg="3">
-                  <IonCard className="info-card declarant-card">
-                    <IonCardHeader>
-                      <IonCardTitle>
-                        <IonIcon icon={person} className="card-icon" />
-                        Declarant
-                      </IonCardTitle>
-                    </IonCardHeader>
-                    <IonCardContent>
-                      <IonText className="card-value">{formContext.declarant_name}</IonText>
+                      <div className="data-field">
+                        <strong>Total Machines:</strong>
+                        <span className="field-value">{calculationsData.length}</span>
+                      </div>
+                      <div className="data-field">
+                        <strong>Total Base Market Value:</strong>
+                        <span className="field-value">{formatCurrency(baseMarketValue)}</span>
+                      </div>
+                      <div className="data-field">
+                        <strong>Total Adjusted Market Value:</strong>
+                        <span className="field-value">{formatCurrency(adjustedMarketValue)}</span>
+                      </div>
                     </IonCardContent>
                   </IonCard>
                 </IonCol>
               </IonRow>
-            </div>
-          )}
 
-          {/* Assessment Level Table */}
-          {assessmentData.length > 0 && (
-            <div className="assessment-section">
-              <IonCard>
-                <IonCardHeader>
-                  <IonCardTitle>Assessment Summary</IonCardTitle>
-                </IonCardHeader>
-                <IonCardContent>
-                  <DynamicTable
-                    data={assessmentData.map(item => ({
-                      ...item,
-                      base_market_value_formatted: formatCurrency(item.base_market_value),
-                      adjusted_market_value_formatted: formatCurrency(item.adjusted_market_value),
-                      assessed_value_formatted: formatCurrency(item.assessed_value)
-                    }))}
-                    keyField="value_info_id"
-                  />
-                </IonCardContent>
-              </IonCard>
-            </div>
-          )}
-
-          {/* Machinery Equipment Cards with Complete Data */}
-          {calculationsData.length === 0 ? (
-            <div className="empty-state">
-              <IonIcon icon={construct} size="large" />
-              <IonText>
-                <h3>No Machinery Equipment Found</h3>
-                <p>No machinery has been added to Form {formId} yet.</p>
-              </IonText>
-            </div>
-          ) : (
-            <IonGrid>
+              {/* Individual machine cards */}
               <IonRow class="ion-justify-content-center">
                 {calculationsData.map((machine, index) => (
                   <IonCol size="12" size-lg="10" size-xl="8" key={machine.machinedata_id}>
@@ -388,7 +452,7 @@ const MachineryTable: React.FC = () => {
                               <IonText>{formatDate(machine.date_acquired)}</IonText>
                             </div>
                             <div className="info-item">
-                              <label>Date Installed</label>
+                              <label>Date Installed:</label>
                               <IonText>{formatDate(machine.date_installed)}</IonText>
                             </div>
                             <div className="info-item">
@@ -475,9 +539,21 @@ const MachineryTable: React.FC = () => {
                   </IonCol>
                 ))}
               </IonRow>
-            </IonGrid>
+            </>
           )}
-        </div>
+        </IonGrid>
+
+        {/* MACHINE FAAS BACK MODAL */}
+        <MachineFaasBackModal
+          isOpen={showFaasModal}
+          onClose={handleCloseFaas}
+          selectedMachine={calculationsData.length > 0 ? calculationsData[0] : null}
+          formContext={formContext}
+          assessmentData={assessmentData}
+          baseMarketValue={baseMarketValue}
+          adjustedMarketValue={adjustedMarketValue}
+          assessmentLevel={assessmentLevel}
+        />
       </IonContent>
     </IonPage>
   );

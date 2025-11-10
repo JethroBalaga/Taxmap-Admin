@@ -19,10 +19,11 @@ import {
   IonButtons,
   IonText
 } from '@ionic/react';
-import { arrowBackOutline } from 'ionicons/icons';
+import { arrowBackOutline, documentOutline } from 'ionicons/icons';
 import { supabase } from '../../utils/supaBaseClient';
 import { useHistory, useParams } from 'react-router-dom';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
+import LandFaasBackModal from '../../components/Fass/LandFaas/LandFaasBackModal';
 import '../../CSS/Setup.css';
 
 interface FormData {
@@ -32,6 +33,8 @@ interface FormData {
   class_id: string;
   kind_description: string;
   status: string;
+  area?: number;
+  actualUse?: string;
   [key: string]: any;
 }
 
@@ -42,6 +45,8 @@ interface ComprehensiveValuation {
   adjusted_market_value: number;
   assessment_level: string;
   assessed_value: number;
+  subclass_id?: string;
+  subclass_description?: string;
 }
 
 interface AdjustmentData {
@@ -52,6 +57,7 @@ interface AdjustmentData {
   adjustment_factor: number;
   additional_factor?: number;
   adjusted_market_value: number;
+  value_adjustment?: number;
 }
 
 const NonAgriculturalLand: React.FC = () => {
@@ -61,6 +67,7 @@ const NonAgriculturalLand: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
+  const [showFaasModal, setShowFaasModal] = useState(false);
   const history = useHistory();
   const { formId } = useParams<{ formId: string }>();
 
@@ -221,6 +228,14 @@ const NonAgriculturalLand: React.FC = () => {
     history.goBack();
   };
 
+  const handleViewFaas = () => {
+    setShowFaasModal(true);
+  };
+
+  const handleCloseFaas = () => {
+    setShowFaasModal(false);
+  };
+
   const formatFieldName = (fieldName: string): string => {
     return fieldName
       .split('_')
@@ -304,6 +319,32 @@ const NonAgriculturalLand: React.FC = () => {
     console.log('Adjustment row clicked:', rowData);
   };
 
+  // Calculate base market value for FAAS
+  const getBaseMarketValue = () => {
+    if (valuationData.length > 0) {
+      return valuationData[0]?.base_market_value || 0;
+    }
+    return 0;
+  };
+
+  // Calculate adjusted market value for FAAS
+  const getAdjustedMarketValue = () => {
+    if (valuationData.length > 0) {
+      return valuationData[0]?.adjusted_market_value || 0;
+    }
+    return 0;
+  };
+
+  // Get assessment level for FAAS
+  const getAssessmentLevel = () => {
+    if (valuationData.length > 0) {
+      return {
+        rate_percent: valuationData[0]?.assessment_level || '0%'
+      };
+    }
+    return { rate_percent: '0%' };
+  };
+
   return (
     <IonPage>
       <IonHeader>
@@ -315,6 +356,22 @@ const NonAgriculturalLand: React.FC = () => {
             </IonButton>
           </IonButtons>
           <IonTitle>Non-Agricultural Land - Form {formId}</IonTitle>
+          <IonButtons slot="end">
+            <IonButton
+              onClick={handleViewFaas}
+              fill="solid"
+              color="primary"
+              style={{
+                '--background': '#3880ff',
+                '--background-hover': '#3171e0',
+                '--background-activated': '#3171e0',
+                '--background-focused': '#3171e0',
+              }}
+            >
+              <IonIcon icon={documentOutline} slot="start" />
+              View FAAS
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
 
@@ -415,6 +472,21 @@ const NonAgriculturalLand: React.FC = () => {
             </IonRow>
           )}
         </IonGrid>
+
+        {/* LAND FAAS BACK MODAL - PASS CLASS_ID */}
+        <LandFaasBackModal
+          isOpen={showFaasModal}
+          onClose={handleCloseFaas}
+          formData={formData}
+          baseMarketValue={getBaseMarketValue()}
+          adjustedMarketValue={getAdjustedMarketValue()}
+          assessmentLevel={getAssessmentLevel()}
+          landAdjustments={adjustmentData}
+          subclassRates={valuationData}
+          isAgricultural={false}
+          formId={formId}
+          classId={formData?.class_id} // PASS CLASS_ID HERE
+        />
       </IonContent>
     </IonPage>
   );

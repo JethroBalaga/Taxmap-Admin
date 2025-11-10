@@ -19,9 +19,10 @@ import {
   IonSegment,
   IonSegmentButton,
   IonLabel,
-  IonAlert
+  IonAlert,
+  IonButtons
 } from '@ionic/react';
-import { arrowBack, refresh } from 'ionicons/icons';
+import { arrowBack, refresh, documentText } from 'ionicons/icons';
 import { Pie, Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -61,7 +62,8 @@ import {
   getStatValue,
   STAT_CARDS,
   FORM_TYPE_CARDS,
-  TIME_RANGES
+  TIME_RANGES,
+  generateDashboardReport
 } from '../utils/Dashboard.utils';
 import '../CSS/Dashboard.css';
 
@@ -93,6 +95,7 @@ const Dashboard: React.FC = () => {
   const [formReviewData, setFormReviewData] = useState<FormReviewData[]>([]);
   const [isLineChartLoading, setIsLineChartLoading] = useState(false);
   const [error, setError] = useState<string>('');
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   // Effects
   useEffect(() => { 
@@ -160,6 +163,29 @@ const Dashboard: React.FC = () => {
           fetchClassificationDistribution(kindId, setClassificationData, setIsChartLoading);
         }
       }
+    }
+  };
+
+  // PDF Generation function
+  const handleGenerateReport = async () => {
+    setIsGeneratingPdf(true);
+    try {
+      await generateDashboardReport(
+        stats,
+        kindData,
+        classificationData,
+        adminActivityData,
+        userActivityData,
+        formSubmissionData,
+        formReviewData,
+        timeRange,
+        selectedView
+      );
+    } catch (error) {
+      console.error('Error generating report:', error);
+      setError('Failed to generate PDF report. Please try again.');
+    } finally {
+      setIsGeneratingPdf(false);
     }
   };
 
@@ -362,9 +388,14 @@ const Dashboard: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonTitle>{getPageTitle()}</IonTitle>
-          <IonButton slot="end" onClick={handleRefresh}>
-            <IonIcon slot="icon-only" icon={refresh} />
-          </IonButton>
+          <IonButtons slot="end">
+            <IonButton onClick={handleGenerateReport} disabled={isGeneratingPdf}>
+              <IonIcon slot="icon-only" icon={isGeneratingPdf ? refresh : documentText} />
+            </IonButton>
+            <IonButton onClick={handleRefresh}>
+              <IonIcon slot="icon-only" icon={refresh} />
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
 
