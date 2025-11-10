@@ -473,7 +473,7 @@ const NonAgriculturalLand: React.FC = () => {
           )}
         </IonGrid>
 
-        {/* LAND FAAS BACK MODAL - PASS CLASS_ID */}
+        {/* LAND FAAS BACK MODAL */}
         <LandFaasBackModal
           isOpen={showFaasModal}
           onClose={handleCloseFaas}
@@ -485,7 +485,6 @@ const NonAgriculturalLand: React.FC = () => {
           subclassRates={valuationData}
           isAgricultural={false}
           formId={formId}
-          classId={formData?.class_id} // PASS CLASS_ID HERE
         />
       </IonContent>
     </IonPage>
