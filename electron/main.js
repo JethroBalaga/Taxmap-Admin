@@ -7,7 +7,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Optional: Hide security warnings during development
-// Remove this line for production to see actual security issues
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
 
 async function clearAllCache() {
@@ -16,13 +15,11 @@ async function clearAllCache() {
   const ses = session.defaultSession;
   
   try {
-    // Clear all types of cache
     await ses.clearCache();
     await ses.clearStorageData();
     await ses.clearAuthCache();
     await ses.clearHostResolverCache();
     
-    // Clear all storage data comprehensively
     await ses.clearStorageData({
       storages: [
         'appcache', 'cookies', 'filesystem', 'indexdb', 
@@ -42,7 +39,6 @@ async function createWindow() {
   // Clear cache BEFORE creating window
   await clearAllCache();
 
-  // Debug the icon path
   const iconPath = path.join(__dirname, '../public/favicon.png');
   console.log('Main.js icon path:', iconPath);
   console.log('Main.js icon exists:', fs.existsSync(iconPath));
@@ -82,11 +78,9 @@ async function createWindow() {
     
     // Inject navigation helpers for React
     await win.webContents.executeJavaScript(`
-      // Enhanced hash change handling for Electron
       console.log('Injecting Electron navigation helpers...');
       
       window.electronNavigate = function(path) {
-        console.log('electronNavigate called with:', path);
         if (path.startsWith('/')) {
           path = path.substring(1);
         }
@@ -94,14 +88,12 @@ async function createWindow() {
         return true;
       };
       
-      // Enhanced hash change listener
       window.addEventListener('hashchange', function(event) {
         console.log('Hash changed from:', event.oldURL);
         console.log('Hash changed to:', event.newURL);
         console.log('Current hash:', window.location.hash);
       });
       
-      // Monitor all navigation attempts
       window.addEventListener('popstate', function(event) {
         console.log('Popstate event:', event.state);
         console.log('Current URL:', window.location.href);
@@ -112,7 +104,6 @@ async function createWindow() {
     
   } catch (error) {
     console.error('Failed to load index.html:', error);
-    // Fallback: Try loading from development server
     try {
       await win.loadURL('http://localhost:3001');
       console.log('Loaded from development server instead');
@@ -121,22 +112,28 @@ async function createWindow() {
     }
   }
 
-  win.webContents.openDevTools();
+  // Removed win.webContents.openDevTools() to prevent inspect popup
 
-  // Debug: Log when page finishes loading
   win.webContents.on('did-finish-load', () => {
     console.log('Page finished loading - current URL:', win.webContents.getURL());
   });
 
-  // Handle redirects and monitor requests
+  // Handle navigation events and block devtools shortcuts
   win.webContents.on('before-input-event', (event, input) => {
+    // Block F12, Ctrl+Shift+I, Ctrl+Shift+J
+    if (
+      input.key === 'F12' ||
+      (input.key.toLowerCase() === 'i' && input.control && input.shift) ||
+      (input.key.toLowerCase() === 'j' && input.control && input.shift)
+    ) {
+      event.preventDefault();
+    }
+    // Optional: Force clear cache on manual reload
     if (input.key === 'F5' || (input.key === 'r' && input.control)) {
-      // Force clear cache on manual reload
       win.webContents.session.clearCache();
     }
   });
 
-  // Handle navigation events for better routing
   win.webContents.on('will-navigate', (event, navigationUrl) => {
     console.log('Navigating to:', navigationUrl);
   });
@@ -160,7 +157,6 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
-// Clear cache on app activation too
 app.on('activate', async () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     await clearAllCache();
