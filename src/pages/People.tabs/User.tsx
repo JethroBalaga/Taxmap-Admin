@@ -33,6 +33,7 @@ interface UserItem {
     user_email: string;
     user_firstname: string;
     user_lastname: string;
+    user_password?: string; // Added for visibility
     date_registered: string;
     user_role: string;
     suspended: boolean;
@@ -84,12 +85,36 @@ const User: React.FC = () => {
     const fetchUsers = useCallback(async () => {
         setIsLoading(true);
         try {
+            console.log('[User] Fetching users from user_roles view...');
             const { data, error } = await supabase
                 .from('user_roles')
                 .select('*')
                 .order('date_registered', { ascending: false });
 
-            if (error) throw error;
+            if (error) {
+                console.error('[User] Supabase error fetching user_roles:', error);
+                
+                // Fallback to "users" table selection if view or column is problematic
+                if (error.code === 'PGRST116' || error.message.includes('relation "user_roles" does not exist') || error.message.includes('column "date_registered" does not exist')) {
+                    console.log('[User] Falling back to "users" table selection...');
+                    const { data: userData, error: userError } = await supabase
+                        .from('users')
+                        .select('user_id, username, user_email, user_firstname, user_lastname, user_password, suspended')
+                        .order('username', { ascending: true });
+                    
+                    if (userError) throw userError;
+                    
+                    const usersFromTable = (userData || []).map(item => ({
+                        ...item,
+                        user_id: String(item.user_id),
+                        date_registered: 'N/A', 
+                        user_role: 'N/A' 
+                    }));
+                    setUsers(usersFromTable);
+                    return;
+                }
+                throw error;
+            }
 
             // Convert user_id to string to ensure consistency
             const usersWithStringId = (data || []).map(item => ({
@@ -98,9 +123,9 @@ const User: React.FC = () => {
             }));
 
             setUsers(usersWithStringId);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching users:', error);
-            setToastMessage('Failed to load users');
+            setToastMessage(`Failed to load users: ${error.message || 'Unknown error'}`);
             setIsError(true);
             setShowToast(true);
         } finally {

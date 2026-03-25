@@ -53,12 +53,34 @@ const Declarant: React.FC = () => {
     const fetchDeclarants = useCallback(async () => {
         setIsLoading(true);
         try {
+            console.log('[Declarant] Fetching declarants from declaranttbl...');
             const { data, error } = await supabase
                 .from('declaranttbl')
                 .select('*')
                 .order('created_at', { ascending: false });
 
-            if (error) throw error;
+            if (error) {
+                console.error('[Declarant] Supabase error fetching declaranttbl:', error);
+                
+                // Check if created_at column exists, if not try ordering by declarant_id
+                if (error.message.includes('column "created_at" does not exist')) {
+                    console.log('[Declarant] Falling back to ordering by declarant_id...');
+                    const { data: fallbackData, error: fallbackError } = await supabase
+                        .from('declaranttbl')
+                        .select('*')
+                        .order('declarant_id', { ascending: false });
+                    
+                    if (fallbackError) throw fallbackError;
+                    
+                    const declarantsWithStringId = (fallbackData || []).map(item => ({
+                        ...item,
+                        declarant_id: String(item.declarant_id)
+                    }));
+                    setDeclarants(declarantsWithStringId);
+                    return;
+                }
+                throw error;
+            }
 
             // Convert declarant_id to string to ensure consistency
             const declarantsWithStringId = (data || []).map(item => ({
@@ -67,9 +89,9 @@ const Declarant: React.FC = () => {
             }));
 
             setDeclarants(declarantsWithStringId);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching declarants:', error);
-            setToastMessage('Failed to load declarants');
+            setToastMessage(`Failed to load declarants: ${error.message || 'Unknown error'}`);
             setIsError(true);
             setShowToast(true);
         } finally {

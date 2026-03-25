@@ -24,3 +24,16 @@
 .data-row.selected:hover {
   background-color: #0069d9;
 }
+
+/* Ensure long text (like hashed passwords) doesn't break the table layout */
+ion-col {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 10px;
+  border-right: 1px solid #333;
+}
+
+.header-row ion-col {
+  border-right: 1px solid #444;
+}
