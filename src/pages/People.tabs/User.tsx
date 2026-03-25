@@ -20,12 +20,13 @@ import {
     IonLabel,
     IonButtons
 } from '@ionic/react';
-import { add, arrowUpCircle, banOutline, trash, eye, eyeOff, checkmarkCircle, closeCircle, phonePortraitOutline } from 'ionicons/icons';
+import { add, arrowUpCircle, banOutline, trash, eye, eyeOff, checkmarkCircle, closeCircle, phonePortraitOutline, keyOutline } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
 import { supabase } from '../../utils/supaBaseClient';
 import { useHistory, useLocation } from 'react-router-dom';
 import bcrypt from 'bcryptjs';
+import UserPasswordModal from '../../components/UserModals/UserPasswordModal';
 
 interface UserItem {
     user_id: string;
@@ -61,6 +62,8 @@ const User: React.FC = () => {
     const [deleteAdminPassword, setDeleteAdminPassword] = useState('');
     const [showDeleteAdminPassword, setShowDeleteAdminPassword] = useState(false);
     const [isDeletePasswordCorrect, setIsDeletePasswordCorrect] = useState<boolean | null>(null);
+
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
 
     // Focus search input on mount
     useEffect(() => {
@@ -466,6 +469,12 @@ const User: React.FC = () => {
             title: banButtonConfig.title
         },
         {
+            icon: keyOutline,
+            onClick: () => setShowPasswordModal(true),
+            disabled: !selectedRow,
+            title: "Change Password"
+        },
+        {
             icon: phonePortraitOutline,
             onClick: handleCheckDevice,
             disabled: !selectedRow,
@@ -692,6 +701,13 @@ const User: React.FC = () => {
                         </div>
                     </IonContent>
                 </IonModal>
+
+                <UserPasswordModal
+                    isOpen={showPasswordModal}
+                    onClose={() => setShowPasswordModal(false)}
+                    selectedUser={selectedRow}
+                    onPasswordUpdated={() => fetchUsers()}
+                />
 
                 <IonToast
                     isOpen={showToast}

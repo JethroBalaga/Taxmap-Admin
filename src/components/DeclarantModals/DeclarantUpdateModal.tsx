@@ -57,9 +57,15 @@ const DeclarantUpdateModal: React.FC<DeclarantUpdateModalProps> = ({
     setIsLoading(true);
     
     try {
+      // Use the discovered table name if available, fallback to declaranttbl
+      const activeTable = localStorage.getItem('declarant_table_actual') || 'declaranttbl';
+      const targetTable = activeTable.includes('view') ? 'declaranttbl' : activeTable;
+
+      console.log(`[DeclarantUpdate] Attempting update on: ${targetTable}`);
+
       // Update declarant using declarant_id from selected row
       const { error } = await supabase
-        .from('declaranttbl')
+        .from(targetTable)
         .update({ 
           firstname: firstName.toUpperCase(),
           lastname: lastName.toUpperCase()

@@ -12,9 +12,13 @@ import {
     IonLoading,
     IonSearchbar,
     IonAlert,
-    IonToast
+    IonToast,
+    IonItem,
+    IonLabel,
+    IonInput,
+    IonButton
 } from '@ionic/react';
-import { add, arrowUpCircle, trash } from 'ionicons/icons';
+import { add, arrowUpCircle, trash, eye } from 'ionicons/icons';
 import './../../CSS/Setup.css';
 import DeclarantCreateModal from '../../components/DeclarantModals/DeclarantCreateModal';
 import DynamicTable from '../../components/Globalcomponents/DynamicTable';
@@ -49,54 +53,95 @@ const Declarant: React.FC = () => {
         return () => clearTimeout(timer);
     }, []);
 
-    // Fetch data
+    // Fetch data with multi-table fallback
     const fetchDeclarants = useCallback(async () => {
         setIsLoading(true);
-        try {
-            console.log('[Declarant] Fetching declarants from declaranttbl...');
-            const { data, error } = await supabase
-                .from('declaranttbl')
-                .select('*')
-                .order('created_at', { ascending: false });
+        setIsError(false);
+        
+        // Variations to try
+        const tableVariations = [
+            'declaranttbl', 
+            '"declaranttbl"',
+            'form_view',
+            'property_details_view',
+            'declarants',
+            'taxpayers',
+            'taxpayertbl'
+        ];
 
-            if (error) {
-                console.error('[Declarant] Supabase error fetching declaranttbl:', error);
+        let lastErr: any = null;
+        let searched: string[] = [];
+
+        for (const tableName of tableVariations) {
+            searched.push(tableName);
+            try {
+                console.log(`[Declarant] Probing: ${tableName}...`);
                 
-                // Check if created_at column exists, if not try ordering by declarant_id
-                if (error.message.includes('column "created_at" does not exist')) {
-                    console.log('[Declarant] Falling back to ordering by declarant_id...');
-                    const { data: fallbackData, error: fallbackError } = await supabase
-                        .from('declaranttbl')
-                        .select('*')
-                        .order('declarant_id', { ascending: false });
-                    
-                    if (fallbackError) throw fallbackError;
-                    
-                    const declarantsWithStringId = (fallbackData || []).map(item => ({
-                        ...item,
-                        declarant_id: String(item.declarant_id)
-                    }));
-                    setDeclarants(declarantsWithStringId);
-                    return;
+                const { data, error } = await supabase
+                    .from(tableName as any)
+                    .select('*')
+                    .limit(200);
+
+                if (error) {
+                    console.warn(`[Declarant] ${tableName} probe failed:`, error.message);
+                    if (!error.message.includes('not find') && !error.message.includes('does not exist')) {
+                        lastErr = error;
+                    }
+                    continue;
                 }
-                throw error;
+
+                console.log(`[Declarant] SUCCESS! Data found in ${tableName}`);
+
+                // Map fields - handle different name patterns from views
+                const mappedData = (data || []).map(item => {
+                    const id = String(item.declarant_id || item.id || item.taxpayer_id || item.owner_id || '');
+                    
+                    let fname = item.firstname || item.declarant_firstname;
+                    let lname = item.lastname || item.declarant_lastname;
+                    
+                    if (!fname && item.declarant_name) {
+                        const parts = item.declarant_name.split(' ');
+                        fname = parts[0];
+                        lname = parts.slice(1).join(' ');
+                    }
+
+                    return {
+                        ...item,
+                        declarant_id: id,
+                        firstname: fname || 'N/A',
+                        lastname: lname || 'N/A'
+                    };
+                });
+
+                // Filter for uniqueness if using a view or if we have many rows
+                let finalData = mappedData;
+                if (tableName.includes('view') || mappedData.length > 50) {
+                    const seen = new Set();
+                    finalData = mappedData.filter(d => {
+                        const key = `${d.firstname}-${d.lastname}`.toLowerCase();
+                        if (seen.has(key) || d.firstname === 'N/A') return false;
+                        seen.add(key);
+                        return true;
+                    });
+                }
+
+                setDeclarants(finalData);
+                localStorage.setItem('declarant_table_actual', tableName);
+                setIsLoading(false);
+                return; // Success!
+
+            } catch (err: any) {
+                console.error(`[Declarant] Exception for ${tableName}:`, err);
             }
-
-            // Convert declarant_id to string to ensure consistency
-            const declarantsWithStringId = (data || []).map(item => ({
-                ...item,
-                declarant_id: String(item.declarant_id)
-            }));
-
-            setDeclarants(declarantsWithStringId);
-        } catch (error: any) {
-            console.error('Error fetching declarants:', error);
-            setToastMessage(`Failed to load declarants: ${error.message || 'Unknown error'}`);
-            setIsError(true);
-            setShowToast(true);
-        } finally {
-            setIsLoading(false);
         }
+
+        // Failure if loop finishes
+        const errorMsg = 'Failed to load declarants. ' + (lastErr?.message || 'Please check database permissions.');
+        console.error('[Declarant] All attempts failed:', searched);
+        setToastMessage(errorMsg);
+        setIsError(true);
+        setShowToast(true);
+        setIsLoading(false);
     }, []);
 
     useEffect(() => {
@@ -135,8 +180,15 @@ const Declarant: React.FC = () => {
 
         try {
             setIsLoading(true);
+            
+            // Use same discovery logic as modals
+            const activeTable = localStorage.getItem('declarant_table_actual') || 'declaranttbl';
+            const targetTable = activeTable.includes('view') ? 'declaranttbl' : activeTable;
+            
+            console.log(`[DeclarantDelete] Attempting delete from: ${targetTable}`);
+
             const { error } = await supabase
-                .from('declaranttbl')
+                .from(targetTable)
                 .delete()
                 .eq('declarant_id', selectedRow.declarant_id);
 

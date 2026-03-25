@@ -40,9 +40,16 @@ const DeclarantCreateModal: React.FC<DeclarantCreateModalProps> = ({
     setIsLoading(true);
     
     try {
+      // Use the discovered table name if available, fallback to declaranttbl
+      const activeTable = localStorage.getItem('declarant_table_actual') || 'declaranttbl';
+      // If it's a view, we probably can't insert into it directly, so fallback to declaranttbl
+      const targetTable = activeTable.includes('view') ? 'declaranttbl' : activeTable;
+
+      console.log(`[DeclarantCreate] Attempting insert into: ${targetTable}`);
+
       // Insert new declarant
       const { data, error } = await supabase
-        .from('declaranttbl')
+        .from(targetTable)
         .insert([{ 
           firstname: firstName.toUpperCase(),
           lastname: lastName.toUpperCase()
