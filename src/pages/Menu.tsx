@@ -81,86 +81,88 @@ const Menu: React.FC = () => {
   };
 
   return (
-    <IonSplitPane contentId="main-content">
-      <IonMenu contentId="main-content">
-        <IonHeader>
-          <IonToolbar style={{ '--background': 'linear-gradient(135deg, #5f27cd, #7044ff)' }}>
-            <IonTitle style={{ fontWeight: '800', fontSize: '1.25rem', color: '#ffffff', letterSpacing: '0.5px' }}>
-              TaxMap Admin
-            </IonTitle>
-          </IonToolbar>
-        </IonHeader>
-        
-        <IonContent style={{ '--background': '#ffffff' }}>
-          <div style={{ padding: '24px 16px', borderBottom: '1px solid rgba(0,0,0,0.06)', marginBottom: '16px', background: '#fafbfc' }}>
-            <h2 style={{ margin: '0 0 4px 0', fontSize: '1.05rem', fontWeight: '700', color: '#1e293b' }}>Control Center</h2>
-            <p style={{ margin: '0', fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>System Management Dashboard</p>
-          </div>
+    <IonPage>
+      <IonSplitPane contentId="main-content">
+        <IonMenu contentId="main-content">
+          <IonHeader>
+            <IonToolbar style={{ '--background': 'linear-gradient(135deg, #5f27cd, #7044ff)' }}>
+              <IonTitle style={{ fontWeight: '800', fontSize: '1.25rem', color: '#ffffff', letterSpacing: '0.5px' }}>
+                TaxMap Admin
+              </IonTitle>
+            </IonToolbar>
+          </IonHeader>
+          
+          <IonContent style={{ '--background': '#ffffff' }}>
+            <div style={{ padding: '24px 16px', borderBottom: '1px solid rgba(0,0,0,0.06)', marginBottom: '16px', background: '#fafbfc' }}>
+              <h2 style={{ margin: '0 0 4px 0', fontSize: '1.05rem', fontWeight: '700', color: '#1e293b' }}>Control Center</h2>
+              <p style={{ margin: '0', fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>System Management Dashboard</p>
+            </div>
 
-          <div style={{ padding: '0 10px' }}>
-            {path.map((item, index) => (
-              <IonMenuToggle key={index} autoHide={false}>
-                <IonItem 
-                  routerLink={item.url} 
-                  routerDirection="none"
-                  detail={false}
-                  lines="none"
-                  style={{
-                    '--border-radius': '12px',
-                    '--margin-bottom': '6px',
-                    '--padding-start': '16px',
-                    '--background-hover': 'rgba(112, 68, 255, 0.06)',
-                    '--color-hover': '#7044ff',
-                    fontWeight: '600',
-                    fontSize: '0.95rem',
-                    letterSpacing: '0.2px',
-                    color: '#475569'
-                  } as any}
-                >
-                  <IonIcon icon={item.icon} slot="start" style={{ marginRight: '14px', fontSize: '1.3rem' }}></IonIcon>
-                  {item.name}
-                </IonItem>
-              </IonMenuToggle>
-            ))}
-          </div>
+            <div style={{ padding: '0 10px' }}>
+              {path.map((item, index) => (
+                <IonMenuToggle key={index} autoHide={false}>
+                  <IonItem 
+                    routerLink={item.url} 
+                    routerDirection="none"
+                    detail={false}
+                    lines="none"
+                    style={{
+                      '--border-radius': '12px',
+                      '--margin-bottom': '6px',
+                      '--padding-start': '16px',
+                      '--background-hover': 'rgba(112, 68, 255, 0.06)',
+                      '--color-hover': '#7044ff',
+                      fontWeight: '600',
+                      fontSize: '0.95rem',
+                      letterSpacing: '0.2px',
+                      color: '#475569'
+                    } as any}
+                  >
+                    <IonIcon icon={item.icon} slot="start" style={{ marginRight: '14px', fontSize: '1.3rem' }}></IonIcon>
+                    {item.name}
+                  </IonItem>
+                </IonMenuToggle>
+              ))}
+            </div>
 
-          <div style={{ position: 'absolute', bottom: '24px', left: '16px', right: '16px' }}>
-            <IonButton
-              expand="block"
-              color="danger"
-              onClick={handleLogout}
-              shape="round"
-              style={{
-                '--box-shadow': '0 4px 12px rgba(239, 68, 68, 0.25)',
-                fontWeight: '700',
-                height: '42px',
-                fontSize: '0.95rem'
-              }}
-            >
-              <IonIcon icon={logOutOutline} slot="start" style={{ fontSize: '1.2rem' }} />
-              Logout
-            </IonButton>
-          </div>
-        </IonContent>
-      </IonMenu>
+            <div style={{ position: 'absolute', bottom: '24px', left: '16px', right: '16px' }}>
+              <IonButton
+                expand="block"
+                color="danger"
+                onClick={handleLogout}
+                shape="round"
+                style={{
+                  '--box-shadow': '0 4px 12px rgba(239, 68, 68, 0.25)',
+                  fontWeight: '700',
+                  height: '42px',
+                  fontSize: '0.95rem'
+                }}
+              >
+                <IonIcon icon={logOutOutline} slot="start" style={{ fontSize: '1.2rem' }} />
+                Logout
+              </IonButton>
+            </div>
+          </IonContent>
+        </IonMenu>
 
-      <IonRouterOutlet id="main-content">
-        <Route exact path="/menu/dashboard" component={Dashboard} />
-        <Route path="/menu/home" component={Home} />
-        <Route exact path="/menu/map" component={Map} />
-        <Route path="/menu/people" component={People} />
-        <Route exact path="/menu/forms" component={Forms} />
-        <Route exact path="/menu/buildingtable" component={BuildingTable} />
-        <Route exact path="/menu/logs" component={Logs} />
-        <Route path="/menu/machinerytable/:formId" component={MachineryTable} />
-        <Route path="/menu/agriculturalland/:formId" component={AgriculturalLand} />
-        <Route path="/menu/nonagriculturalland/:formId" component={NonAgriculturalLand} />
-        
-        <Route exact path="/menu">
-          <Redirect to="/menu/dashboard" />
-        </Route>
-      </IonRouterOutlet>
-    </IonSplitPane>
+        <IonRouterOutlet id="main-content">
+          <Route exact path="/menu/dashboard" component={Dashboard} />
+          <Route path="/menu/home" component={Home} />
+          <Route exact path="/menu/map" component={Map} />
+          <Route path="/menu/people" component={People} />
+          <Route exact path="/menu/forms" component={Forms} />
+          <Route exact path="/menu/buildingtable" component={BuildingTable} />
+          <Route exact path="/menu/logs" component={Logs} />
+          <Route path="/menu/machinerytable/:formId" component={MachineryTable} />
+          <Route path="/menu/agriculturalland/:formId" component={AgriculturalLand} />
+          <Route path="/menu/nonagriculturalland/:formId" component={NonAgriculturalLand} />
+          
+          <Route exact path="/menu">
+            <Redirect to="/menu/dashboard" />
+          </Route>
+        </IonRouterOutlet>
+      </IonSplitPane>
+    </IonPage>
   );
 };
 

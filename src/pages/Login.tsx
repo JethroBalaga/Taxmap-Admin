@@ -81,7 +81,7 @@ const Login: React.FC = () => {
 
         setShowToast(true);
         setTimeout(() => {
-          navigation.push('/menu', 'forward', 'replace');
+          navigation.push('/menu/dashboard', 'root', 'replace');
         }, 300);
         return;
       }
@@ -170,7 +170,7 @@ const Login: React.FC = () => {
       // 6. Login successful
       setShowToast(true);
       setTimeout(() => {
-        navigation.push('/menu', 'forward', 'replace');
+        navigation.push('/menu/dashboard', 'root', 'replace');
       }, 300);
 
     } catch (error) {
