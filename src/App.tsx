@@ -24,34 +24,7 @@ import AdminRegister from './pages/AdminRegistration';
 setupIonicReact();
 
 const App: React.FC = () => {
-  // Clear invalid tokens on app start
-  useEffect(() => {
-    const clearInvalidTokens = () => {
-      try {
-        // Clear all Supabase auth storage
-        localStorage.removeItem('supabase.auth.token');
-        localStorage.removeItem('sb-*'); // Supabase storage pattern
-        sessionStorage.removeItem('supabase.auth.token');
-        
-        // Also clear any other potential auth storage
-        const keysToRemove = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && (key.includes('supabase') || key.includes('auth') || key.includes('token'))) {
-            keysToRemove.push(key);
-          }
-        }
-        
-        keysToRemove.forEach(key => localStorage.removeItem(key));
-        
-        console.log('Cleared invalid auth tokens');
-      } catch (error) {
-        console.log('No auth tokens to clear or error clearing:', error);
-      }
-    };
 
-    clearInvalidTokens();
-  }, []);
 
   return (
     <IonApp>

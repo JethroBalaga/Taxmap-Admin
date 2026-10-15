@@ -14,7 +14,9 @@ import {
     IonLoading,
     IonToast,
     IonRefresher,
-    IonRefresherContent
+    IonRefresherContent,
+    IonButtons,
+    IonMenuButton
 } from '@ionic/react';
 import { supabase } from '../utils/supaBaseClient';
 import DynamicTable from '../components/Globalcomponents/DynamicTable';
@@ -168,8 +170,11 @@ const Logs: React.FC = () => {
     return (
         <IonPage>
             <IonHeader>
-                <IonToolbar>
-                    <IonTitle>Logs</IonTitle>
+                <IonToolbar style={{ '--background': 'linear-gradient(135deg, #5f27cd, #7044ff)', '--color': '#ffffff' }}>
+                    <IonButtons slot="start">
+                        <IonMenuButton style={{ '--color': '#ffffff' }} />
+                    </IonButtons>
+                    <IonTitle style={{ fontWeight: '700', letterSpacing: '0.5px' }}>Logs</IonTitle>
                 </IonToolbar>
             </IonHeader>
 

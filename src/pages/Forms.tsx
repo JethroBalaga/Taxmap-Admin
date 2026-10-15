@@ -12,7 +12,9 @@ import {
   IonIcon,
   IonLoading,
   IonButton,
-  IonToast
+  IonToast,
+  IonButtons,
+  IonMenuButton
 } from '@ionic/react';
 import { informationCircleOutline, mapOutline } from 'ionicons/icons';
 import DynamicTable from '../components/Globalcomponents/DynamicTable';
@@ -178,8 +180,11 @@ const Forms: React.FC = () => {
   return (
     <IonPage>
       <IonHeader>
-        <IonToolbar>
-          <IonTitle>Forms</IonTitle>
+        <IonToolbar style={{ '--background': 'linear-gradient(135deg, #5f27cd, #7044ff)', '--color': '#ffffff' }}>
+          <IonButtons slot="start">
+            <IonMenuButton style={{ '--color': '#ffffff' }} />
+          </IonButtons>
+          <IonTitle style={{ fontWeight: '700', letterSpacing: '0.5px' }}>Forms</IonTitle>
         </IonToolbar>
       </IonHeader>
 

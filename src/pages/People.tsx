@@ -7,7 +7,12 @@ import {
   IonTabButton,
   IonTabs,
   IonPage,
-  IonContent
+  IonContent,
+  IonHeader,
+  IonToolbar,
+  IonButtons,
+  IonMenuButton,
+  IonTitle
 } from '@ionic/react';
 import { Route, Redirect } from 'react-router';
 import { documentOutline, personCircleOutline, phonePortraitOutline } from 'ionicons/icons';
@@ -25,7 +30,14 @@ const People: React.FC = () => {
   
   return (
     <IonPage>
-      {/* REMOVED HEADER - tabs will have their own headers */}
+      <IonHeader>
+        <IonToolbar style={{ '--background': 'linear-gradient(135deg, #5f27cd, #7044ff)', '--color': '#ffffff' }}>
+          <IonButtons slot="start">
+            <IonMenuButton style={{ '--color': '#ffffff' }} />
+          </IonButtons>
+          <IonTitle style={{ fontWeight: '700', letterSpacing: '0.5px' }}>People Management</IonTitle>
+        </IonToolbar>
+      </IonHeader>
       <IonContent fullscreen>
         <IonTabs>
           <IonRouterOutlet>

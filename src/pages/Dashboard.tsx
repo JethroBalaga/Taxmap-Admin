@@ -23,7 +23,16 @@ import {
   IonLabel,
   IonAlert
 } from '@ionic/react';
-import { arrowBack } from 'ionicons/icons';
+import { 
+  arrowBack,
+  documentTextOutline,
+  peopleOutline,
+  pulseOutline,
+  cloudUploadOutline,
+  leafOutline,
+  businessOutline,
+  constructOutline
+} from 'ionicons/icons';
 import { Pie, Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -168,28 +177,34 @@ const Dashboard: React.FC = () => {
         label: 'Admin Logins',
         data: adminActivityData.map(item => item.loginCount),
         borderColor: '#7044ff',
-        backgroundColor: 'rgba(112, 68, 255, 0.1)',
-        borderWidth: 2,
+        backgroundColor: 'rgba(112, 68, 255, 0.08)',
+        borderWidth: 2.5,
         tension: 0.4,
         fill: true,
+        pointBackgroundColor: '#7044ff',
+        pointHoverRadius: 6
       },
       {
         label: 'System Actions',
         data: adminActivityData.map(item => item.systemActionCount),
         borderColor: '#ff4961',
-        backgroundColor: 'rgba(255, 73, 97, 0.1)',
-        borderWidth: 2,
+        backgroundColor: 'rgba(255, 73, 97, 0.08)',
+        borderWidth: 2.5,
         tension: 0.4,
         fill: true,
+        pointBackgroundColor: '#ff4961',
+        pointHoverRadius: 6
       },
       {
         label: 'Form Reviews',
         data: formReviewData.map(item => item.reviewCount),
         borderColor: '#10dc60',
-        backgroundColor: 'rgba(16, 220, 96, 0.1)',
-        borderWidth: 2,
+        backgroundColor: 'rgba(16, 220, 96, 0.08)',
+        borderWidth: 2.5,
         tension: 0.4,
         fill: true,
+        pointBackgroundColor: '#10dc60',
+        pointHoverRadius: 6
       }
     ],
   };
@@ -200,10 +215,12 @@ const Dashboard: React.FC = () => {
       label: 'User Logins',
       data: userActivityData.map(item => item.loginCount),
       borderColor: '#3880ff',
-      backgroundColor: 'rgba(56, 128, 255, 0.1)',
-      borderWidth: 2,
+      backgroundColor: 'rgba(56, 128, 255, 0.08)',
+      borderWidth: 2.5,
       tension: 0.4,
       fill: true,
+      pointBackgroundColor: '#3880ff',
+      pointHoverRadius: 6
     }],
   };
 
@@ -214,37 +231,45 @@ const Dashboard: React.FC = () => {
         label: 'Total Submissions',
         data: formSubmissionData.map(item => item.totalCount),
         borderColor: '#7044ff',
-        backgroundColor: 'rgba(112, 68, 255, 0.1)',
+        backgroundColor: 'rgba(112, 68, 255, 0.08)',
         borderWidth: 3,
         tension: 0.4,
         fill: true,
+        pointBackgroundColor: '#7044ff',
+        pointHoverRadius: 6
       },
       {
         label: 'Land Forms',
         data: formSubmissionData.map(item => item.landCount),
         borderColor: '#2dd36f',
-        backgroundColor: 'rgba(45, 211, 111, 0.2)',
+        backgroundColor: 'transparent',
         borderWidth: 2,
         tension: 0.4,
         fill: false,
+        pointBackgroundColor: '#2dd36f',
+        pointHoverRadius: 5
       },
       {
         label: 'Building Forms',
         data: formSubmissionData.map(item => item.buildingCount),
         borderColor: '#5260ff',
-        backgroundColor: 'rgba(82, 96, 255, 0.2)',
+        backgroundColor: 'transparent',
         borderWidth: 2,
         tension: 0.4,
         fill: false,
+        pointBackgroundColor: '#5260ff',
+        pointHoverRadius: 5
       },
       {
         label: 'Machinery Forms',
         data: formSubmissionData.map(item => item.machineryCount),
         borderColor: '#ffc409',
-        backgroundColor: 'rgba(255, 196, 9, 0.2)',
+        backgroundColor: 'transparent',
         borderWidth: 2,
         tension: 0.4,
         fill: false,
+        pointBackgroundColor: '#ffc409',
+        pointHoverRadius: 5
       }
     ],
   };
@@ -254,38 +279,111 @@ const Dashboard: React.FC = () => {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } },
+      legend: { 
+        position: 'bottom' as const, 
+        labels: { 
+          padding: 20, 
+          usePointStyle: true,
+          font: { family: "'Inter', sans-serif", weight: '600', size: 12 },
+          color: '#475569'
+        } 
+      },
+      tooltip: {
+        backgroundColor: '#0f172a',
+        titleFont: { family: "'Inter', sans-serif", weight: 'bold' },
+        bodyFont: { family: "'Inter', sans-serif" },
+        padding: 12,
+        cornerRadius: 8
+      }
     },
   };
 
   const lineChartOptions: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { position: 'top' as const } },
-    scales: { y: { beginAtZero: true } },
+    plugins: { 
+      legend: { 
+        position: 'top' as const,
+        labels: {
+          font: { family: "'Inter', sans-serif", weight: '600', size: 12 },
+          usePointStyle: true,
+          padding: 15,
+          color: '#475569'
+        }
+      },
+      tooltip: {
+        backgroundColor: '#0f172a',
+        titleFont: { family: "'Inter', sans-serif", weight: 'bold' },
+        bodyFont: { family: "'Inter', sans-serif" },
+        padding: 12,
+        cornerRadius: 8,
+        displayColors: true
+      }
+    },
+    scales: { 
+      y: { 
+        beginAtZero: true,
+        grid: {
+          color: '#f1f5f9',
+          lineWidth: 1
+        },
+        ticks: {
+          font: { family: "'Inter', sans-serif", weight: '500' },
+          color: '#64748b'
+        }
+      },
+      x: {
+        grid: {
+          display: false
+        },
+        ticks: {
+          font: { family: "'Inter', sans-serif", weight: '500' },
+          color: '#64748b'
+        }
+      }
+    },
+  };
+
+  // Helper helper to map card key to CSS details & icons
+  const getCardDetails = (key: string) => {
+    switch (key) {
+      case 'totalForms': return { className: 'total-forms', icon: documentTextOutline };
+      case 'totalUsers': return { className: 'total-users', icon: peopleOutline };
+      case 'activeUsers': return { className: 'active-users', icon: pulseOutline };
+      case 'formSubmissions': return { className: 'form-submissions', icon: cloudUploadOutline };
+      case 'totalLand': return { className: 'land-forms', icon: leafOutline };
+      case 'totalBuilding': return { className: 'building-forms', icon: businessOutline };
+      case 'totalMachinery': return { className: 'machinery-forms', icon: constructOutline };
+      default: return { className: '', icon: documentTextOutline };
+    }
   };
 
   // Components
   const StatCard: React.FC<{
+    cardKey: string;
     title: string;
     value: number;
-    color: string;
     onClick?: () => void;
-  }> = ({ title, value, color, onClick }) => (
-    <IonCard 
-      className="stat-card" 
-      style={{ '--card-color': color } as any}
-      button={!!onClick}
-      onClick={onClick}
-    >
-      <IonCardHeader>
-        <IonCardTitle className="stat-card-title">{title}</IonCardTitle>
-      </IonCardHeader>
-      <IonCardContent>
-        <div className="stat-value">{value.toLocaleString()}</div>
-      </IonCardContent>
-    </IonCard>
-  );
+  }> = ({ cardKey, title, value, onClick }) => {
+    const { className, icon } = getCardDetails(cardKey);
+    return (
+      <div 
+        className={`stat-card ${className}`} 
+        onClick={onClick}
+        style={{ cursor: onClick ? 'pointer' : 'default' }}
+      >
+        <div className="stat-card-inner">
+          <div className="stat-card-content">
+            <div className="stat-card-label">{title}</div>
+            <div className="stat-card-value">{value.toLocaleString()}</div>
+          </div>
+          <div className="stat-card-icon-box">
+            <IonIcon icon={icon} style={{ fontSize: '1.65rem' }} />
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // Calculations
   const totalAdminLogins = adminActivityData.reduce((sum, item) => sum + item.loginCount, 0);
@@ -330,8 +428,11 @@ const Dashboard: React.FC = () => {
   return (
     <IonPage>
       <IonHeader>
-        <IonToolbar>
-          <IonTitle>{getPageTitle()}</IonTitle>
+        <IonToolbar style={{ '--background': 'linear-gradient(135deg, #5f27cd, #7044ff)', '--color': '#ffffff' }}>
+          <IonButtons slot="start">
+            <IonMenuButton style={{ '--color': '#ffffff' }} />
+          </IonButtons>
+          <IonTitle style={{ fontWeight: '700', letterSpacing: '0.5px' }}>{getPageTitle()}</IonTitle>
         </IonToolbar>
       </IonHeader>
 
@@ -340,45 +441,45 @@ const Dashboard: React.FC = () => {
 
         {selectedView === 'overview' && (
           <div className="dashboard-container">
-            <IonCard>
-              <IonCardContent>
-                <IonSegment value={timeRange} onIonChange={e => {
+            <div className="dashboard-title-container">
+              <h2>Admin Dashboard</h2>
+              <p>System overview and user activity analytics</p>
+            </div>
+
+            <div className="time-segment-card">
+              <IonSegment 
+                value={timeRange} 
+                onIonChange={e => {
                   if (e.detail.value) setTimeRange(e.detail.value as TimeRangeType);
-                }}>
-                  {TIME_RANGES.map(range => (
-                    <IonSegmentButton key={range} value={range}>
-                      <IonLabel>{range === '7days' ? '7 Days' : '30 Days'}</IonLabel>
-                    </IonSegmentButton>
-                  ))}
-                </IonSegment>
-              </IonCardContent>
-            </IonCard>
+                }}
+                className="time-segment"
+              >
+                {TIME_RANGES.map(range => (
+                  <IonSegmentButton key={range} value={range} className="time-segment-button">
+                    <IonLabel>{range === '7days' ? '7 Days' : '30 Days'}</IonLabel>
+                  </IonSegmentButton>
+                ))}
+              </IonSegment>
+            </div>
 
-            <IonGrid>
-              <IonRow>
-                <IonCol size="12">
-                  <h2>Admin Dashboard</h2>
-                  <IonText color="medium"><p>System overview and user activity analytics</p></IonText>
-                </IonCol>
-              </IonRow>
-
+            <IonGrid style={{ padding: 0 }}>
               {isLoading ? (
                 <IonRow>
                   <IonCol size="12" className="loading-col">
-                    <IonSpinner />
-                    <IonText>Loading admin statistics...</IonText>
+                    <IonSpinner name="crescent" color="primary" />
+                    <IonText>Loading dashboard statistics...</IonText>
                   </IonCol>
                 </IonRow>
               ) : (
                 <>
                   {/* Stat Cards */}
-                  <IonRow>
+                  <IonRow style={{ margin: '0 -8px 16px -8px' }}>
                     {STAT_CARDS.map((card: any) => (
-                      <IonCol key={card.key} size="6" size-md="3">
+                      <IonCol key={card.key} size="12" size-sm="6" size-md="3" style={{ padding: '8px' }}>
                         <StatCard
+                          cardKey={card.key}
                           title={card.title}
                           value={getStatValue(stats, card.key, totalFormSubmissions)}
-                          color={card.color}
                           onClick={card.view ? () => setSelectedView(card.view) : undefined}
                         />
                       </IonCol>
@@ -386,13 +487,14 @@ const Dashboard: React.FC = () => {
                   </IonRow>
 
                   {/* Form Type Cards */}
-                  <IonRow>
+                  <h3 className="section-header">Real Property Tax Forms</h3>
+                  <IonRow style={{ margin: '0 -8px 24px -8px' }}>
                     {FORM_TYPE_CARDS.map((card: any) => (
-                      <IonCol key={card.key} size="4">
+                      <IonCol key={card.key} size="12" size-md="4" style={{ padding: '8px' }}>
                         <StatCard
+                          cardKey={card.key}
                           title={card.title}
                           value={getStatValue(stats, card.key, totalFormSubmissions)}
-                          color={card.color}
                           onClick={() => setSelectedView(card.view)}
                         />
                       </IonCol>
@@ -400,15 +502,19 @@ const Dashboard: React.FC = () => {
                   </IonRow>
 
                   {/* Charts */}
+                  <h3 className="section-header">Activity Analytics Charts</h3>
                   {chartConfigs.map((chart, index) => (
-                    <IonRow key={index}>
+                    <IonRow key={index} style={{ marginBottom: '24px' }}>
                       <IonCol size="12">
-                        <IonCard>
-                          <IonCardHeader><IonCardTitle>{chart.title}</IonCardTitle></IonCardHeader>
-                          <IonCardContent>
+                        <IonCard className="dashboard-card">
+                          <IonCardHeader className="dashboard-card-header">
+                            <IonCardTitle className="dashboard-card-title">{chart.title}</IonCardTitle>
+                          </IonCardHeader>
+                          <IonCardContent className="chart-card-content">
                             {isLineChartLoading ? (
                               <div className="chart-loading">
-                                <IonSpinner /><IonText>Loading chart data...</IonText>
+                                <IonSpinner name="crescent" color="primary" />
+                                <IonText>Loading chart data...</IonText>
                               </div>
                             ) : (
                               <div className="chart-container">
@@ -422,18 +528,20 @@ const Dashboard: React.FC = () => {
                   ))}
 
                   {/* Quick Summary */}
-                  <IonRow>
+                  <h3 className="section-header">Quick Summary ({timeRange === '7days' ? '7 Days' : '30 Days'})</h3>
+                  <IonRow style={{ margin: '0 -8px 24px -8px' }}>
                     <IonCol size="12">
-                      <IonCard>
-                        <IonCardHeader><IonCardTitle>Quick Summary ({timeRange})</IonCardTitle></IonCardHeader>
-                        <IonCardContent>
-                          <IonGrid>
-                            <IonRow>
+                      <IonCard className="dashboard-card">
+                        <IonCardContent className="summary-grid">
+                          <IonGrid style={{ padding: 0 }}>
+                            <IonRow style={{ margin: 0 }}>
                               {summaryItems.map((item, index) => (
-                                <IonCol key={index} size="12" size-md="3">
-                                  <div className="summary-item">
-                                    <IonText color={item.color}><h3>{item.value}</h3></IonText>
-                                    <IonText color="medium"><p>{item.label}</p></IonText>
+                                <IonCol key={index} size="6" size-md="3" style={{ padding: '8px' }}>
+                                  <div className="summary-item-card">
+                                    <div className="summary-item-val" style={{ color: `var(--ion-color-${item.color})` }}>
+                                      {item.value.toLocaleString()}
+                                    </div>
+                                    <p className="summary-item-lbl">{item.label}</p>
                                   </div>
                                 </IonCol>
                               ))}
@@ -451,24 +559,36 @@ const Dashboard: React.FC = () => {
 
         {/* Pie Charts Section */}
         {selectedView !== 'overview' && (
-          <div className="charts-container">
-            <IonGrid>
-              <IonRow>
-                <IonCol size="12" size-md="8" offset-md="2">
-                  <IonCard>
-                    <IonCardHeader>
+          <div className="dashboard-container">
+            <IonGrid style={{ padding: 0 }}>
+              <IonRow style={{ margin: 0 }}>
+                <IonCol size="12" size-md="8" offset-md="2" style={{ padding: 0 }}>
+                  <IonCard className="dashboard-card">
+                    <IonCardHeader className="dashboard-card-header">
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <IonCardTitle>{getChartTitle()}</IonCardTitle>
-                        <IonButton fill="clear" onClick={() => setSelectedView('overview')} color="medium">
+                        <IonCardTitle className="dashboard-card-title">{getChartTitle()}</IonCardTitle>
+                        <IonButton 
+                          fill="solid" 
+                          onClick={() => setSelectedView('overview')} 
+                          color="primary"
+                          shape="round"
+                          style={{
+                            '--box-shadow': '0 4px 10px rgba(112, 68, 255, 0.2)',
+                            fontWeight: '700',
+                            fontSize: '0.85rem',
+                            height: '36px'
+                          }}
+                        >
                           <IonIcon slot="start" icon={arrowBack} />
                           Back to Overview
                         </IonButton>
                       </div>
                     </IonCardHeader>
-                    <IonCardContent>
+                    <IonCardContent className="chart-card-content">
                       {isChartLoading ? (
                         <div className="chart-loading">
-                          <IonSpinner /><IonText>Loading chart data...</IonText>
+                          <IonSpinner name="crescent" color="primary" />
+                          <IonText>Loading chart data...</IonText>
                         </div>
                       ) : (
                         <div className="chart-container">

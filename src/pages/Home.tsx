@@ -7,7 +7,12 @@ import {
   IonTabButton,
   IonTabs,
   IonPage,
-  IonContent
+  IonContent,
+  IonHeader,
+  IonToolbar,
+  IonButtons,
+  IonMenuButton,
+  IonTitle
 } from '@ionic/react';
 import { Route, Redirect, useLocation } from 'react-router';
 import { albumsOutline, bookOutline, trailSignOutline } from 'ionicons/icons';
@@ -43,6 +48,14 @@ const Home: React.FC = () => {
 
   return (
     <IonPage>
+      <IonHeader>
+        <IonToolbar style={{ '--background': 'linear-gradient(135deg, #5f27cd, #7044ff)', '--color': '#ffffff' }}>
+          <IonButtons slot="start">
+            <IonMenuButton style={{ '--color': '#ffffff' }} />
+          </IonButtons>
+          <IonTitle style={{ fontWeight: '700', letterSpacing: '0.5px' }}>Home Settings</IonTitle>
+        </IonToolbar>
+      </IonHeader>
       <IonContent fullscreen>
         <IonTabs>
           <IonRouterOutlet>

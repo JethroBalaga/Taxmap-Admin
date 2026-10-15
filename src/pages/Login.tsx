@@ -64,6 +64,28 @@ const Login: React.FC = () => {
 
   const doLogin = async () => {
     try {
+      // Development bypass for local testing
+      if (email.trim() === 'admin' && password === 'admin') {
+        console.log('Using admin/admin development bypass with real Supabase session');
+        const { error: bypassError } = await supabase.auth.signInWithPassword({
+          email: 'admin@taxmap.local',
+          password: 'admin_password_123'
+        });
+
+        if (bypassError) {
+          console.error('Bypass sign-in error:', bypassError);
+          setAlertMessage('Development bypass sign-in failed: ' + bypassError.message);
+          setShowAlert(true);
+          return;
+        }
+
+        setShowToast(true);
+        setTimeout(() => {
+          navigation.push('/menu', 'forward', 'replace');
+        }, 300);
+        return;
+      }
+
       let resolvedEmail = email.trim();
 
       // 1. Check if the input is a username instead of email

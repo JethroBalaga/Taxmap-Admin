@@ -10,7 +10,9 @@ import {
   IonIcon,
   IonGrid,
   IonRow,
-  IonCol
+  IonCol,
+  IonButtons,
+  IonMenuButton
 } from '@ionic/react';
 import { closeCircleOutline } from 'ionicons/icons';
 import { useState, useEffect } from 'react';
@@ -51,8 +53,11 @@ const Map: React.FC = () => {
   return (
     <IonPage>
       <IonHeader>
-        <IonToolbar>
-          <IonTitle>Admin Map</IonTitle>
+        <IonToolbar style={{ '--background': 'linear-gradient(135deg, #5f27cd, #7044ff)', '--color': '#ffffff' }}>
+          <IonButtons slot="start">
+            <IonMenuButton style={{ '--color': '#ffffff' }} />
+          </IonButtons>
+          <IonTitle style={{ fontWeight: '700', letterSpacing: '0.5px' }}>Admin Map</IonTitle>
         </IonToolbar>
         
         {/* Updated Search Bar Section - Only copying the STYLE layout */}
